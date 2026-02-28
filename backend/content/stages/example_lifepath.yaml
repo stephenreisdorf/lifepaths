@@ -1,0 +1,185 @@
+id: example_lifepath
+name: Example Life Path
+version: "1.0"
+starting_stage_id: childhood
+base_attributes:
+  strength: 2
+  agility: 2
+  intellect: 2
+  wealth_level: 1
+
+stages:
+  childhood:
+    id: childhood
+    name: Childhood
+    description: Your formative years shape who you will become.
+    order_hint: 1
+    age_cost: 10
+    default_next_stage_id: youth
+    events:
+      - id: childhood_upbringing
+        name: Upbringing
+        description: Roll to determine the circumstances of your childhood.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: upbringing_poor
+            label: Poor
+            description: You grew up in poverty, learning to make do with little.
+            roll_min: 1
+            roll_max: 2
+            attribute_modifiers:
+              - attribute: wealth_level
+                delta: -1
+              - attribute: agility
+                delta: 1
+            features_granted:
+              - id: street_smart
+                name: Street Smart
+                description: Hard times taught you to read people and situations quickly.
+                category: trait
+                source_stage_id: childhood
+                source_event_id: childhood_upbringing
+          - id: upbringing_middle
+            label: Middle Class
+            description: A comfortable upbringing with modest opportunities.
+            roll_min: 3
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted: []
+          - id: upbringing_wealthy
+            label: Wealthy
+            description: You grew up with privilege and access to education.
+            roll_min: 5
+            roll_max: 6
+            attribute_modifiers:
+              - attribute: wealth_level
+                delta: 1
+              - attribute: intellect
+                delta: 1
+            features_granted:
+              - id: educated
+                name: Educated
+                description: Formal schooling has broadened your mind.
+                category: trait
+                source_stage_id: childhood
+                source_event_id: childhood_upbringing
+
+      - id: childhood_talent
+        name: Natural Talent
+        description: Choose an area where you showed early aptitude.
+        event_type: choice
+        choice_prompt: Which talent emerged during your childhood?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: talent_physical
+            label: Physical
+            description: You excelled at sports and physical activities.
+            choice_key: physical
+            attribute_modifiers:
+              - attribute: strength
+                delta: 1
+            features_granted: []
+          - id: talent_mental
+            label: Mental
+            description: You had a knack for learning and problem-solving.
+            choice_key: mental
+            attribute_modifiers:
+              - attribute: intellect
+                delta: 1
+            features_granted: []
+
+  youth:
+    id: youth
+    name: Youth
+    description: Your adolescent years and early independence.
+    order_hint: 2
+    age_cost: 6
+    default_next_stage_id: career
+    prerequisite_stage_ids:
+      - childhood
+    events:
+      - id: youth_event
+        name: Defining Moment
+        description: Something happened in your youth that left a mark.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: youth_adventure
+            label: Adventure
+            description: A chance encounter led you into brief adventure.
+            roll_min: 1
+            roll_max: 3
+            attribute_modifiers:
+              - attribute: agility
+                delta: 1
+            features_granted: []
+          - id: youth_scholarship
+            label: Scholarship
+            description: Your academic abilities earned you a rare opportunity.
+            roll_min: 4
+            roll_max: 6
+            attribute_modifiers:
+              - attribute: intellect
+                delta: 1
+            features_granted:
+              - id: scholar
+                name: Scholar
+                description: Rigorous study has sharpened your analytical mind.
+                category: skill
+                source_stage_id: youth
+                source_event_id: youth_event
+
+  career:
+    id: career
+    name: Career
+    description: You enter the workforce and find your calling.
+    order_hint: 3
+    age_cost: 4
+    is_repeatable: true
+    max_repeats: 3
+    repeat_prompt: Do you wish to continue in this career for another term?
+    default_next_stage_id: null
+    prerequisite_stage_ids:
+      - youth
+    events:
+      - id: career_assignment
+        name: Assignment
+        description: Roll to see what work comes your way this term.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: career_rough
+            label: Rough Term
+            description: This term was hard. You earned little but learned much.
+            roll_min: 1
+            roll_max: 2
+            attribute_modifiers:
+              - attribute: strength
+                delta: 1
+            features_granted: []
+          - id: career_steady
+            label: Steady Work
+            description: Solid, unremarkable employment.
+            roll_min: 3
+            roll_max: 4
+            attribute_modifiers:
+              - attribute: wealth_level
+                delta: 1
+            features_granted: []
+          - id: career_windfall
+            label: Windfall
+            description: A lucrative contract or lucky break.
+            roll_min: 5
+            roll_max: 6
+            attribute_modifiers:
+              - attribute: wealth_level
+                delta: 2
+            features_granted:
+              - id: well_connected
+                name: Well Connected
+                description: Success brought you into contact with influential people.
+                category: contact
+                source_stage_id: career
+                source_event_id: career_assignment
