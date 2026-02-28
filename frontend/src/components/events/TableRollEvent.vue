@@ -11,15 +11,24 @@ const emit = defineEmits(['roll'])
 const rollValue = ref('')
 
 const diceRange = computed(() => {
-  if (!props.event?.dice_expression) return { min: 1, max: 6 }
+  if (!props.event?.dice_expression) return { n: 1, sides: 6, min: 1, max: 6 }
   const [n, m] = props.event.dice_expression.split('d').map(Number)
-  return { min: n, max: n * m }
+  return { n, sides: m, min: n, max: n * m }
 })
 
 const isValid = computed(() => {
   const v = Number(rollValue.value)
   return Number.isInteger(v) && v >= diceRange.value.min && v <= diceRange.value.max
 })
+
+function rollRandom() {
+  const { n, sides } = diceRange.value
+  let result = 0
+  for (let i = 0; i < n; i++) {
+    result += Math.floor(Math.random() * sides) + 1
+  }
+  emit('roll', { eventId: props.event.id, rollResult: result })
+}
 
 function submit() {
   if (!isValid.value || props.loading) return
@@ -35,7 +44,10 @@ function submit() {
 
     <div class="dice-area">
       <div class="dice-label">Roll <strong>{{ event.dice_expression }}</strong></div>
-      <div class="dice-hint">Enter a value from {{ diceRange.min }} to {{ diceRange.max }}</div>
+      <button class="primary roll-btn" @click="rollRandom" :disabled="loading">
+        {{ loading ? 'Resolving...' : `Roll ${event.dice_expression}` }}
+      </button>
+      <div class="manual-label">Or enter a result manually</div>
       <div class="dice-input-row">
         <input
           type="number"
@@ -45,8 +57,8 @@ function submit() {
           placeholder="Result"
           @keyup.enter="submit"
         />
-        <button class="primary" @click="submit" :disabled="!isValid || loading">
-          {{ loading ? 'Resolving...' : 'Resolve' }}
+        <button class="secondary" @click="submit" :disabled="!isValid || loading">
+          Resolve
         </button>
       </div>
     </div>
@@ -85,13 +97,20 @@ p {
 
 .dice-label {
   font-size: 1rem;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.75rem;
 }
 
-.dice-hint {
-  font-size: 0.85rem;
+.roll-btn {
+  width: 100%;
+  padding: 0.65rem;
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+
+.manual-label {
+  font-size: 0.8rem;
   color: var(--color-text-muted);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
 }
 
 .dice-input-row {
