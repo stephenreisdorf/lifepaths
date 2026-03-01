@@ -83,7 +83,8 @@ class SessionState(BaseModel):
     pending_event_index: int
     # Queue of injected follow-up event IDs to resolve before advancing stage index:
     injected_event_ids: list[str]
-    current_attributes: dict[str, int]
+    current_attributes: dict[str, int]   # core pools (body, stamina, focus, power, age)
+    current_skills: dict[str, int]        # skill ranks; absent key = not possessed
     current_features: list[Feature]
     current_age: int
     stage_visit_counts: dict[str, int]   # stage_id → completed visit count
@@ -160,12 +161,14 @@ class CharacterSession(BaseModel):
             elif isinstance(entry, SessionCompletedEntry):
                 status = "completed"
 
+        base_keys = set(first.base_attributes.keys())
         return SessionState(
             status=status,
             current_stage_id=current_stage_id,
             pending_event_index=pending_event_index,
             injected_event_ids=injected_event_ids,
-            current_attributes=attributes,
+            current_attributes={k: v for k, v in attributes.items() if k in base_keys},
+            current_skills={k: v for k, v in attributes.items() if k not in base_keys},
             current_features=features,
             current_age=current_age,
             stage_visit_counts=stage_visit_counts,

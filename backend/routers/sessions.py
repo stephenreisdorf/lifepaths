@@ -54,7 +54,9 @@ def _assemble_character_sheet(session: CharacterSession) -> CharacterSheet:
 
     # Build per-stage history summaries
     history: list[StageHistorySummary] = []
+    base_keys = set(config.base_attributes.keys())
     current_stage_attrs: dict[str, int] = {}
+    current_stage_skills: dict[str, int] = {}
     current_stage_features: list[str] = []
     current_stage_narratives: list[str] = []
     active_stage_id: str | None = None
@@ -69,9 +71,14 @@ def _assemble_character_sheet(session: CharacterSession) -> CharacterSheet:
 
         elif isinstance(entry, EventResolvedEntry):
             for mod in entry.attribute_modifiers:
-                current_stage_attrs[mod.attribute] = (
-                    current_stage_attrs.get(mod.attribute, 0) + mod.delta
-                )
+                if mod.attribute in base_keys:
+                    current_stage_attrs[mod.attribute] = (
+                        current_stage_attrs.get(mod.attribute, 0) + mod.delta
+                    )
+                else:
+                    current_stage_skills[mod.attribute] = (
+                        current_stage_skills.get(mod.attribute, 0) + mod.delta
+                    )
             current_stage_features.extend(f.name for f in entry.features_granted)
             # Find outcome description for narrative
             if active_stage_id and active_stage_id in config.stages:
@@ -95,11 +102,13 @@ def _assemble_character_sheet(session: CharacterSession) -> CharacterSheet:
                     visit_number=entry.visit_number,
                     narrative_fragments=list(current_stage_narratives),
                     attributes_gained=dict(current_stage_attrs),
+                    skills_gained=dict(current_stage_skills),
                     features_gained=list(current_stage_features),
                 )
             )
             active_stage_id = entry.next_stage_id
             current_stage_attrs = {}
+            current_stage_skills = {}
             current_stage_features = []
             current_stage_narratives = []
 
@@ -110,6 +119,7 @@ def _assemble_character_sheet(session: CharacterSession) -> CharacterSheet:
         character_name=session.character_name,
         player_name=session.player_name,
         attributes=state.current_attributes,
+        skills=state.current_skills,
         features=state.current_features,
         age=state.current_age,
         stage_history=history,
@@ -222,6 +232,7 @@ def create_session(body: CreateSessionRequest) -> SessionResponse:
         )
 
     now = _now()
+    base_attributes = dict(config.base_attributes)
     session = CharacterSession(
         id=str(uuid4()),
         lifepath_config_id=config.id,
@@ -235,7 +246,7 @@ def create_session(body: CreateSessionRequest) -> SessionResponse:
                 timestamp=now,
                 lifepath_config_id=config.id,
                 starting_stage_id=config.starting_stage_id,
-                base_attributes=dict(config.base_attributes),
+                base_attributes=base_attributes,
             )
         ],
     )

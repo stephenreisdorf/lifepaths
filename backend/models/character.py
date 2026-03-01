@@ -11,6 +11,7 @@ class StageHistorySummary(BaseModel):
     visit_number: int
     narrative_fragments: list[str]    # outcome descriptions for readable history
     attributes_gained: dict[str, int]
+    skills_gained: dict[str, int]
     features_gained: list[str]        # feature names
 
 
@@ -21,6 +22,7 @@ class CharacterSheet(BaseModel):
     character_name: str | None
     player_name: str | None
     attributes: dict[str, int]
+    skills: dict[str, int]
     features: list[Feature]
     age: int
     stage_history: list[StageHistorySummary]
