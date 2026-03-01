@@ -28,6 +28,8 @@ stages:
             description: You grew up in poverty, learning to make do with little.
             roll_min: 1
             roll_max: 2
+            context_updates:
+              upbringing: "poor"
             attribute_modifiers:
               - attribute: wealth_level
                 delta: -1
@@ -45,6 +47,8 @@ stages:
             description: A comfortable upbringing with modest opportunities.
             roll_min: 3
             roll_max: 4
+            context_updates:
+              upbringing: "middle"
             attribute_modifiers: []
             features_granted: []
           - id: upbringing_wealthy
@@ -52,6 +56,8 @@ stages:
             description: You grew up with privilege and access to education.
             roll_min: 5
             roll_max: 6
+            context_updates:
+              upbringing: "wealthy"
             attribute_modifiers:
               - attribute: wealth_level
                 delta: 1
@@ -85,10 +91,28 @@ stages:
             label: Mental
             description: You had a knack for learning and problem-solving.
             choice_key: mental
+            requires_context:
+              upbringing: ["middle", "wealthy"]
             attribute_modifiers:
               - attribute: intellect
                 delta: 1
             features_granted: []
+          - id: talent_patronage
+            label: Patronage
+            description: A wealthy sponsor took notice of your gifts.
+            choice_key: patronage
+            requires_context:
+              upbringing: ["wealthy"]
+            attribute_modifiers:
+              - attribute: intellect
+                delta: 1
+            features_granted:
+              - id: patron
+                name: Patron
+                description: A powerful figure owes you a favor.
+                category: contact
+                source_stage_id: childhood
+                source_event_id: childhood_talent
 
   youth:
     id: youth
