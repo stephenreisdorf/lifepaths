@@ -4,11 +4,21 @@ import { ref, computed } from 'vue'
 const props = defineProps({
   event: Object,
   loading: Boolean,
+  resolvedContext: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['choose'])
 
 const selected = ref([])
+
+function isOutcomeAvailable(outcome) {
+  for (const [key, allowed] of Object.entries(outcome.requires_context ?? {})) {
+    if (!allowed.includes(props.resolvedContext[key])) return false
+  }
+  return true
+}
+
+const availableOutcomes = computed(() => (props.event?.outcomes ?? []).filter(isOutcomeAvailable))
 
 const canSubmit = computed(() => {
   const count = selected.value.length
@@ -46,7 +56,7 @@ function submit() {
 
     <div class="choices">
       <button
-        v-for="o in event.outcomes"
+        v-for="o in availableOutcomes"
         :key="o.choice_key"
         class="choice-card"
         :class="{ selected: selected.includes(o.choice_key) }"

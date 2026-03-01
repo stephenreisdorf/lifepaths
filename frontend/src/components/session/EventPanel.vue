@@ -6,6 +6,7 @@ import AutomaticEvent from '../events/AutomaticEvent.vue'
 const props = defineProps({
   event: Object,
   loading: Boolean,
+  resolvedContext: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['roll', 'choose', 'skip'])
@@ -23,6 +24,7 @@ const emit = defineEmits(['roll', 'choose', 'skip'])
       v-else-if="event?.event_type === 'choice'"
       :event="event"
       :loading="loading"
+      :resolvedContext="resolvedContext"
       @choose="emit('choose', $event)"
     />
     <AutomaticEvent

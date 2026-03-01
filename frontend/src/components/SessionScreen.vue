@@ -78,6 +78,7 @@ const sessionComplete = computed(() => props.sessionState?.status === 'completed
         v-else-if="currentEvent && !lastOutcome"
         :event="currentEvent"
         :loading="loading"
+        :resolvedContext="sessionState?.resolved_context ?? {}"
         @roll="emit('roll', $event)"
         @choose="emit('choose', $event)"
         @skip="emit('skip', $event)"
