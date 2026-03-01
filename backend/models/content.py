@@ -21,6 +21,10 @@ class OutcomeDefinition(BaseModel):
     features_granted: list[Feature] = []
     next_stage_override: str | None = None
     triggers_events: list[str] = []       # inject follow-up event IDs into current stage
+    context_updates: dict[str, str] = {}
+    # key-value pairs merged into session resolved_context when this outcome resolves
+    requires_context: dict[str, list[str]] = {}
+    # gates availability: all keys must be present with a matching value (AND across keys, OR across list values)
 
 
 class EventDefinition(BaseModel):

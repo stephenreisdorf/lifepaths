@@ -36,6 +36,7 @@ class EventResolvedEntry(BaseModel):
     injected_event_ids: list[str] = []
     # If this outcome overrides the next stage:
     next_stage_override: str | None = None
+    context_updates: dict[str, str] = {}   # snapshotted from outcome(s) at resolve time
 
 
 class EventSkippedEntry(BaseModel):
@@ -86,6 +87,7 @@ class SessionState(BaseModel):
     current_features: list[Feature]
     current_age: int
     stage_visit_counts: dict[str, int]   # stage_id → completed visit count
+    resolved_context: dict[str, str] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -125,12 +127,14 @@ class CharacterSession(BaseModel):
         injected_event_ids: list[str] = []
         current_age: int = 0
         status: Literal["in_progress", "completed", "abandoned"] = "in_progress"
+        resolved_context: dict[str, str] = {}
 
         for entry in self.log[1:]:
             if isinstance(entry, EventResolvedEntry):
                 for mod in entry.attribute_modifiers:
                     attributes[mod.attribute] = attributes.get(mod.attribute, 0) + mod.delta
                 features.extend(entry.features_granted)
+                resolved_context.update(entry.context_updates)
                 # Prepend new injected events to the front of the queue
                 injected_event_ids = list(entry.injected_event_ids) + injected_event_ids
                 if injected_event_ids:
@@ -165,4 +169,5 @@ class CharacterSession(BaseModel):
             current_features=features,
             current_age=current_age,
             stage_visit_counts=stage_visit_counts,
+            resolved_context=resolved_context,
         )
