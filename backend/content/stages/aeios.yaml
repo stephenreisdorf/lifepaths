@@ -1,0 +1,2473 @@
+id: aeios
+name: Aeios
+version: "1.0"
+starting_stage_id: childhood
+base_attributes:
+  body: 3
+  stamina: 3
+  focus: 3
+  power: 3
+  age: 15
+
+stages:
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 1: CHILDHOOD
+  # ──────────────────────────────────────────────────────────────
+  childhood:
+    id: childhood
+    name: Childhood
+    description: Three rolls define the world you grew up in — your family's wealth, where you lived, and the social structure surrounding you. Together they surface skill options; choose one at Rank 0.
+    order_hint: 1
+    age_cost: 0
+    default_next_stage_id: career_entry
+    events:
+      - id: wealth_roll
+        name: Wealth
+        description: Roll 1d6 to determine your family's economic circumstances. On a 6, treat as 5 (Wealthy).
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: wealth_destitute
+            label: Destitute
+            description: The family had nothing, or there was no family. Survival was not a given.
+            roll_min: 1
+            roll_max: 1
+            context_updates:
+              revealed_survival: "yes"
+              revealed_thievery: "yes"
+            features_granted:
+              - id: bg_wealth_destitute
+                name: Destitute
+                description: The family had nothing, or there was no family. Survival was not a given.
+                category: background
+          - id: wealth_poor
+            label: Poor
+            description: Enough to survive, not enough for anything else. The body was the primary asset.
+            roll_min: 2
+            roll_max: 2
+            context_updates:
+              revealed_athletics: "yes"
+            features_granted:
+              - id: bg_wealth_poor
+                name: Poor
+                description: Enough to survive, not enough for anything else. The body was the primary asset.
+                category: background
+          - id: wealth_common
+            label: Common
+            description: A trade, a modest home, maybe some savings. Enough, and no more.
+            roll_min: 3
+            roll_max: 3
+            context_updates:
+              revealed_craftsmanship: "yes"
+              revealed_commerce: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_wealth_common
+                name: Common
+                description: A trade, a modest home, maybe some savings. Enough, and no more.
+                category: background
+          - id: wealth_prosperous
+            label: Prosperous
+            description: More than enough. Wealth enough to have choices and exert social influence.
+            roll_min: 4
+            roll_max: 4
+            context_updates:
+              revealed_commerce: "yes"
+              revealed_influence: "yes"
+            features_granted:
+              - id: bg_wealth_prosperous
+                name: Prosperous
+                description: More than enough. Wealth enough to have choices and exert social influence.
+                category: background
+          - id: wealth_wealthy
+            label: Wealthy
+            description: Wealth that commands. Money is not the constraint — access and reputation are the game.
+            roll_min: 5
+            roll_max: 6
+            context_updates:
+              revealed_scholarship: "yes"
+              revealed_influence: "yes"
+            features_granted:
+              - id: bg_wealth_wealthy
+                name: Wealthy
+                description: Wealth that commands. Money is not the constraint — access and reputation are the game.
+                category: background
+
+      - id: locale_roll
+        name: Locale
+        description: Roll 1d6 to determine where you grew up, from deep wilderness to great city. On a 6, treat as 5 (Great City).
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: locale_wilderness
+            label: Wilderness
+            description: Beyond the edge of maps. The nearest neighbor might be days away.
+            roll_min: 1
+            roll_max: 1
+            context_updates:
+              revealed_survival: "yes"
+              revealed_navigation: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_locale_wilderness
+                name: Wilderness
+                description: Beyond the edge of maps. The nearest neighbor might be days away.
+                category: background
+          - id: locale_rural
+            label: Rural
+            description: Settled agricultural land — villages, farms, managed forest.
+            roll_min: 2
+            roll_max: 2
+            context_updates:
+              revealed_athletics: "yes"
+              revealed_craftsmanship: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_locale_rural
+                name: Rural
+                description: Settled agricultural land — villages, farms, managed forest.
+                category: background
+          - id: locale_town
+            label: Small Town
+            description: A real settlement with an inn, a market, a temple, a constable.
+            roll_min: 3
+            roll_max: 3
+            context_updates:
+              revealed_craftsmanship: "yes"
+              revealed_commerce: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_locale_town
+                name: Small Town
+                description: A real settlement with an inn, a market, a temple, a constable.
+                category: background
+          - id: locale_city
+            label: City
+            description: Walls, guilds, crime, crowds. A city is a world unto itself.
+            roll_min: 4
+            roll_max: 4
+            context_updates:
+              revealed_stealth: "yes"
+              revealed_commerce: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_locale_city
+                name: City
+                description: Walls, guilds, crime, crowds. A city is a world unto itself.
+                category: background
+          - id: locale_great_city
+            label: Great City
+            description: Ancient, vast, layered. So large it contains multitudes.
+            roll_min: 5
+            roll_max: 6
+            context_updates:
+              revealed_scholarship: "yes"
+              revealed_influence: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_locale_great_city
+                name: Great City
+                description: Ancient, vast, layered. So large it contains multitudes.
+                category: background
+
+      - id: community_roll
+        name: Community
+        description: Roll 1d6 to determine the social structure you grew up within. On a 6, treat as 5 (Court / Great Institution).
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: community_solitary
+            label: Solitary
+            description: Raised largely alone or effectively cut off. People were scarce; you learned to need them less.
+            roll_min: 1
+            roll_max: 1
+            context_updates:
+              revealed_survival: "yes"
+              revealed_stealth: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_community_solitary
+                name: Solitary
+                description: Raised largely alone or effectively cut off. People were scarce; you learned to need them less.
+                category: background
+          - id: community_band
+            label: Small Band
+            description: A handful of people bound by necessity or blood. Tight bonds, narrow world.
+            roll_min: 2
+            roll_max: 2
+            context_updates:
+              revealed_melee: "yes"
+              revealed_athletics: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_community_band
+                name: Small Band
+                description: A handful of people bound by necessity or blood. Tight bonds, narrow world.
+                category: background
+          - id: community_congregation
+            label: Congregation
+            description: A true community of dozens to a few hundred, mostly known to each other.
+            roll_min: 3
+            roll_max: 3
+            context_updates:
+              revealed_craftsmanship: "yes"
+              revealed_commerce: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_community_congregation
+                name: Congregation
+                description: A true community of dozens to a few hundred, mostly known to each other.
+                category: background
+          - id: community_organization
+            label: Organization
+            description: Hundreds or more with formal structure — membership, rules, and ranks.
+            roll_min: 4
+            roll_max: 4
+            context_updates:
+              revealed_commerce: "yes"
+              revealed_influence: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_community_organization
+                name: Organization
+                description: Hundreds or more with formal structure — membership, rules, and ranks.
+                category: background
+          - id: community_court
+            label: "Court / Great Institution"
+            description: Thousands of people, layered hierarchy, complex politics. Navigating the structure was its own discipline.
+            roll_min: 5
+            roll_max: 6
+            context_updates:
+              revealed_scholarship: "yes"
+              revealed_influence: "yes"
+            attribute_modifiers: []
+            features_granted:
+              - id: bg_community_court
+                name: "Court / Great Institution"
+                description: Thousands of people, layered hierarchy, complex politics. Navigating the structure was its own discipline.
+                category: background
+
+      - id: childhood_skill
+        name: Childhood Skill
+        description: From all skills surfaced across your three rolls, choose one. That skill is held at Rank 0 — basic familiarity that removes the untrained penalty die.
+        event_type: choice
+        choice_prompt: Which skill became second nature during your childhood?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: cs_survival
+            label: Survival
+            description: You learned early how to stay alive when circumstances turned against you.
+            choice_key: survival
+            requires_context:
+              revealed_survival: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_survival_0
+                name: Survival Rank 0
+                description: Basic familiarity with survival — removes the untrained penalty die.
+                category: skill
+          - id: cs_thievery
+            label: Thievery
+            description: Necessity taught you to take what wasn't offered.
+            choice_key: thievery
+            requires_context:
+              revealed_thievery: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_thievery_0
+                name: Thievery Rank 0
+                description: Basic familiarity with thievery — removes the untrained penalty die.
+                category: skill
+          - id: cs_athletics
+            label: Athletics
+            description: Physical work or outdoor life built a capable body from an early age.
+            choice_key: athletics
+            requires_context:
+              revealed_athletics: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_athletics_0
+                name: Athletics Rank 0
+                description: Basic familiarity with athletics — removes the untrained penalty die.
+                category: skill
+          - id: cs_craftsmanship
+            label: Craftsmanship
+            description: A trade household or practical upbringing gave you skill with your hands.
+            choice_key: craftsmanship
+            requires_context:
+              revealed_craftsmanship: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_craftsmanship_0
+                name: Craftsmanship Rank 0
+                description: Basic familiarity with craftsmanship — removes the untrained penalty die.
+                category: skill
+          - id: cs_commerce
+            label: Commerce
+            description: Growing up around trade gave you an eye for value and negotiation.
+            choice_key: commerce
+            requires_context:
+              revealed_commerce: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_commerce_0
+                name: Commerce Rank 0
+                description: Basic familiarity with commerce — removes the untrained penalty die.
+                category: skill
+          - id: cs_influence
+            label: Influence
+            description: Social environments taught you how to read people and make yourself heard.
+            choice_key: influence
+            requires_context:
+              revealed_influence: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_influence_0
+                name: Influence Rank 0
+                description: Basic familiarity with influence — removes the untrained penalty die.
+                category: skill
+          - id: cs_scholarship
+            label: Scholarship
+            description: Access to knowledge — books, learned people, institutions — ignited a habit of study.
+            choice_key: scholarship
+            requires_context:
+              revealed_scholarship: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_scholarship_0
+                name: Scholarship Rank 0
+                description: Basic familiarity with scholarship — removes the untrained penalty die.
+                category: skill
+          - id: cs_melee
+            label: Melee
+            description: Fighting was part of life — by necessity, culture, or circumstance.
+            choice_key: melee
+            requires_context:
+              revealed_melee: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_melee_0
+                name: Melee Rank 0
+                description: Basic familiarity with melee combat — removes the untrained penalty die.
+                category: skill
+          - id: cs_stealth
+            label: Stealth
+            description: Learning to move unseen was survival in the environment you grew up in.
+            choice_key: stealth
+            requires_context:
+              revealed_stealth: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_stealth_0
+                name: Stealth Rank 0
+                description: Basic familiarity with stealth — removes the untrained penalty die.
+                category: skill
+          - id: cs_navigation
+            label: Navigation
+            description: Growing up beyond settled land gave you an instinct for direction and terrain.
+            choice_key: navigation
+            requires_context:
+              revealed_navigation: ["yes"]
+            attribute_modifiers: []
+            features_granted:
+              - id: skill_navigation_0
+                name: Navigation Rank 0
+                description: Basic familiarity with navigation — removes the untrained penalty die.
+                category: skill
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 2: CAREER ENTRY
+  # ──────────────────────────────────────────────────────────────
+  career_entry:
+    id: career_entry
+    name: Career Entry
+    description: Choose your career. All careers are freely available. Your choice grants Basic Training at Rank 0 in two skills and sets your career path.
+    order_hint: 2
+    age_cost: 0
+    default_next_stage_id: career_blade
+    events:
+      - id: career_choice
+        name: Choose a Career
+        description: Select the career you are entering. You gain both Basic Training skills at Rank 0. You may change careers in future cycles by mustering out and returning here.
+        event_type: choice
+        choice_prompt: Which career do you enter?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: enter_blade
+            label: "Blade — Professional Fighting"
+            description: Sellswords, city guardsmen, pit-fighters. You sell your body's strength for coin, order, or spectacle. Basic Training — Melee, Defense.
+            choice_key: blade
+            context_updates:
+              current_career: "blade"
+            next_stage_override: career_blade
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_melee_0
+                name: Melee Rank 0
+                description: Basic Training — removes the untrained penalty die for melee combat.
+                category: skill
+              - id: bt_defense_0
+                name: Defense Rank 0
+                description: Basic Training — removes the untrained penalty die for defense.
+                category: skill
+          - id: enter_scout
+            label: "Scout — Wilderness and Frontier Work"
+            description: Guides, outriders, trappers. You live beyond the edge of maps and bring back what you find. Basic Training — Survival, Navigation (Wayfinding).
+            choice_key: scout
+            context_updates:
+              current_career: "scout"
+            next_stage_override: career_scout
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_survival_0
+                name: Survival Rank 0
+                description: Basic Training — removes the untrained penalty die for survival.
+                category: skill
+              - id: bt_navigation_0
+                name: Navigation (Wayfinding) Rank 0
+                description: Basic Training — removes the untrained penalty die for navigation and wayfinding.
+                category: skill
+          - id: enter_shadow
+            label: "Shadow — Criminal and Covert Work"
+            description: Cutpurses, nighthands, smugglers. You live outside the law and learn to move without being seen. Basic Training — Stealth, Thievery.
+            choice_key: shadow
+            context_updates:
+              current_career: "shadow"
+            next_stage_override: career_shadow
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_stealth_0
+                name: Stealth Rank 0
+                description: Basic Training — removes the untrained penalty die for stealth.
+                category: skill
+              - id: bt_thievery_0
+                name: Thievery Rank 0
+                description: Basic Training — removes the untrained penalty die for thievery.
+                category: skill
+          - id: enter_sailor
+            label: "Sailor — Sea and River Life"
+            description: Oarsmen, river traders, corsairs. You know how to read water and when to hold on. Basic Training — Seamanship, Athletics.
+            choice_key: sailor
+            context_updates:
+              current_career: "sailor"
+            next_stage_override: career_sailor
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_seamanship_0
+                name: Seamanship Rank 0
+                description: Basic Training — removes the untrained penalty die for seamanship.
+                category: skill
+              - id: bt_athletics_0
+                name: Athletics Rank 0
+                description: Basic Training — removes the untrained penalty die for athletics.
+                category: skill
+          - id: enter_temple
+            label: "Temple — Religious and Sacred Orders"
+            description: Acolytes, healers, temple guards. You serve something larger than yourself and learn its language. Basic Training — Influence, Lore (Theology).
+            choice_key: temple
+            context_updates:
+              current_career: "temple"
+            next_stage_override: career_temple
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_influence_0
+                name: Influence Rank 0
+                description: Basic Training — removes the untrained penalty die for influence.
+                category: skill
+              - id: bt_lore_theology_0
+                name: Lore (Theology) Rank 0
+                description: Basic Training — removes the untrained penalty die for theological lore.
+                category: skill
+          - id: enter_scholar
+            label: "Scholar — Knowledge and Learning"
+            description: Scribes, antiquarians, occultists. You trade in knowing — and discover that some knowledge has a price. Basic Training — Lore, Commerce.
+            choice_key: scholar
+            context_updates:
+              current_career: "scholar"
+            next_stage_override: career_scholar
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_lore_0
+                name: Lore Rank 0
+                description: Basic Training — removes the untrained penalty die for lore and scholarship.
+                category: skill
+              - id: bt_commerce_0
+                name: Commerce Rank 0
+                description: Basic Training — removes the untrained penalty die for commerce.
+                category: skill
+          - id: enter_court
+            label: "Court — Political and Social Maneuvering"
+            description: Courtiers, spymasters' agents, heralds. The sharpest blade in a palace is a secret. Basic Training — Influence, Deception.
+            choice_key: court
+            context_updates:
+              current_career: "court"
+            next_stage_override: career_court
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_influence_court_0
+                name: Influence Rank 0
+                description: Basic Training — removes the untrained penalty die for influence.
+                category: skill
+              - id: bt_deception_0
+                name: Deception Rank 0
+                description: Basic Training — removes the untrained penalty die for deception and intrigue.
+                category: skill
+          - id: enter_tradesman
+            label: "Tradesman — Commerce and Craft"
+            description: Artisans, merchants, physicians. You build things, sell things, or keep people alive long enough to do both. Basic Training — Commerce, Artisan.
+            choice_key: tradesman
+            context_updates:
+              current_career: "tradesman"
+            next_stage_override: career_tradesman
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_commerce_trade_0
+                name: Commerce Rank 0
+                description: Basic Training — removes the untrained penalty die for commerce.
+                category: skill
+              - id: bt_artisan_0
+                name: Artisan Rank 0
+                description: Basic Training — removes the untrained penalty die for artisan crafts.
+                category: skill
+          - id: enter_wanderer
+            label: "Wanderer — The Rootless Path"
+            description: Vagabonds, pilgrims, exiles. You go from place to place and learn that every road eventually circles back. Basic Training — Survival, Athletics.
+            choice_key: wanderer
+            context_updates:
+              current_career: "wanderer"
+            next_stage_override: career_wanderer
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_survival_wand_0
+                name: Survival Rank 0
+                description: Basic Training — removes the untrained penalty die for survival.
+                category: skill
+              - id: bt_athletics_wand_0
+                name: Athletics Rank 0
+                description: Basic Training — removes the untrained penalty die for athletics.
+                category: skill
+          - id: enter_warband
+            label: "Warband — Tribal Warrior Culture"
+            description: Tribal warriors, raiders, war-shamans. You live by the strength of your people and the clarity of battle. Basic Training — Melee, Athletics.
+            choice_key: warband
+            context_updates:
+              current_career: "warband"
+            next_stage_override: career_warband
+            attribute_modifiers: []
+            features_granted:
+              - id: bt_melee_warband_0
+                name: Melee Rank 0
+                description: Basic Training — removes the untrained penalty die for melee combat.
+                category: skill
+              - id: bt_athletics_warband_0
+                name: Athletics Rank 0
+                description: Basic Training — removes the untrained penalty die for athletics.
+                category: skill
+
+  # ──────────────────────────────────────────────────────────────
+  # CAREER STAGES (3–12): one per career, age_cost 4 each
+  # Each has: sub_assignment → life_event → survival_roll
+  # ──────────────────────────────────────────────────────────────
+
+  career_blade:
+    id: career_blade
+    name: "Career — Blade"
+    description: A term as a professional fighter — sellsword, city guard, or pit-fighter. Dangerous work that shapes the body and hardens the will.
+    order_hint: 3
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: blade_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Blade career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: blade_sellsword
+            label: Sellsword
+            description: You sell your blade to whoever pays — caravan guards, mercenary companies, private security.
+            choice_key: sellsword
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_melee_0
+                name: Melee Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for melee combat.
+                category: skill
+          - id: blade_city_guard
+            label: City Guard
+            description: You serve as a keeper of civic order — watch duty, patrol, and the occasional riot.
+            choice_key: city_guard
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_defense_0
+                name: Defense Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for defense.
+                category: skill
+          - id: blade_pit_fighter
+            label: Pit-Fighter
+            description: You fight for crowds in the ring, the pit, or the arena — raw skill against opponents.
+            choice_key: pit_fighter
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_athletics_0
+                name: Athletics Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for athletics.
+                category: skill
+
+      - id: blade_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Blade career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: blade_life_1
+            label: Caravan Run
+            description: You guarded a caravan through hostile country and picked up something of the road.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: blade_nav_0
+                name: Navigation Rank 0
+                description: Time on the road through hostile country — removes the untrained penalty die for navigation.
+                category: skill
+          - id: blade_life_2
+            label: A Fellow Blade
+            description: A comrade-in-arms pulled you out of a losing fight. You owe them.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: blade_ally
+                name: Ally — A Fellow Blade
+                description: A comrade who pulled you out of a losing fight. They may call on you in return.
+                category: contact
+          - id: blade_life_3
+            label: A Victory That Mattered
+            description: A tournament, a battle, or a job done cleanly. Something you are proud of.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: blade_veteran
+                name: Combat Veteran
+                description: A victory that mattered — tournament, battle, or a job done cleanly. Record the details.
+                category: skill
+          - id: blade_life_4
+            label: A Contract Gone Wrong
+            description: Someone died who shouldn't have. A surviving party blames you.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: blade_rival
+                name: Rival — A Wronged Party
+                description: A contract went wrong and someone blames you for the outcome. They watch for an opportunity.
+                category: contact
+          - id: blade_life_5
+            label: Long Garrison Months
+            description: Nothing to do but drink. You found community at the bottom of a cup.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: blade_carousing_0
+                name: Carousing Rank 0
+                description: Long garrison months with nothing to do but drink — removes the untrained penalty die for carousing.
+                category: skill
+          - id: blade_life_6
+            label: The Last One Standing
+            description: You were the only survivor of a rout. An enemy — whoever ordered you into it — still draws breath.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: blade_enemy
+                name: Enemy — Commander Who Sent You In
+                description: You were the last one standing. Whoever ordered that charge still draws breath. The enmity is mutual.
+                category: burden
+
+      - id: blade_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: blade_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Blade career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: blade_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_scout:
+    id: career_scout
+    name: "Career — Scout"
+    description: A term as a wilderness professional — guide, outrider, or trapper. You live beyond the edge of maps and bring back what you find.
+    order_hint: 4
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: scout_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Scout career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: scout_guide
+            label: Guide
+            description: You lead parties through territory that would kill them without you.
+            choice_key: guide
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_wayfinding_0
+                name: Wayfinding Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for navigation and wayfinding.
+                category: skill
+          - id: scout_outrider
+            label: Outrider
+            description: You ride ahead of columns and patrols, gathering information and managing the terrain.
+            choice_key: outrider
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_beast_handling_0
+                name: Beast Handling Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for beast handling and horsemanship.
+                category: skill
+          - id: scout_trapper
+            label: Trapper
+            description: You make a living from the wild — furs, game, and the patience to wait for both.
+            choice_key: trapper
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_survival_scout_0
+                name: Survival Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for survival.
+                category: skill
+
+      - id: scout_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Scout career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: scout_life_1
+            label: Unmapped Territory
+            description: You crossed a stretch of land no one had charted. You know the way now.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: scout_nav_0
+                name: Navigation Rank 0
+                description: Crossed unmapped territory and lived to chart it — removes the untrained penalty die for navigation.
+                category: skill
+          - id: scout_life_2
+            label: A Local Contact
+            description: Someone who knew the country kept you alive in unfamiliar land.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: scout_ally
+                name: Ally — A Local Contact
+                description: A local who kept you alive in unfamiliar country. They know things you don't about the region.
+                category: contact
+          - id: scout_life_3
+            label: Tracked Something Hard to Find
+            description: You found what you were looking for. It hadn't wanted to be found.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: scout_survival_0
+                name: Survival Rank 0
+                description: Tracking something dangerous through hostile land — removes the untrained penalty die for survival.
+                category: skill
+          - id: scout_life_4
+            label: Something Marked You
+            description: Something out there noticed you. You don't know what, but it hasn't forgotten.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: scout_enemy
+                name: Enemy — Something in the Wild
+                description: Something out there marked you. You don't know what it is, but it hasn't forgotten you exist.
+                category: burden
+          - id: scout_life_5
+            label: Found Ruins
+            description: Old ones. You spent weeks picking through what was left. What you found changed how you see the past.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: scout_scholarship_0
+                name: Scholarship Rank 0
+                description: Time in old ruins studying what came before — removes the untrained penalty die for historical scholarship.
+                category: skill
+          - id: scout_life_6
+            label: Sole Survivor
+            description: You came back. Your party didn't. You still aren't sure why you made it and they didn't.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: scout_sole_survivor
+                name: Sole Survivor
+                description: You came back when your party didn't. The instinct that saved you doesn't have a name. Record the circumstances.
+                category: burden
+
+      - id: scout_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: scout_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Scout career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: scout_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_shadow:
+    id: career_shadow
+    name: "Career — Shadow"
+    description: A term in criminal or covert work — cutpurse, nighthand, or smuggler. You live outside the law and learn to move without being seen.
+    order_hint: 5
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: shadow_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Shadow career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: shadow_cutpurse
+            label: Cutpurse
+            description: You work crowds, markets, and busy streets — a hand here, a purse there.
+            choice_key: cutpurse
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_thievery_0
+                name: Thievery Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for thievery.
+                category: skill
+          - id: shadow_nighthand
+            label: Nighthand
+            description: You work after dark — burglary, assassination contracts, and covert entry.
+            choice_key: nighthand
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_stealth_0
+                name: Stealth Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for stealth.
+                category: skill
+          - id: shadow_smuggler
+            label: Smuggler
+            description: You move goods that aren't supposed to move — across borders, through checkpoints, past guards.
+            choice_key: smuggler
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_commerce_shadow_0
+                name: Commerce Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for commerce and trade negotiation.
+                category: skill
+
+      - id: shadow_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Shadow career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: shadow_life_1
+            label: A Job Gone Wrong
+            description: A job that should have been simple. You got out; your fence didn't.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: shadow_rival
+                name: Rival — A Former Fence
+                description: A job went wrong and your fence blames you for the outcome. They have connections you don't.
+                category: contact
+          - id: shadow_life_2
+            label: A Real Professional
+            description: You worked a long stretch with someone who actually knew what they were doing.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: shadow_ally
+                name: Ally — A Seasoned Criminal
+                description: Someone who actually knew what they were doing, and trusted you enough to work alongside them.
+                category: contact
+          - id: shadow_life_3
+            label: Something Memorable
+            description: You pulled off something that got talked about in certain circles. Your name carries a little more weight now.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: shadow_rep
+                name: Shadow Reputation
+                description: You pulled off something memorable in criminal circles. In certain company, your name opens doors.
+                category: skill
+          - id: shadow_life_4
+            label: Blackmailed
+            description: Someone knew too much about you. They used it. They still could.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: shadow_enemy
+                name: Enemy — A Blackmailer
+                description: Someone who knows too much about you and used it. The threat remains. Name them.
+                category: burden
+          - id: shadow_life_5
+            label: Weeks in an Unfamiliar City
+            description: You had to figure out how to survive in a city where you knew no one and nothing.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: shadow_survival_0
+                name: Survival Rank 0
+                description: Surviving alone in an unfamiliar city — removes the untrained penalty die for survival in urban environments.
+                category: skill
+          - id: shadow_life_6
+            label: Walked Away
+            description: You walked away from a job that would have made you. Something about it didn't sit right. Record what you turned down.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: shadow_integrity
+                name: A Line Not Crossed
+                description: You walked away from a job that would have made you. Record what you refused and why. GM Hook.
+                category: burden
+
+      - id: shadow_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: shadow_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Shadow career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: shadow_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_sailor:
+    id: career_sailor
+    name: "Career — Sailor"
+    description: A term at sea or on the rivers — oarsman, river trader, or corsair. You know how to read water and when to hold on.
+    order_hint: 6
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: sailor_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Sailor career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: sailor_oarsman
+            label: Oarsman
+            description: You pull an oar on trading ships, war galleys, and river barges. The work is honest and brutal.
+            choice_key: oarsman
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_seamanship_0
+                name: Seamanship Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for seamanship.
+                category: skill
+          - id: sailor_river_trader
+            label: River Trader
+            description: You move goods along rivers and inland waterways, buying low and selling high.
+            choice_key: river_trader
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_commerce_sailor_0
+                name: Commerce Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for commerce.
+                category: skill
+          - id: sailor_corsair
+            label: Corsair
+            description: You sail under flags of convenience and take what the sea offers — including other ships' cargo.
+            choice_key: corsair
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_ranged_0
+                name: Ranged Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for ranged combat.
+                category: skill
+
+      - id: sailor_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Sailor career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: sailor_life_1
+            label: Storm Season
+            description: A storm that took half the crew. You lashed yourself to the mast and held on.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: sailor_athletics_0
+                name: Athletics Rank 0
+                description: Surviving storm season when half the crew didn't — removes the untrained penalty die for athletics.
+                category: skill
+          - id: sailor_life_2
+            label: A Fair Merchant
+            description: A merchant you dealt with honestly remembers you. There is goodwill there.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: sailor_patron
+                name: Patron — A Merchant
+                description: A merchant you dealt with fairly. They remember honest dealing and may have work or aid to offer.
+                category: contact
+          - id: sailor_life_3
+            label: A Port You Know
+            description: A town you returned to three seasons running. You have a face there, maybe more.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: sailor_carousing_0
+                name: Carousing Rank 0
+                description: Three seasons at the same port — removes the untrained penalty die for carousing.
+                category: skill
+          - id: sailor_life_4
+            label: A Rival Captain
+            description: Another captain who considers the same waters theirs. The grudge is mutual.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: sailor_rival
+                name: Rival — A Rival Captain
+                description: A captain who considers the same waters theirs. They remember every slight. Name them.
+                category: contact
+          - id: sailor_life_5
+            label: Something in the Deep
+            description: You saw something that no one on shore believes. It saw you back.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: sailor_enemy_deep
+                name: Enemy — Something in the Deep
+                description: You saw something beneath the waves. It looked back. It hasn't forgotten. Record what you saw.
+                category: burden
+          - id: sailor_life_6
+            label: Your Ship Went Down
+            description: Fire, treachery, or storm. You survived but not without cost. An enemy made in the chaos.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers:
+              - attribute: body
+                delta: -1
+            features_granted:
+              - id: sailor_enemy_wreck
+                name: Enemy — Made in the Wreck
+                description: Your ship went down and someone blames you for it — or used the chaos against you. Name them.
+                category: burden
+
+      - id: sailor_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: sailor_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Sailor career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: sailor_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_temple:
+    id: career_temple
+    name: "Career — Temple"
+    description: A term in religious or sacred service — acolyte, healer, or temple guard. You serve something larger than yourself and learn its language.
+    order_hint: 7
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: temple_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Temple career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: temple_acolyte
+            label: Acolyte
+            description: You study the sacred texts, assist in rites, and serve the priests of your order.
+            choice_key: acolyte
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_lore_temple_0
+                name: Lore Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for lore and sacred knowledge.
+                category: skill
+          - id: temple_healer
+            label: Healer
+            description: You tend the sick and wounded in the temple's name, learning the arts of medicine and herbalism.
+            choice_key: healer
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_medicine_0
+                name: Medicine Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for medicine and healing arts.
+                category: skill
+          - id: temple_guard
+            label: Temple Guard
+            description: You protect the sacred spaces and their occupants, the last line between the profane world and holy ground.
+            choice_key: temple_guard
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_defense_temple_0
+                name: Defense Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for defense.
+                category: skill
+
+      - id: temple_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Temple career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: temple_life_1
+            label: A Difficult Pilgrimage
+            description: A long walk to a distant shrine. The road was harder than expected. You learned something about keeping moving.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: temple_nav_0
+                name: Navigation Rank 0
+                description: A difficult pilgrimage to a distant shrine — removes the untrained penalty die for navigation.
+                category: skill
+          - id: temple_life_2
+            label: A Senior Priest's Favor
+            description: A priest of standing saw something in you and offered guidance and protection.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: temple_patron
+                name: Patron — A Senior Priest
+                description: A priest of standing within the temple hierarchy who saw your worth. They may have use for you.
+                category: contact
+          - id: temple_life_3
+            label: Tended the Sick
+            description: An outbreak. You spent weeks at bedsides and came away knowing more than you did.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: temple_scholarship_0
+                name: Scholarship Rank 0
+                description: Tending the sick during an outbreak — removes the untrained penalty die for medical scholarship.
+                category: skill
+          - id: temple_life_4
+            label: Schism
+            description: A faction split in the temple. You took a side. The other side remembers.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: temple_rival
+                name: Rival — The Other Faction
+                description: A temple schism forced you to choose a side. Those on the other side watch you with cold eyes.
+                category: contact
+          - id: temple_life_5
+            label: A Vision During Prayer
+            description: Something happened in the ritual space that no one could entirely explain. You are still thinking about it.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: temple_occult_0
+                name: Scholarship (Occult) Rank 0
+                description: A vision during prayer that produced results no one could explain — removes the untrained penalty die for occult scholarship.
+                category: skill
+          - id: temple_life_6
+            label: Something Came Through
+            description: During a rite, something arrived that wasn't supposed to. It left a mark. It also left an enemy.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: temple_enemy
+                name: Enemy — Something That Came Through
+                description: Something arrived during a rite that wasn't supposed to. It or whatever it serves has not forgotten. Record what happened.
+                category: burden
+
+      - id: temple_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: temple_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Temple career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: temple_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_scholar:
+    id: career_scholar
+    name: "Career — Scholar"
+    description: A term in academic or arcane pursuit — scribe, antiquarian, or occultist. You trade in knowing, and discover that some knowledge has a price.
+    order_hint: 8
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: scholar_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Scholar career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: scholar_scribe
+            label: "Scribe / Tutor"
+            description: You copy manuscripts, maintain records, and teach those whose families can afford it.
+            choice_key: scribe_tutor
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_lore_scholar_0
+                name: Lore Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for historical and general lore.
+                category: skill
+          - id: scholar_antiquarian
+            label: Antiquarian
+            description: You seek out old things — artifacts, ruins, forgotten manuscripts — and assess their value and meaning.
+            choice_key: antiquarian
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_commerce_scholar_0
+                name: Commerce Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for commerce and appraisal.
+                category: skill
+          - id: scholar_occultist
+            label: Occultist
+            description: You probe the edge of what scholarship can touch — the arcane, the forbidden, the things scholars aren't supposed to study.
+            choice_key: occultist
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_lore_occult_0
+                name: Lore (Occult) Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for occult and arcane scholarship.
+                category: skill
+
+      - id: scholar_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Scholar career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: scholar_life_1
+            label: A Year in the Archive
+            description: A year in an archive that changed how you see the world. Something in those texts rearranged your thinking.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: scholar_scholarship_0
+                name: Scholarship Rank 0
+                description: A year in an archive that changed how you see the world — removes the untrained penalty die for scholarship.
+                category: skill
+          - id: scholar_life_2
+            label: A Colleague
+            description: Someone who shared your obsession and was worth sharing it with.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: scholar_ally
+                name: Ally — A Fellow Scholar
+                description: A colleague who shared your obsession and trusted you with their own. They know things you don't.
+                category: contact
+          - id: scholar_life_3
+            label: A Strange Commission
+            description: A patron sent you somewhere unexpected. You learned more from the journey than the assignment.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: scholar_nav_0
+                name: Navigation Rank 0
+                description: A commission that took you somewhere strange — removes the untrained penalty die for navigation.
+                category: skill
+          - id: scholar_life_4
+            label: Published Something Dangerous
+            description: You circulated something that made enemies. They have not forgotten what you wrote.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: scholar_rival
+                name: Rival — An Offended Party
+                description: Someone who didn't appreciate what you published. Rival scholar, censorious institution, or the subject of your research.
+                category: contact
+          - id: scholar_life_5
+            label: A Sealed Library
+            description: Access to a collection that wasn't supposed to be accessible. What you found there is still with you.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: scholar_occult_0
+                name: Scholarship (Occult) Rank 0
+                description: Access to a sealed collection of forbidden knowledge — removes the untrained penalty die for occult scholarship.
+                category: skill
+          - id: scholar_life_6
+            label: Found Something Not Meant to Be Found
+            description: Record what it was. Someone wants it back — or wants you silenced. They know you have it.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: scholar_enemy
+                name: Enemy — Someone Who Wants It Back
+                description: You found something not meant to be found. Record what it is. An enemy wants it back — or wants you silenced.
+                category: burden
+
+      - id: scholar_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: scholar_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Scholar career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: scholar_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_court:
+    id: career_court
+    name: "Career — Court"
+    description: A term in political and social maneuvering — courtier, spymaster's agent, or herald. The sharpest blade in a palace is a secret.
+    order_hint: 9
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: court_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Court career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: court_courtier
+            label: Courtier
+            description: You navigate the social landscape of the court — rank, favor, and the currency of reputation.
+            choice_key: courtier
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_influence_court_0
+                name: Influence Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for social influence.
+                category: skill
+          - id: court_spymaster
+            label: "Spymaster's Agent"
+            description: You gather information, run assets, and move through the world wearing other people's faces.
+            choice_key: spymasters_agent
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_deception_0
+                name: Deception Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for deception and disguise.
+                category: skill
+          - id: court_herald
+            label: Herald
+            description: You carry messages, enforce protocol, and represent great houses across the known world.
+            choice_key: herald
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_lore_heraldry_0
+                name: Lore (Heraldry) Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for heraldry and court protocol.
+                category: skill
+
+      - id: court_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Court career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: court_life_1
+            label: A Difficult Season
+            description: You navigated a brutal political season without making permanent enemies. Barely.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: court_influence_0
+                name: Influence Rank 0
+                description: Surviving a brutal political season without making permanent enemies — removes the untrained penalty die for influence.
+                category: skill
+          - id: court_life_2
+            label: A Patron of Standing
+            description: A senior figure took you under their wing. Their protection is real, and so is their expectation of loyalty.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: court_patron
+                name: Patron — A Court Figure
+                description: A senior figure who took you under their wing. Their protection is real. So is their expectation of return.
+                category: contact
+          - id: court_life_3
+            label: A Foreign Visitor
+            description: A foreign dignitary's visit put you in unusual company and unusual places.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: court_nav_0
+                name: Navigation Rank 0
+                description: A foreign dignitary's visit put you in unusual places — removes the untrained penalty die for navigation.
+                category: skill
+          - id: court_life_4
+            label: Caught in the Middle
+            description: A factional rivalry caught you between two parties. You came out intact, but both sides remember which way you leaned.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: court_rival
+                name: Rival — The Wrong Faction
+                description: A factional rivalry caught you in the middle. One side thinks you chose against them. They may be right.
+                category: contact
+          - id: court_life_5
+            label: Carrying a Secret
+            description: You carried a secret for someone powerful. They haven't forgotten, and neither have you.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: court_patron_secret
+                name: Patron — Someone Who Owns a Piece of You
+                description: A powerful figure whose secret you carry. Their gratitude is real. So is their leverage.
+                category: contact
+          - id: court_life_6
+            label: Witnessed Something
+            description: You saw something at court that was never meant to be seen. They need you to stay quiet.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: court_enemy
+                name: Enemy — Someone Who Needs You Silent
+                description: You witnessed something at court that was never meant to be seen. Someone needs you to stay that way. Name them.
+                category: burden
+
+      - id: court_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: court_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Court career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: court_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_tradesman:
+    id: career_tradesman
+    name: "Career — Tradesman"
+    description: A term in commerce or craft — artisan, merchant, or physician. You build things, sell things, or keep people alive long enough to do both.
+    order_hint: 10
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: tradesman_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Tradesman career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: tradesman_artisan
+            label: Artisan
+            description: You make things with your hands — metalwork, woodwork, leatherwork, or some other craft.
+            choice_key: artisan
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_artisan_trade_0
+                name: Artisan Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for artisan crafts.
+                category: skill
+          - id: tradesman_merchant
+            label: Merchant
+            description: You buy and sell, move goods across distances, and profit from knowing what people want.
+            choice_key: merchant
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_commerce_trade_0
+                name: Commerce Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for commerce.
+                category: skill
+          - id: tradesman_physician
+            label: Physician
+            description: You practice medicine — surgery, herbalism, and the management of people in crisis.
+            choice_key: physician
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_medicine_trade_0
+                name: Medicine Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for medicine and surgery.
+                category: skill
+
+      - id: tradesman_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Tradesman career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: tradesman_life_1
+            label: A Lucrative Contract
+            description: A commission that required traveling somewhere unfamiliar. You learned more from the road than the job.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: tradesman_nav_0
+                name: Navigation Rank 0
+                description: A lucrative contract that required traveling somewhere unfamiliar — removes the untrained penalty die for navigation.
+                category: skill
+          - id: tradesman_life_2
+            label: A Long-Term Client
+            description: A client who became something like a friend. They trust you, and you them.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: tradesman_ally
+                name: Ally — A Long-Term Client
+                description: A client who became something like a friend. The relationship is built on honest dealing over time.
+                category: contact
+          - id: tradesman_life_3
+            label: A Perfected Technique
+            description: A slow season gave you time to refine your approach. You came out of it better at what you do.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: tradesman_technique
+                name: Perfected Technique
+                description: A slow season spent refining your craft. You came out of it demonstrably better. Record the technique.
+                category: skill
+          - id: tradesman_life_4
+            label: A Competitor
+            description: Someone undermined you — stole your work, damaged your reputation, or simply undercut you at the wrong moment.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: tradesman_rival
+                name: Rival — A Competitor
+                description: Someone who undercut you, stole your work, or damaged your reputation. They are still in business.
+                category: contact
+          - id: tradesman_life_5
+            label: A Client You Could Not Help
+            description: Someone came to you in desperate circumstances. You did what you could. It wasn't enough.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: tradesman_bond
+                name: Bond — An Unfinished Obligation
+                description: A client in desperate circumstances you could not fully help. You still feel the weight of it. Record who they were.
+                category: bond
+          - id: tradesman_life_6
+            label: Your Work Was Misused
+            description: You discovered your patron was using your work for something terrible. You know too much now.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: tradesman_enemy
+                name: Enemy — A Patron Who Used You
+                description: Your patron used your work for something terrible. They need you not to talk about it. Record what you made and what it was used for.
+                category: burden
+
+      - id: tradesman_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: tradesman_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Tradesman career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: tradesman_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_wanderer:
+    id: career_wanderer
+    name: "Career — Wanderer"
+    description: A term on the rootless path — vagabond, pilgrim, or exile. You go from place to place and learn that every road eventually circles back. The universal fallback; always available.
+    order_hint: 11
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: wanderer_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Wanderer career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: wanderer_vagabond
+            label: Vagabond
+            description: You drift from city to city, living on the margins and learning the hidden shape of places.
+            choice_key: vagabond
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_stealth_wand_0
+                name: Stealth Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for stealth in urban environments.
+                category: skill
+          - id: wanderer_pilgrim
+            label: Pilgrim
+            description: You travel to sacred places and spend time in contemplation, service, and study along the road.
+            choice_key: pilgrim
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_lore_wand_0
+                name: Lore Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for lore and historical knowledge.
+                category: skill
+          - id: wanderer_exile
+            label: Exile
+            description: You are somewhere you are not supposed to be, moving carefully and keeping a low profile.
+            choice_key: exile
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_survival_wand_0
+                name: Survival Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for survival.
+                category: skill
+
+      - id: wanderer_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Wanderer career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: wanderer_life_1
+            label: Hard Road
+            description: A stretch of difficult road that taught you the land in ways no map could.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: wanderer_survival_0
+                name: Survival Rank 0
+                description: A stretch of hard road that taught you the land — removes the untrained penalty die for survival.
+                category: skill
+          - id: wanderer_life_2
+            label: A Stranger's Kindness
+            description: A stranger helped you without being asked. You have thought about why ever since.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: wanderer_ally
+                name: Ally — A Stranger Who Helped
+                description: Someone who helped you when they had no reason to. The debt feels personal even if they don't know it.
+                category: contact
+          - id: wanderer_life_3
+            label: A City, a Season
+            description: A long strange month somewhere you didn't expect to stay. You learned what it means to belong, briefly.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: wanderer_carousing_0
+                name: Carousing Rank 0
+                description: A long strange month in an unexpected city — removes the untrained penalty die for carousing.
+                category: skill
+          - id: wanderer_life_4
+            label: Deemed Trouble
+            description: Someone decided you were a problem — or someone you were running from found a lead.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: wanderer_enemy
+                name: Enemy — Someone on Your Trail
+                description: Someone decided you were trouble, or someone from your past found a lead. They are still looking. Name them.
+                category: burden
+          - id: wanderer_life_5
+            label: Taken In
+            description: A community sheltered you for a time and taught you something of their ways.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: wanderer_craftsmanship_0
+                name: Craftsmanship Rank 0
+                description: Time in a community that shared its practical knowledge — removes the untrained penalty die for craftsmanship.
+                category: skill
+          - id: wanderer_life_6
+            label: Crossed the Wrong Territory
+            description: You crossed something's territory without knowing it. It has not forgotten.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: wanderer_enemy_territory
+                name: Enemy — Something in the Dark
+                description: You crossed something's territory without knowing it. It noticed. It hasn't forgotten. Record what it was, if you know.
+                category: burden
+
+      - id: wanderer_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: wanderer_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Wanderer career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: wanderer_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  career_warband:
+    id: career_warband
+    name: "Career — Warband"
+    description: A term in tribal warrior culture — tribal warrior, raider, or war-shaman. You live by the strength of your people and the clarity of battle.
+    order_hint: 12
+    age_cost: 4
+    default_next_stage_id: career_decision
+    events:
+      - id: warband_sub
+        name: Sub-assignment
+        description: Choose your specialization within the Warband career for this term.
+        event_type: choice
+        choice_prompt: Which sub-assignment do you pursue?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: warband_tribal
+            label: Tribal Warrior
+            description: You fight for your people in the traditional manner — raids, defense of territory, honor challenges.
+            choice_key: tribal_warrior
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_melee_warband_0
+                name: Melee Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for melee combat.
+                category: skill
+          - id: warband_raider
+            label: Raider
+            description: You strike fast and hard at targets beyond your people's territory, taking what the raid offers.
+            choice_key: raider
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_athletics_warband_0
+                name: Athletics Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for athletics.
+                category: skill
+          - id: warband_war_shaman
+            label: War-Shaman
+            description: You serve as a spiritual warrior — calling on powers beyond the physical, protecting the warband's soul.
+            choice_key: war_shaman
+            attribute_modifiers: []
+            features_granted:
+              - id: sa_lore_theology_0
+                name: Lore (Theology) Rank 0
+                description: Sub-assignment skill — removes the untrained penalty die for sacred and theological lore.
+                category: skill
+
+      - id: warband_life
+        name: Life Event
+        description: Roll 1d6 to see what happened during this term of the Warband career.
+        event_type: table_roll
+        dice_expression: 1d6
+        outcomes:
+          - id: warband_life_1
+            label: A Victory That Made Your Name
+            description: A successful raid or battle that established your reputation within the warband.
+            roll_min: 1
+            roll_max: 1
+            attribute_modifiers: []
+            features_granted:
+              - id: warband_veteran
+                name: Warband Veteran
+                description: A victory that made your name within the warband. You are known as someone who delivers. Record the battle.
+                category: skill
+          - id: warband_life_2
+            label: An Elder Warrior
+            description: An experienced fighter took you aside and taught you something worth knowing.
+            roll_min: 2
+            roll_max: 2
+            attribute_modifiers: []
+            features_granted:
+              - id: warband_ally
+                name: Ally — An Elder Warrior
+                description: An experienced warrior who taught you something worth knowing. The respect goes both ways now.
+                category: contact
+          - id: warband_life_3
+            label: A Season Alone
+            description: A rite, a mission, or a punishment sent you into the wilderness alone for a season.
+            roll_min: 3
+            roll_max: 3
+            attribute_modifiers: []
+            features_granted:
+              - id: warband_survival_0
+                name: Survival Rank 0
+                description: A season alone in the wilderness on a rite or mission — removes the untrained penalty die for survival.
+                category: skill
+          - id: warband_life_4
+            label: A Blood Feud
+            description: Something ignited a feud — yours or your warband's. An enemy now exists who will not let it rest.
+            roll_min: 4
+            roll_max: 4
+            attribute_modifiers: []
+            features_granted:
+              - id: warband_enemy
+                name: Enemy — A Blood Feud
+                description: A blood feud ignited — yours or your warband's. Name the enemy. The feud goes both ways.
+                category: burden
+          - id: warband_life_5
+            label: Something the Shamans Say Not to Disturb
+            description: You encountered something in the wild that the war-shamans speak about in hushed tones.
+            roll_min: 5
+            roll_max: 5
+            attribute_modifiers: []
+            features_granted:
+              - id: warband_occult_0
+                name: Scholarship (Occult) Rank 0
+                description: An encounter with something the shamans say should not be disturbed — removes the untrained penalty die for occult scholarship.
+                category: skill
+          - id: warband_life_6
+            label: The Warband Is Gone
+            description: Broken by war, plague, or betrayal. You are what's left. An enemy remains.
+            roll_min: 6
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted:
+              - id: warband_enemy_remnant
+                name: "Enemy — The Breaker of the Warband"
+                description: Your warband was broken by war, plague, or betrayal. You are the remnant. Someone is responsible. Name them.
+                category: burden
+
+      - id: warband_survival
+        name: Survival Roll
+        description: Roll 2d6 to determine whether you survive this term without serious mishap. 7 or higher means you made it through.
+        event_type: table_roll
+        dice_expression: 2d6
+        outcomes:
+          - id: warband_mishap
+            label: Mishap
+            description: Something went badly wrong this term. You are ejected from the Warband career.
+            roll_min: 2
+            roll_max: 6
+            attribute_modifiers: []
+            features_granted: []
+            next_stage_override: career_mishap
+          - id: warband_survived
+            label: Survived the Term
+            description: You made it through another term without serious incident.
+            roll_min: 7
+            roll_max: 12
+            attribute_modifiers: []
+            features_granted: []
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 13: CAREER DECISION
+  # ──────────────────────────────────────────────────────────────
+  career_decision:
+    id: career_decision
+    name: Career Decision
+    description: Another term completed. You can continue in your current career or muster out voluntarily to earn a Knack.
+    order_hint: 13
+    age_cost: 0
+    default_next_stage_id: muster_out_with_knack
+    events:
+      - id: continue_or_muster
+        name: Continue or Muster Out?
+        description: You may serve another term in your current career, or muster out voluntarily to earn a Knack.
+        event_type: choice
+        choice_prompt: What do you do?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: continue_blade
+            label: "Another Term — Blade"
+            description: Return for another term as a professional fighter.
+            choice_key: continue_blade
+            requires_context:
+              current_career: ["blade"]
+            next_stage_override: career_blade
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_scout
+            label: "Another Term — Scout"
+            description: Return for another term in wilderness and frontier work.
+            choice_key: continue_scout
+            requires_context:
+              current_career: ["scout"]
+            next_stage_override: career_scout
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_shadow
+            label: "Another Term — Shadow"
+            description: Return for another term in criminal and covert work.
+            choice_key: continue_shadow
+            requires_context:
+              current_career: ["shadow"]
+            next_stage_override: career_shadow
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_sailor
+            label: "Another Term — Sailor"
+            description: Return for another term at sea or on the rivers.
+            choice_key: continue_sailor
+            requires_context:
+              current_career: ["sailor"]
+            next_stage_override: career_sailor
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_temple
+            label: "Another Term — Temple"
+            description: Return for another term in religious and sacred service.
+            choice_key: continue_temple
+            requires_context:
+              current_career: ["temple"]
+            next_stage_override: career_temple
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_scholar
+            label: "Another Term — Scholar"
+            description: Return for another term pursuing knowledge and learning.
+            choice_key: continue_scholar
+            requires_context:
+              current_career: ["scholar"]
+            next_stage_override: career_scholar
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_court
+            label: "Another Term — Court"
+            description: Return for another term in political and social maneuvering.
+            choice_key: continue_court
+            requires_context:
+              current_career: ["court"]
+            next_stage_override: career_court
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_tradesman
+            label: "Another Term — Tradesman"
+            description: Return for another term in commerce and craft.
+            choice_key: continue_tradesman
+            requires_context:
+              current_career: ["tradesman"]
+            next_stage_override: career_tradesman
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_wanderer
+            label: "Another Term — Wanderer"
+            description: Return for another term on the rootless path.
+            choice_key: continue_wanderer
+            requires_context:
+              current_career: ["wanderer"]
+            next_stage_override: career_wanderer
+            attribute_modifiers: []
+            features_granted: []
+          - id: continue_warband
+            label: "Another Term — Warband"
+            description: Return for another term in tribal warrior culture.
+            choice_key: continue_warband
+            requires_context:
+              current_career: ["warband"]
+            next_stage_override: career_warband
+            attribute_modifiers: []
+            features_granted: []
+          - id: muster_out_choice
+            label: Muster Out
+            description: You leave your career voluntarily. Proceed to earn a Knack of your choosing.
+            choice_key: muster_out
+            attribute_modifiers: []
+            features_granted: []
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 14: CAREER MISHAP
+  # ──────────────────────────────────────────────────────────────
+  career_mishap:
+    id: career_mishap
+    name: Career Mishap
+    description: Your survival roll failed and you are ejected from your career. Choose the form your mishap takes. No Knack is earned from this career.
+    order_hint: 14
+    age_cost: 0
+    default_next_stage_id: muster_out
+    events:
+      - id: mishap_type
+        name: Mishap Consequence
+        description: Something went wrong. Choose what form the consequence takes.
+        event_type: choice
+        choice_prompt: What form does your mishap take?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: mishap_debt
+            label: Debt
+            description: You begin play significantly poorer — a failed venture, an unpaid employer, or a loan that came due badly.
+            choice_key: debt
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_debt_mishap
+                name: "Burden — Debt"
+                description: Begin play significantly poorer. Work out the magnitude with the GM.
+                category: burden
+          - id: mishap_enemy
+            label: Enemy
+            description: Someone has active cause against you. They may appear during play at GM discretion.
+            choice_key: enemy
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_enemy_mishap
+                name: "Burden — Enemy"
+                description: Name an NPC with active cause against you. They may appear during play at GM discretion.
+                category: burden
+          - id: mishap_burden
+            label: Burden
+            description: You begin play saddled with a persistent complication — a vow, a secret, an obligation you cannot easily shed.
+            choice_key: burden
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_complication_mishap
+                name: "Burden — Complication"
+                description: Begin play saddled with a persistent complication. Define it in detail at the Bonds and Burdens step.
+                category: burden
+          - id: mishap_wound
+            label: Wound
+            description: You start play with Body reduced by 1. The pool recovers normally during play.
+            choice_key: wound
+            attribute_modifiers:
+              - attribute: body
+                delta: -1
+            features_granted:
+              - id: burden_wound_mishap
+                name: "Burden — Wound"
+                description: Start play with Body at current value −1. The pool recovers normally during play.
+                category: burden
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 15: MUSTER OUT WITH KNACK
+  # ──────────────────────────────────────────────────────────────
+  muster_out_with_knack:
+    id: muster_out_with_knack
+    name: Muster Out
+    description: You leave your career voluntarily. Choose a Knack — a passive trait that bends the rules in a small but meaningful way. Then decide whether to start another career or proceed to Bonds and Burdens.
+    order_hint: 15
+    age_cost: 0
+    default_next_stage_id: bonds_and_burdens
+    events:
+      - id: knack_choice
+        name: Choose a Knack
+        description: Select one Knack from the full list. Honor-system — choose a Knack appropriate to your career. Knacks are passive traits; they do not require activation.
+        event_type: choice
+        choice_prompt: Which Knack do you earn from this career?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: knack_ironhide
+            label: Ironhide
+            description: Reduce Body pool damage from all sources by 1 (minimum 1). Earned by those who have been hit too many times to count.
+            choice_key: ironhide
+            attribute_modifiers: []
+            features_granted:
+              - id: knack_ironhide_feat
+                name: Ironhide
+                description: Reduce Body pool damage from all sources by 1 (minimum 1).
+                category: knack
+          - id: knack_danger_sense
+            label: Danger Sense
+            description: You are never surprised. You may always act in the first round of an ambush.
+            choice_key: danger_sense
+            attribute_modifiers: []
+            features_granted:
+              - id: knack_danger_sense_feat
+                name: Danger Sense
+                description: You are never surprised. You may always act in the first round of an ambush.
+                category: knack
+          - id: knack_silver_tongue
+            label: Silver Tongue
+            description: When you fail a social skill roll that would be penalized by your Power pool status, you may reroll once per scene.
+            choice_key: silver_tongue
+            attribute_modifiers: []
+            features_granted:
+              - id: knack_silver_tongue_feat
+                name: Silver Tongue
+                description: When you fail a social skill roll that would be penalized by your Power pool status, you may reroll once per scene.
+                category: knack
+          - id: knack_predators_eye
+            label: "Predator's Eye"
+            description: You always know the approximate Body pool level of enemies you have observed for at least one round.
+            choice_key: predators_eye
+            attribute_modifiers: []
+            features_granted:
+              - id: knack_predators_eye_feat
+                name: "Predator's Eye"
+                description: You always know the approximate Body pool level of enemies you have observed for at least one round.
+                category: knack
+          - id: knack_hard_to_kill
+            label: Hard to Kill
+            description: When your Body pool would reach zero, roll 2d6 vs. difficulty 9. On success, remain at 1 Body instead. Once per session.
+            choice_key: hard_to_kill
+            attribute_modifiers: []
+            features_granted:
+              - id: knack_hard_to_kill_feat
+                name: Hard to Kill
+                description: When your Body pool would reach zero, make a flat 2d6 roll vs. difficulty 9 (no Skill Rank bonus). On a success, you remain at 1 Body instead. Once per session.
+                category: knack
+          - id: knack_travelers_luck
+            label: "Traveler's Luck"
+            description: Once per session, declare you happen to have a mundane item not on your sheet. It fits in one hand.
+            choice_key: travelers_luck
+            attribute_modifiers: []
+            features_granted:
+              - id: knack_travelers_luck_feat
+                name: "Traveler's Luck"
+                description: Once per session, declare you happen to have a mundane item not on your sheet. It fits in one hand.
+                category: knack
+          - id: knack_iron_nerve
+            label: Iron Nerve
+            description: Focus pool damage from horror, supernatural, or mind-affecting sources is halved (round down).
+            choice_key: iron_nerve
+            attribute_modifiers: []
+            features_granted:
+              - id: knack_iron_nerve_feat
+                name: Iron Nerve
+                description: Focus pool damage from horror, supernatural, or mind-affecting sources is halved (round down).
+                category: knack
+
+      - id: career_or_finish_knack
+        name: Another Career or Proceed?
+        description: You may start another career — entering at career_entry to choose a new path — or proceed to Bonds and Burdens to finish character creation.
+        event_type: choice
+        choice_prompt: What do you do next?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: next_career_knack
+            label: Start Another Career
+            description: Return to Career Entry and choose a new career path. You will serve at least one term before mustering out again.
+            choice_key: next_career
+            next_stage_override: career_entry
+            attribute_modifiers: []
+            features_granted: []
+          - id: proceed_bonds_knack
+            label: Proceed to Bonds and Burdens
+            description: Your Early Years are complete. Move on to define your Bond and Burden.
+            choice_key: proceed
+            attribute_modifiers: []
+            features_granted: []
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 16: MUSTER OUT (after mishap — no knack)
+  # ──────────────────────────────────────────────────────────────
+  muster_out:
+    id: muster_out
+    name: "Muster Out (Mishap)"
+    description: Your career ended by mishap — no Knack is earned. You may start another career or proceed to Bonds and Burdens.
+    order_hint: 16
+    age_cost: 0
+    default_next_stage_id: bonds_and_burdens
+    events:
+      - id: career_or_finish_mishap
+        name: Another Career or Proceed?
+        description: You may start another career — entering at career_entry to choose a new path — or proceed to Bonds and Burdens to finish character creation.
+        event_type: choice
+        choice_prompt: What do you do next?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: next_career_mishap
+            label: Start Another Career
+            description: Return to Career Entry and choose a new career path. First term carries no Survival roll.
+            choice_key: next_career
+            next_stage_override: career_entry
+            attribute_modifiers: []
+            features_granted: []
+          - id: proceed_bonds_mishap
+            label: Proceed to Bonds and Burdens
+            description: Your Early Years are complete. Move on to define your Bond and Burden.
+            choice_key: proceed
+            attribute_modifiers: []
+            features_granted: []
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 17: BONDS AND BURDENS
+  # ──────────────────────────────────────────────────────────────
+  bonds_and_burdens:
+    id: bonds_and_burdens
+    name: Bonds and Burdens
+    description: Sword and Sorcery heroes are not free. Define one Bond — a meaningful obligation — and one Burden — a complication you cannot easily escape.
+    order_hint: 17
+    age_cost: 0
+    default_next_stage_id: fate
+    events:
+      - id: bond_choice
+        name: Choose a Bond
+        description: A Bond is a meaningful obligation to a person, place, cause, vow, or ideal. Once per session, when you act directly in service of your Bond at real cost or risk to yourself, add a bonus die to one roll.
+        event_type: choice
+        choice_prompt: What is your Bond?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: bond_person
+            label: A Person
+            description: You are bound to a specific individual — a debt of loyalty, love, or obligation that you will not let die without a fight.
+            choice_key: person
+            attribute_modifiers: []
+            features_granted:
+              - id: bond_person_feat
+                name: Bond — A Person
+                description: "A meaningful obligation to a person. Write who they are and what you owe or feel. Mechanical benefit: once per session, when you act in direct service of this Bond at real cost or risk, add a bonus die to one roll."
+                category: bond
+          - id: bond_place
+            label: A Place
+            description: You are bound to a specific location — somewhere you will return to, protect, or restore no matter what stands in the way.
+            choice_key: place
+            attribute_modifiers: []
+            features_granted:
+              - id: bond_place_feat
+                name: Bond — A Place
+                description: "A meaningful obligation to a place. Write where it is and what it means to you. Mechanical benefit: once per session, when you act in direct service of this Bond at real cost or risk, add a bonus die to one roll."
+                category: bond
+          - id: bond_cause
+            label: A Cause
+            description: You serve something larger than yourself — a principle, a people, or an ideal worth dying for.
+            choice_key: cause
+            attribute_modifiers: []
+            features_granted:
+              - id: bond_cause_feat
+                name: Bond — A Cause
+                description: "A meaningful obligation to a cause. Write what it is and why it matters to you. Mechanical benefit: once per session, when you act in direct service of this Bond at real cost or risk, add a bonus die to one roll."
+                category: bond
+          - id: bond_vow
+            label: A Vow
+            description: A solemn oath that binds you — spoken aloud, witnessed, or sworn in your own blood. You do not break it.
+            choice_key: vow
+            attribute_modifiers: []
+            features_granted:
+              - id: bond_vow_feat
+                name: Bond — A Vow
+                description: "A solemn oath that binds you. Write the exact words of the vow and who witnessed it. Mechanical benefit: once per session, when you act in direct service of this Bond at real cost or risk, add a bonus die to one roll."
+                category: bond
+          - id: bond_ideal
+            label: An Ideal
+            description: A principle you refuse to abandon — a code of conduct, a moral line, or a belief you hold even when it costs you.
+            choice_key: ideal
+            attribute_modifiers: []
+            features_granted:
+              - id: bond_ideal_feat
+                name: Bond — An Ideal
+                description: "A principle you refuse to abandon. Write what it is and how you came to hold it. Mechanical benefit: once per session, when you act in direct service of this Bond at real cost or risk, add a bonus die to one roll."
+                category: bond
+
+      - id: burden_choice
+        name: Choose a Burden
+        description: A Burden is a complication you cannot easily escape — an enemy, an addiction, a debt, a secret, or a vow of vengeance. The GM may invoke it to introduce complications. Accepting the complication is a recognized trigger for advancement.
+        event_type: choice
+        choice_prompt: What is your Burden?
+        min_choices: 1
+        max_choices: 1
+        outcomes:
+          - id: burden_rival_out
+            label: A Rival
+            description: Someone who works against your interests — not to kill you (yet), but to undermine, embarrass, or obstruct you.
+            choice_key: rival
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_rival_feat
+                name: "Burden — A Rival"
+                description: Someone who works against your interests. Name them and write what they want. The GM may invoke this to introduce complications.
+                category: burden
+          - id: burden_addiction_out
+            label: An Addiction
+            description: A pull you cannot entirely resist — a substance, a behavior, a compulsion that surfaces under pressure.
+            choice_key: addiction
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_addiction_feat
+                name: "Burden — An Addiction"
+                description: A pull you cannot entirely resist. Name it and describe when it surfaces. The GM may invoke this to introduce complications.
+                category: burden
+          - id: burden_debt_out
+            label: A Debt
+            description: You owe something significant to someone who expects repayment — in coin, in service, or in kind.
+            choice_key: debt
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_debt_feat
+                name: "Burden — A Debt"
+                description: You owe something significant. Name the creditor and write what is owed. The GM may invoke this to introduce complications.
+                category: burden
+          - id: burden_secret_out
+            label: A Dark Secret
+            description: Something that must stay hidden. If it came out, it would cost you — reputation, safety, or the people you care about.
+            choice_key: secret
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_secret_feat
+                name: "Burden — A Dark Secret"
+                description: Something that must stay hidden. Write what it is and who would be harmed if it emerged. The GM may invoke this to introduce complications.
+                category: burden
+          - id: burden_vengeance_out
+            label: A Vow of Vengeance
+            description: An enemy you are sworn to destroy. The vow defines a portion of your purpose. It may outlive you.
+            choice_key: vengeance
+            attribute_modifiers: []
+            features_granted:
+              - id: burden_vengeance_feat
+                name: "Burden — A Vow of Vengeance"
+                description: An enemy you are sworn to destroy. Name them and write what they did. The GM may invoke this to introduce complications.
+                category: burden
+
+  # ──────────────────────────────────────────────────────────────
+  # STAGE 18: FATE (terminal)
+  # ──────────────────────────────────────────────────────────────
+  fate:
+    id: fate
+    name: Fate
+    description: Every character in Aeios is moving toward something. Write a short, poetic statement in second person — your character's likely doom. It is a compass for play, not a prophecy. You may outrun it, embrace it, or die trying to rewrite it.
+    order_hint: 18
+    age_cost: 0
+    default_next_stage_id: null
+    events:
+      - id: fate_declaration
+        name: Fate Declared
+        description: Your character's arc compass is set. Gain a bonus die when acting in direct opposition to your Fate — genuine risk to deny the trajectory it describes. Playing toward your Fate is an advancement trigger.
+        event_type: automatic
+        outcomes:
+          - id: fate_auto_outcome
+            label: Fate Declared
+            description: Your Fate is declared. Write a short poetic statement in second person as your character's arc compass.
+            attribute_modifiers: []
+            features_granted:
+              - id: fate_declared
+                name: Fate Declared
+                description: "Write a short poetic statement in second person as your character's arc compass. Example: 'You will find what you are looking for. You will wish you hadn't.' Mechanical benefit: gain a bonus die when acting in direct opposition to your Fate (genuine risk to deny it). Playing toward your Fate is a recognized advancement trigger."
+                category: fate
