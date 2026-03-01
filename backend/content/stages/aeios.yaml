@@ -7,7 +7,6 @@ base_attributes:
   stamina: 3
   focus: 3
   power: 3
-  age: 15
 
 stages:
 
@@ -19,14 +18,14 @@ stages:
     name: Childhood
     description: Three rolls define the world you grew up in — your family's wealth, where you lived, and the social structure surrounding you. Together they surface skill options; choose one at Rank 0.
     order_hint: 1
-    age_cost: 0
+    age_cost: 15
     default_next_stage_id: career_entry
     events:
       - id: wealth_roll
         name: Wealth
-        description: Roll 1d6 to determine your family's economic circumstances. On a 6, treat as 5 (Wealthy).
+        description: Roll 1d5 to determine your family's economic circumstances.
         event_type: table_roll
-        dice_expression: 1d6
+        dice_expression: 1d5
         outcomes:
           - id: wealth_destitute
             label: Destitute
@@ -84,7 +83,7 @@ stages:
             label: Wealthy
             description: Wealth that commands. Money is not the constraint — access and reputation are the game.
             roll_min: 5
-            roll_max: 6
+            roll_max: 5
             context_updates:
               revealed_scholarship: "yes"
               revealed_influence: "yes"
@@ -96,9 +95,9 @@ stages:
 
       - id: locale_roll
         name: Locale
-        description: Roll 1d6 to determine where you grew up, from deep wilderness to great city. On a 6, treat as 5 (Great City).
+        description: Roll 1d5 to determine where you grew up, from deep wilderness to great city.
         event_type: table_roll
-        dice_expression: 1d6
+        dice_expression: 1d5
         outcomes:
           - id: locale_wilderness
             label: Wilderness
@@ -160,7 +159,7 @@ stages:
             label: Great City
             description: Ancient, vast, layered. So large it contains multitudes.
             roll_min: 5
-            roll_max: 6
+            roll_max: 5
             context_updates:
               revealed_scholarship: "yes"
               revealed_influence: "yes"
@@ -173,9 +172,9 @@ stages:
 
       - id: community_roll
         name: Community
-        description: Roll 1d6 to determine the social structure you grew up within. On a 6, treat as 5 (Court / Great Institution).
+        description: Roll 1d5 to determine the social structure you grew up within.
         event_type: table_roll
-        dice_expression: 1d6
+        dice_expression: 1d5
         outcomes:
           - id: community_solitary
             label: Solitary
@@ -237,7 +236,7 @@ stages:
             label: "Court / Great Institution"
             description: Thousands of people, layered hierarchy, complex politics. Navigating the structure was its own discipline.
             roll_min: 5
-            roll_max: 6
+            roll_max: 5
             context_updates:
               revealed_scholarship: "yes"
               revealed_influence: "yes"
@@ -262,120 +261,90 @@ stages:
             choice_key: survival
             requires_context:
               revealed_survival: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_survival_0
-                name: Survival Rank 0
-                description: Basic familiarity with survival — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 0
           - id: cs_thievery
             label: Thievery
             description: Necessity taught you to take what wasn't offered.
             choice_key: thievery
             requires_context:
               revealed_thievery: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_thievery_0
-                name: Thievery Rank 0
-                description: Basic familiarity with thievery — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: thievery
+                delta: 0
           - id: cs_athletics
             label: Athletics
             description: Physical work or outdoor life built a capable body from an early age.
             choice_key: athletics
             requires_context:
               revealed_athletics: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_athletics_0
-                name: Athletics Rank 0
-                description: Basic familiarity with athletics — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: athletics
+                delta: 0
           - id: cs_craftsmanship
             label: Craftsmanship
             description: A trade household or practical upbringing gave you skill with your hands.
             choice_key: craftsmanship
             requires_context:
               revealed_craftsmanship: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_craftsmanship_0
-                name: Craftsmanship Rank 0
-                description: Basic familiarity with craftsmanship — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: craftsmanship
+                delta: 0
           - id: cs_commerce
             label: Commerce
             description: Growing up around trade gave you an eye for value and negotiation.
             choice_key: commerce
             requires_context:
               revealed_commerce: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_commerce_0
-                name: Commerce Rank 0
-                description: Basic familiarity with commerce — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: commerce
+                delta: 0
           - id: cs_influence
             label: Influence
             description: Social environments taught you how to read people and make yourself heard.
             choice_key: influence
             requires_context:
               revealed_influence: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_influence_0
-                name: Influence Rank 0
-                description: Basic familiarity with influence — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: influence
+                delta: 0
           - id: cs_scholarship
             label: Scholarship
             description: Access to knowledge — books, learned people, institutions — ignited a habit of study.
             choice_key: scholarship
             requires_context:
               revealed_scholarship: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_scholarship_0
-                name: Scholarship Rank 0
-                description: Basic familiarity with scholarship — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: scholarship
+                delta: 0
           - id: cs_melee
             label: Melee
             description: Fighting was part of life — by necessity, culture, or circumstance.
             choice_key: melee
             requires_context:
               revealed_melee: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_melee_0
-                name: Melee Rank 0
-                description: Basic familiarity with melee combat — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: melee
+                delta: 0
           - id: cs_stealth
             label: Stealth
             description: Learning to move unseen was survival in the environment you grew up in.
             choice_key: stealth
             requires_context:
               revealed_stealth: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_stealth_0
-                name: Stealth Rank 0
-                description: Basic familiarity with stealth — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: stealth
+                delta: 0
           - id: cs_navigation
             label: Navigation
             description: Growing up beyond settled land gave you an instinct for direction and terrain.
             choice_key: navigation
             requires_context:
               revealed_navigation: ["yes"]
-            attribute_modifiers: []
-            features_granted:
-              - id: skill_navigation_0
-                name: Navigation Rank 0
-                description: Basic familiarity with navigation — removes the untrained penalty die.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 0
 
   # ──────────────────────────────────────────────────────────────
   # STAGE 2: CAREER ENTRY
@@ -403,16 +372,11 @@ stages:
             context_updates:
               current_career: "blade"
             next_stage_override: career_blade
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_melee_0
-                name: Melee Rank 0
-                description: Basic Training — removes the untrained penalty die for melee combat.
-                category: skill
-              - id: bt_defense_0
-                name: Defense Rank 0
-                description: Basic Training — removes the untrained penalty die for defense.
-                category: skill
+            attribute_modifiers:
+              - attribute: melee
+                delta: 0
+              - attribute: defense
+                delta: 0
           - id: enter_scout
             label: "Scout — Wilderness and Frontier Work"
             description: Guides, outriders, trappers. You live beyond the edge of maps and bring back what you find. Basic Training — Survival, Navigation (Wayfinding).
@@ -420,16 +384,11 @@ stages:
             context_updates:
               current_career: "scout"
             next_stage_override: career_scout
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_survival_0
-                name: Survival Rank 0
-                description: Basic Training — removes the untrained penalty die for survival.
-                category: skill
-              - id: bt_navigation_0
-                name: Navigation (Wayfinding) Rank 0
-                description: Basic Training — removes the untrained penalty die for navigation and wayfinding.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 0
+              - attribute: navigation
+                delta: 0
           - id: enter_shadow
             label: "Shadow — Criminal and Covert Work"
             description: Cutpurses, nighthands, smugglers. You live outside the law and learn to move without being seen. Basic Training — Stealth, Thievery.
@@ -437,16 +396,11 @@ stages:
             context_updates:
               current_career: "shadow"
             next_stage_override: career_shadow
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_stealth_0
-                name: Stealth Rank 0
-                description: Basic Training — removes the untrained penalty die for stealth.
-                category: skill
-              - id: bt_thievery_0
-                name: Thievery Rank 0
-                description: Basic Training — removes the untrained penalty die for thievery.
-                category: skill
+            attribute_modifiers:
+              - attribute: stealth
+                delta: 0
+              - attribute: thievery
+                delta: 0
           - id: enter_sailor
             label: "Sailor — Sea and River Life"
             description: Oarsmen, river traders, corsairs. You know how to read water and when to hold on. Basic Training — Seamanship, Athletics.
@@ -454,16 +408,11 @@ stages:
             context_updates:
               current_career: "sailor"
             next_stage_override: career_sailor
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_seamanship_0
-                name: Seamanship Rank 0
-                description: Basic Training — removes the untrained penalty die for seamanship.
-                category: skill
-              - id: bt_athletics_0
-                name: Athletics Rank 0
-                description: Basic Training — removes the untrained penalty die for athletics.
-                category: skill
+            attribute_modifiers:
+              - attribute: seamanship
+                delta: 0
+              - attribute: athletics
+                delta: 0
           - id: enter_temple
             label: "Temple — Religious and Sacred Orders"
             description: Acolytes, healers, temple guards. You serve something larger than yourself and learn its language. Basic Training — Influence, Lore (Theology).
@@ -471,16 +420,11 @@ stages:
             context_updates:
               current_career: "temple"
             next_stage_override: career_temple
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_influence_0
-                name: Influence Rank 0
-                description: Basic Training — removes the untrained penalty die for influence.
-                category: skill
-              - id: bt_lore_theology_0
-                name: Lore (Theology) Rank 0
-                description: Basic Training — removes the untrained penalty die for theological lore.
-                category: skill
+            attribute_modifiers:
+              - attribute: influence
+                delta: 0
+              - attribute: lore_theology
+                delta: 0
           - id: enter_scholar
             label: "Scholar — Knowledge and Learning"
             description: Scribes, antiquarians, occultists. You trade in knowing — and discover that some knowledge has a price. Basic Training — Lore, Commerce.
@@ -488,16 +432,11 @@ stages:
             context_updates:
               current_career: "scholar"
             next_stage_override: career_scholar
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_lore_0
-                name: Lore Rank 0
-                description: Basic Training — removes the untrained penalty die for lore and scholarship.
-                category: skill
-              - id: bt_commerce_0
-                name: Commerce Rank 0
-                description: Basic Training — removes the untrained penalty die for commerce.
-                category: skill
+            attribute_modifiers:
+              - attribute: lore
+                delta: 0
+              - attribute: commerce
+                delta: 0
           - id: enter_court
             label: "Court — Political and Social Maneuvering"
             description: Courtiers, spymasters' agents, heralds. The sharpest blade in a palace is a secret. Basic Training — Influence, Deception.
@@ -505,16 +444,11 @@ stages:
             context_updates:
               current_career: "court"
             next_stage_override: career_court
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_influence_court_0
-                name: Influence Rank 0
-                description: Basic Training — removes the untrained penalty die for influence.
-                category: skill
-              - id: bt_deception_0
-                name: Deception Rank 0
-                description: Basic Training — removes the untrained penalty die for deception and intrigue.
-                category: skill
+            attribute_modifiers:
+              - attribute: influence
+                delta: 0
+              - attribute: deception
+                delta: 0
           - id: enter_tradesman
             label: "Tradesman — Commerce and Craft"
             description: Artisans, merchants, physicians. You build things, sell things, or keep people alive long enough to do both. Basic Training — Commerce, Artisan.
@@ -522,16 +456,11 @@ stages:
             context_updates:
               current_career: "tradesman"
             next_stage_override: career_tradesman
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_commerce_trade_0
-                name: Commerce Rank 0
-                description: Basic Training — removes the untrained penalty die for commerce.
-                category: skill
-              - id: bt_artisan_0
-                name: Artisan Rank 0
-                description: Basic Training — removes the untrained penalty die for artisan crafts.
-                category: skill
+            attribute_modifiers:
+              - attribute: commerce
+                delta: 0
+              - attribute: artisan
+                delta: 0
           - id: enter_wanderer
             label: "Wanderer — The Rootless Path"
             description: Vagabonds, pilgrims, exiles. You go from place to place and learn that every road eventually circles back. Basic Training — Survival, Athletics.
@@ -539,16 +468,11 @@ stages:
             context_updates:
               current_career: "wanderer"
             next_stage_override: career_wanderer
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_survival_wand_0
-                name: Survival Rank 0
-                description: Basic Training — removes the untrained penalty die for survival.
-                category: skill
-              - id: bt_athletics_wand_0
-                name: Athletics Rank 0
-                description: Basic Training — removes the untrained penalty die for athletics.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 0
+              - attribute: athletics
+                delta: 0
           - id: enter_warband
             label: "Warband — Tribal Warrior Culture"
             description: Tribal warriors, raiders, war-shamans. You live by the strength of your people and the clarity of battle. Basic Training — Melee, Athletics.
@@ -556,16 +480,11 @@ stages:
             context_updates:
               current_career: "warband"
             next_stage_override: career_warband
-            attribute_modifiers: []
-            features_granted:
-              - id: bt_melee_warband_0
-                name: Melee Rank 0
-                description: Basic Training — removes the untrained penalty die for melee combat.
-                category: skill
-              - id: bt_athletics_warband_0
-                name: Athletics Rank 0
-                description: Basic Training — removes the untrained penalty die for athletics.
-                category: skill
+            attribute_modifiers:
+              - attribute: melee
+                delta: 0
+              - attribute: athletics
+                delta: 0
 
   # ──────────────────────────────────────────────────────────────
   # CAREER STAGES (3–12): one per career, age_cost 4 each
@@ -592,32 +511,23 @@ stages:
             label: Sellsword
             description: You sell your blade to whoever pays — caravan guards, mercenary companies, private security.
             choice_key: sellsword
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_melee_0
-                name: Melee Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for melee combat.
-                category: skill
+            attribute_modifiers:
+              - attribute: melee
+                delta: 1
           - id: blade_city_guard
             label: City Guard
             description: You serve as a keeper of civic order — watch duty, patrol, and the occasional riot.
             choice_key: city_guard
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_defense_0
-                name: Defense Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for defense.
-                category: skill
+            attribute_modifiers:
+              - attribute: defense
+                delta: 1
           - id: blade_pit_fighter
             label: Pit-Fighter
             description: You fight for crowds in the ring, the pit, or the arena — raw skill against opponents.
             choice_key: pit_fighter
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_athletics_0
-                name: Athletics Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for athletics.
-                category: skill
+            attribute_modifiers:
+              - attribute: athletics
+                delta: 1
 
       - id: blade_life
         name: Life Event
@@ -630,12 +540,9 @@ stages:
             description: You guarded a caravan through hostile country and picked up something of the road.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: blade_nav_0
-                name: Navigation Rank 0
-                description: Time on the road through hostile country — removes the untrained penalty die for navigation.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 1
           - id: blade_life_2
             label: A Fellow Blade
             description: A comrade-in-arms pulled you out of a losing fight. You owe them.
@@ -674,12 +581,9 @@ stages:
             description: Nothing to do but drink. You found community at the bottom of a cup.
             roll_min: 5
             roll_max: 5
-            attribute_modifiers: []
-            features_granted:
-              - id: blade_carousing_0
-                name: Carousing Rank 0
-                description: Long garrison months with nothing to do but drink — removes the untrained penalty die for carousing.
-                category: skill
+            attribute_modifiers:
+              - attribute: carousing
+                delta: 1
           - id: blade_life_6
             label: The Last One Standing
             description: You were the only survivor of a rout. An enemy — whoever ordered you into it — still draws breath.
@@ -734,32 +638,23 @@ stages:
             label: Guide
             description: You lead parties through territory that would kill them without you.
             choice_key: guide
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_wayfinding_0
-                name: Wayfinding Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for navigation and wayfinding.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 1
           - id: scout_outrider
             label: Outrider
             description: You ride ahead of columns and patrols, gathering information and managing the terrain.
             choice_key: outrider
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_beast_handling_0
-                name: Beast Handling Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for beast handling and horsemanship.
-                category: skill
+            attribute_modifiers:
+              - attribute: beast_handling
+                delta: 1
           - id: scout_trapper
             label: Trapper
             description: You make a living from the wild — furs, game, and the patience to wait for both.
             choice_key: trapper
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_survival_scout_0
-                name: Survival Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for survival.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 1
 
       - id: scout_life
         name: Life Event
@@ -772,12 +667,9 @@ stages:
             description: You crossed a stretch of land no one had charted. You know the way now.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: scout_nav_0
-                name: Navigation Rank 0
-                description: Crossed unmapped territory and lived to chart it — removes the untrained penalty die for navigation.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 1
           - id: scout_life_2
             label: A Local Contact
             description: Someone who knew the country kept you alive in unfamiliar land.
@@ -794,12 +686,9 @@ stages:
             description: You found what you were looking for. It hadn't wanted to be found.
             roll_min: 3
             roll_max: 3
-            attribute_modifiers: []
-            features_granted:
-              - id: scout_survival_0
-                name: Survival Rank 0
-                description: Tracking something dangerous through hostile land — removes the untrained penalty die for survival.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 1
           - id: scout_life_4
             label: Something Marked You
             description: Something out there noticed you. You don't know what, but it hasn't forgotten.
@@ -816,12 +705,9 @@ stages:
             description: Old ones. You spent weeks picking through what was left. What you found changed how you see the past.
             roll_min: 5
             roll_max: 5
-            attribute_modifiers: []
-            features_granted:
-              - id: scout_scholarship_0
-                name: Scholarship Rank 0
-                description: Time in old ruins studying what came before — removes the untrained penalty die for historical scholarship.
-                category: skill
+            attribute_modifiers:
+              - attribute: scholarship
+                delta: 1
           - id: scout_life_6
             label: Sole Survivor
             description: You came back. Your party didn't. You still aren't sure why you made it and they didn't.
@@ -876,32 +762,23 @@ stages:
             label: Cutpurse
             description: You work crowds, markets, and busy streets — a hand here, a purse there.
             choice_key: cutpurse
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_thievery_0
-                name: Thievery Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for thievery.
-                category: skill
+            attribute_modifiers:
+              - attribute: thievery
+                delta: 1
           - id: shadow_nighthand
             label: Nighthand
             description: You work after dark — burglary, assassination contracts, and covert entry.
             choice_key: nighthand
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_stealth_0
-                name: Stealth Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for stealth.
-                category: skill
+            attribute_modifiers:
+              - attribute: stealth
+                delta: 1
           - id: shadow_smuggler
             label: Smuggler
             description: You move goods that aren't supposed to move — across borders, through checkpoints, past guards.
             choice_key: smuggler
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_commerce_shadow_0
-                name: Commerce Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for commerce and trade negotiation.
-                category: skill
+            attribute_modifiers:
+              - attribute: commerce
+                delta: 1
 
       - id: shadow_life
         name: Life Event
@@ -958,12 +835,9 @@ stages:
             description: You had to figure out how to survive in a city where you knew no one and nothing.
             roll_min: 5
             roll_max: 5
-            attribute_modifiers: []
-            features_granted:
-              - id: shadow_survival_0
-                name: Survival Rank 0
-                description: Surviving alone in an unfamiliar city — removes the untrained penalty die for survival in urban environments.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 1
           - id: shadow_life_6
             label: Walked Away
             description: You walked away from a job that would have made you. Something about it didn't sit right. Record what you turned down.
@@ -1018,32 +892,23 @@ stages:
             label: Oarsman
             description: You pull an oar on trading ships, war galleys, and river barges. The work is honest and brutal.
             choice_key: oarsman
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_seamanship_0
-                name: Seamanship Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for seamanship.
-                category: skill
+            attribute_modifiers:
+              - attribute: seamanship
+                delta: 1
           - id: sailor_river_trader
             label: River Trader
             description: You move goods along rivers and inland waterways, buying low and selling high.
             choice_key: river_trader
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_commerce_sailor_0
-                name: Commerce Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for commerce.
-                category: skill
+            attribute_modifiers:
+              - attribute: commerce
+                delta: 1
           - id: sailor_corsair
             label: Corsair
             description: You sail under flags of convenience and take what the sea offers — including other ships' cargo.
             choice_key: corsair
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_ranged_0
-                name: Ranged Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for ranged combat.
-                category: skill
+            attribute_modifiers:
+              - attribute: ranged
+                delta: 1
 
       - id: sailor_life
         name: Life Event
@@ -1056,12 +921,9 @@ stages:
             description: A storm that took half the crew. You lashed yourself to the mast and held on.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: sailor_athletics_0
-                name: Athletics Rank 0
-                description: Surviving storm season when half the crew didn't — removes the untrained penalty die for athletics.
-                category: skill
+            attribute_modifiers:
+              - attribute: athletics
+                delta: 1
           - id: sailor_life_2
             label: A Fair Merchant
             description: A merchant you dealt with honestly remembers you. There is goodwill there.
@@ -1078,12 +940,9 @@ stages:
             description: A town you returned to three seasons running. You have a face there, maybe more.
             roll_min: 3
             roll_max: 3
-            attribute_modifiers: []
-            features_granted:
-              - id: sailor_carousing_0
-                name: Carousing Rank 0
-                description: Three seasons at the same port — removes the untrained penalty die for carousing.
-                category: skill
+            attribute_modifiers:
+              - attribute: carousing
+                delta: 1
           - id: sailor_life_4
             label: A Rival Captain
             description: Another captain who considers the same waters theirs. The grudge is mutual.
@@ -1162,32 +1021,23 @@ stages:
             label: Acolyte
             description: You study the sacred texts, assist in rites, and serve the priests of your order.
             choice_key: acolyte
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_lore_temple_0
-                name: Lore Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for lore and sacred knowledge.
-                category: skill
+            attribute_modifiers:
+              - attribute: lore
+                delta: 1
           - id: temple_healer
             label: Healer
             description: You tend the sick and wounded in the temple's name, learning the arts of medicine and herbalism.
             choice_key: healer
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_medicine_0
-                name: Medicine Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for medicine and healing arts.
-                category: skill
+            attribute_modifiers:
+              - attribute: medicine
+                delta: 1
           - id: temple_guard
             label: Temple Guard
             description: You protect the sacred spaces and their occupants, the last line between the profane world and holy ground.
             choice_key: temple_guard
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_defense_temple_0
-                name: Defense Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for defense.
-                category: skill
+            attribute_modifiers:
+              - attribute: defense
+                delta: 1
 
       - id: temple_life
         name: Life Event
@@ -1200,12 +1050,9 @@ stages:
             description: A long walk to a distant shrine. The road was harder than expected. You learned something about keeping moving.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: temple_nav_0
-                name: Navigation Rank 0
-                description: A difficult pilgrimage to a distant shrine — removes the untrained penalty die for navigation.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 1
           - id: temple_life_2
             label: A Senior Priest's Favor
             description: A priest of standing saw something in you and offered guidance and protection.
@@ -1222,12 +1069,9 @@ stages:
             description: An outbreak. You spent weeks at bedsides and came away knowing more than you did.
             roll_min: 3
             roll_max: 3
-            attribute_modifiers: []
-            features_granted:
-              - id: temple_scholarship_0
-                name: Scholarship Rank 0
-                description: Tending the sick during an outbreak — removes the untrained penalty die for medical scholarship.
-                category: skill
+            attribute_modifiers:
+              - attribute: scholarship
+                delta: 1
           - id: temple_life_4
             label: Schism
             description: A faction split in the temple. You took a side. The other side remembers.
@@ -1244,12 +1088,9 @@ stages:
             description: Something happened in the ritual space that no one could entirely explain. You are still thinking about it.
             roll_min: 5
             roll_max: 5
-            attribute_modifiers: []
-            features_granted:
-              - id: temple_occult_0
-                name: Scholarship (Occult) Rank 0
-                description: A vision during prayer that produced results no one could explain — removes the untrained penalty die for occult scholarship.
-                category: skill
+            attribute_modifiers:
+              - attribute: scholarship_occult
+                delta: 1
           - id: temple_life_6
             label: Something Came Through
             description: During a rite, something arrived that wasn't supposed to. It left a mark. It also left an enemy.
@@ -1304,32 +1145,23 @@ stages:
             label: "Scribe / Tutor"
             description: You copy manuscripts, maintain records, and teach those whose families can afford it.
             choice_key: scribe_tutor
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_lore_scholar_0
-                name: Lore Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for historical and general lore.
-                category: skill
+            attribute_modifiers:
+              - attribute: lore
+                delta: 1
           - id: scholar_antiquarian
             label: Antiquarian
             description: You seek out old things — artifacts, ruins, forgotten manuscripts — and assess their value and meaning.
             choice_key: antiquarian
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_commerce_scholar_0
-                name: Commerce Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for commerce and appraisal.
-                category: skill
+            attribute_modifiers:
+              - attribute: commerce
+                delta: 1
           - id: scholar_occultist
             label: Occultist
             description: You probe the edge of what scholarship can touch — the arcane, the forbidden, the things scholars aren't supposed to study.
             choice_key: occultist
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_lore_occult_0
-                name: Lore (Occult) Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for occult and arcane scholarship.
-                category: skill
+            attribute_modifiers:
+              - attribute: lore_occult
+                delta: 1
 
       - id: scholar_life
         name: Life Event
@@ -1342,12 +1174,9 @@ stages:
             description: A year in an archive that changed how you see the world. Something in those texts rearranged your thinking.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: scholar_scholarship_0
-                name: Scholarship Rank 0
-                description: A year in an archive that changed how you see the world — removes the untrained penalty die for scholarship.
-                category: skill
+            attribute_modifiers:
+              - attribute: scholarship
+                delta: 1
           - id: scholar_life_2
             label: A Colleague
             description: Someone who shared your obsession and was worth sharing it with.
@@ -1364,12 +1193,9 @@ stages:
             description: A patron sent you somewhere unexpected. You learned more from the journey than the assignment.
             roll_min: 3
             roll_max: 3
-            attribute_modifiers: []
-            features_granted:
-              - id: scholar_nav_0
-                name: Navigation Rank 0
-                description: A commission that took you somewhere strange — removes the untrained penalty die for navigation.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 1
           - id: scholar_life_4
             label: Published Something Dangerous
             description: You circulated something that made enemies. They have not forgotten what you wrote.
@@ -1386,12 +1212,9 @@ stages:
             description: Access to a collection that wasn't supposed to be accessible. What you found there is still with you.
             roll_min: 5
             roll_max: 5
-            attribute_modifiers: []
-            features_granted:
-              - id: scholar_occult_0
-                name: Scholarship (Occult) Rank 0
-                description: Access to a sealed collection of forbidden knowledge — removes the untrained penalty die for occult scholarship.
-                category: skill
+            attribute_modifiers:
+              - attribute: scholarship_occult
+                delta: 1
           - id: scholar_life_6
             label: Found Something Not Meant to Be Found
             description: Record what it was. Someone wants it back — or wants you silenced. They know you have it.
@@ -1446,32 +1269,23 @@ stages:
             label: Courtier
             description: You navigate the social landscape of the court — rank, favor, and the currency of reputation.
             choice_key: courtier
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_influence_court_0
-                name: Influence Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for social influence.
-                category: skill
+            attribute_modifiers:
+              - attribute: influence
+                delta: 1
           - id: court_spymaster
             label: "Spymaster's Agent"
             description: You gather information, run assets, and move through the world wearing other people's faces.
             choice_key: spymasters_agent
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_deception_0
-                name: Deception Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for deception and disguise.
-                category: skill
+            attribute_modifiers:
+              - attribute: deception
+                delta: 1
           - id: court_herald
             label: Herald
             description: You carry messages, enforce protocol, and represent great houses across the known world.
             choice_key: herald
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_lore_heraldry_0
-                name: Lore (Heraldry) Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for heraldry and court protocol.
-                category: skill
+            attribute_modifiers:
+              - attribute: lore_heraldry
+                delta: 1
 
       - id: court_life
         name: Life Event
@@ -1484,12 +1298,9 @@ stages:
             description: You navigated a brutal political season without making permanent enemies. Barely.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: court_influence_0
-                name: Influence Rank 0
-                description: Surviving a brutal political season without making permanent enemies — removes the untrained penalty die for influence.
-                category: skill
+            attribute_modifiers:
+              - attribute: influence
+                delta: 1
           - id: court_life_2
             label: A Patron of Standing
             description: A senior figure took you under their wing. Their protection is real, and so is their expectation of loyalty.
@@ -1506,12 +1317,9 @@ stages:
             description: A foreign dignitary's visit put you in unusual company and unusual places.
             roll_min: 3
             roll_max: 3
-            attribute_modifiers: []
-            features_granted:
-              - id: court_nav_0
-                name: Navigation Rank 0
-                description: A foreign dignitary's visit put you in unusual places — removes the untrained penalty die for navigation.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 1
           - id: court_life_4
             label: Caught in the Middle
             description: A factional rivalry caught you between two parties. You came out intact, but both sides remember which way you leaned.
@@ -1588,32 +1396,23 @@ stages:
             label: Artisan
             description: You make things with your hands — metalwork, woodwork, leatherwork, or some other craft.
             choice_key: artisan
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_artisan_trade_0
-                name: Artisan Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for artisan crafts.
-                category: skill
+            attribute_modifiers:
+              - attribute: artisan
+                delta: 1
           - id: tradesman_merchant
             label: Merchant
             description: You buy and sell, move goods across distances, and profit from knowing what people want.
             choice_key: merchant
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_commerce_trade_0
-                name: Commerce Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for commerce.
-                category: skill
+            attribute_modifiers:
+              - attribute: commerce
+                delta: 1
           - id: tradesman_physician
             label: Physician
             description: You practice medicine — surgery, herbalism, and the management of people in crisis.
             choice_key: physician
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_medicine_trade_0
-                name: Medicine Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for medicine and surgery.
-                category: skill
+            attribute_modifiers:
+              - attribute: medicine
+                delta: 1
 
       - id: tradesman_life
         name: Life Event
@@ -1626,12 +1425,9 @@ stages:
             description: A commission that required traveling somewhere unfamiliar. You learned more from the road than the job.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: tradesman_nav_0
-                name: Navigation Rank 0
-                description: A lucrative contract that required traveling somewhere unfamiliar — removes the untrained penalty die for navigation.
-                category: skill
+            attribute_modifiers:
+              - attribute: navigation
+                delta: 1
           - id: tradesman_life_2
             label: A Long-Term Client
             description: A client who became something like a friend. They trust you, and you them.
@@ -1730,32 +1526,23 @@ stages:
             label: Vagabond
             description: You drift from city to city, living on the margins and learning the hidden shape of places.
             choice_key: vagabond
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_stealth_wand_0
-                name: Stealth Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for stealth in urban environments.
-                category: skill
+            attribute_modifiers:
+              - attribute: stealth
+                delta: 1
           - id: wanderer_pilgrim
             label: Pilgrim
             description: You travel to sacred places and spend time in contemplation, service, and study along the road.
             choice_key: pilgrim
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_lore_wand_0
-                name: Lore Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for lore and historical knowledge.
-                category: skill
+            attribute_modifiers:
+              - attribute: lore
+                delta: 1
           - id: wanderer_exile
             label: Exile
             description: You are somewhere you are not supposed to be, moving carefully and keeping a low profile.
             choice_key: exile
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_survival_wand_0
-                name: Survival Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for survival.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 1
 
       - id: wanderer_life
         name: Life Event
@@ -1768,12 +1555,9 @@ stages:
             description: A stretch of difficult road that taught you the land in ways no map could.
             roll_min: 1
             roll_max: 1
-            attribute_modifiers: []
-            features_granted:
-              - id: wanderer_survival_0
-                name: Survival Rank 0
-                description: A stretch of hard road that taught you the land — removes the untrained penalty die for survival.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 1
           - id: wanderer_life_2
             label: A Stranger's Kindness
             description: A stranger helped you without being asked. You have thought about why ever since.
@@ -1790,12 +1574,9 @@ stages:
             description: A long strange month somewhere you didn't expect to stay. You learned what it means to belong, briefly.
             roll_min: 3
             roll_max: 3
-            attribute_modifiers: []
-            features_granted:
-              - id: wanderer_carousing_0
-                name: Carousing Rank 0
-                description: A long strange month in an unexpected city — removes the untrained penalty die for carousing.
-                category: skill
+            attribute_modifiers:
+              - attribute: carousing
+                delta: 1
           - id: wanderer_life_4
             label: Deemed Trouble
             description: Someone decided you were a problem — or someone you were running from found a lead.
@@ -1812,12 +1593,9 @@ stages:
             description: A community sheltered you for a time and taught you something of their ways.
             roll_min: 5
             roll_max: 5
-            attribute_modifiers: []
-            features_granted:
-              - id: wanderer_craftsmanship_0
-                name: Craftsmanship Rank 0
-                description: Time in a community that shared its practical knowledge — removes the untrained penalty die for craftsmanship.
-                category: skill
+            attribute_modifiers:
+              - attribute: craftsmanship
+                delta: 1
           - id: wanderer_life_6
             label: Crossed the Wrong Territory
             description: You crossed something's territory without knowing it. It has not forgotten.
@@ -1872,32 +1650,23 @@ stages:
             label: Tribal Warrior
             description: You fight for your people in the traditional manner — raids, defense of territory, honor challenges.
             choice_key: tribal_warrior
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_melee_warband_0
-                name: Melee Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for melee combat.
-                category: skill
+            attribute_modifiers:
+              - attribute: melee
+                delta: 1
           - id: warband_raider
             label: Raider
             description: You strike fast and hard at targets beyond your people's territory, taking what the raid offers.
             choice_key: raider
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_athletics_warband_0
-                name: Athletics Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for athletics.
-                category: skill
+            attribute_modifiers:
+              - attribute: athletics
+                delta: 1
           - id: warband_war_shaman
             label: War-Shaman
             description: You serve as a spiritual warrior — calling on powers beyond the physical, protecting the warband's soul.
             choice_key: war_shaman
-            attribute_modifiers: []
-            features_granted:
-              - id: sa_lore_theology_0
-                name: Lore (Theology) Rank 0
-                description: Sub-assignment skill — removes the untrained penalty die for sacred and theological lore.
-                category: skill
+            attribute_modifiers:
+              - attribute: lore_theology
+                delta: 1
 
       - id: warband_life
         name: Life Event
@@ -1932,12 +1701,9 @@ stages:
             description: A rite, a mission, or a punishment sent you into the wilderness alone for a season.
             roll_min: 3
             roll_max: 3
-            attribute_modifiers: []
-            features_granted:
-              - id: warband_survival_0
-                name: Survival Rank 0
-                description: A season alone in the wilderness on a rite or mission — removes the untrained penalty die for survival.
-                category: skill
+            attribute_modifiers:
+              - attribute: survival
+                delta: 1
           - id: warband_life_4
             label: A Blood Feud
             description: Something ignited a feud — yours or your warband's. An enemy now exists who will not let it rest.
@@ -1954,12 +1720,9 @@ stages:
             description: You encountered something in the wild that the war-shamans speak about in hushed tones.
             roll_min: 5
             roll_max: 5
-            attribute_modifiers: []
-            features_granted:
-              - id: warband_occult_0
-                name: Scholarship (Occult) Rank 0
-                description: An encounter with something the shamans say should not be disturbed — removes the untrained penalty die for occult scholarship.
-                category: skill
+            attribute_modifiers:
+              - attribute: scholarship_occult
+                delta: 1
           - id: warband_life_6
             label: The Warband Is Gone
             description: Broken by war, plague, or betrayal. You are what's left. An enemy remains.
