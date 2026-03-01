@@ -6,6 +6,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 
 from content.loader import get_config
+from models.content import EventType
 from models.api import (
     AdvanceRequest,
     ChooseEventRequest,
@@ -117,57 +118,90 @@ def _assemble_character_sheet(session: CharacterSession) -> CharacterSheet:
 
 
 def _try_auto_advance(session: CharacterSession) -> CharacterSheet | None:
-    """After every event resolution, check if the stage is done and auto-append
-    StageCompletedEntry (and possibly SessionCompletedEntry). Returns a
-    CharacterSheet if the session just completed, else None."""
+    """Resolve automatic events and advance non-repeatable stages until player
+    input is required. Returns a CharacterSheet if the session just completed,
+    else None."""
     config = get_config(session.lifepath_config_id)
-    state = session.derive_state(stages=config.stages)
 
-    if state.status != "in_progress" or state.current_stage_id is None:
-        return None
+    while True:
+        state = session.derive_state(stages=config.stages)
 
-    stage = config.stages.get(state.current_stage_id)
-    if stage is None:
-        return None
-
-    all_events_done = (
-        state.pending_event_index >= len(stage.events)
-        and not state.injected_event_ids
-    )
-
-    if not all_events_done:
-        return None
-
-    # Determine next stage
-    # Check if any prior EventResolvedEntry in this stage had a next_stage_override
-    next_stage_id: str | None = stage.default_next_stage_id
-    for entry in reversed(session.log):
-        if isinstance(entry, StageCompletedEntry):
-            break  # don't look past the previous stage boundary
-        if isinstance(entry, EventResolvedEntry) and entry.next_stage_override is not None:
-            next_stage_id = entry.next_stage_override
+        if state.status != "in_progress" or state.current_stage_id is None:
             break
 
-    visit_number = state.stage_visit_counts.get(state.current_stage_id, 0) + 1
+        stage = config.stages.get(state.current_stage_id)
+        if stage is None:
+            break
 
-    # For repeatable stages, we don't auto-advance — let the /advance endpoint handle it
-    if stage.is_repeatable:
-        return None
-
-    session.log.append(
-        StageCompletedEntry(
-            type="stage_completed",
-            timestamp=_now(),
-            stage_id=state.current_stage_id,
-            visit_number=visit_number,
-            next_stage_id=next_stage_id,
+        all_events_done = (
+            state.pending_event_index >= len(stage.events)
+            and not state.injected_event_ids
         )
-    )
 
-    if next_stage_id is None:
-        session.log.append(SessionCompletedEntry(type="session_completed", timestamp=_now()))
-        _save(session)
-        return _assemble_character_sheet(session)
+        if all_events_done:
+            # Repeatable stages wait for the /advance endpoint
+            if stage.is_repeatable:
+                break
+
+            # Find next stage — use last next_stage_override within current stage
+            next_stage_id: str | None = stage.default_next_stage_id
+            for entry in reversed(session.log):
+                if isinstance(entry, StageCompletedEntry):
+                    break  # don't look past the previous stage boundary
+                if isinstance(entry, EventResolvedEntry) and entry.next_stage_override is not None:
+                    next_stage_id = entry.next_stage_override
+                    break
+
+            visit_number = state.stage_visit_counts.get(state.current_stage_id, 0) + 1
+            session.log.append(
+                StageCompletedEntry(
+                    type="stage_completed",
+                    timestamp=_now(),
+                    stage_id=state.current_stage_id,
+                    visit_number=visit_number,
+                    next_stage_id=next_stage_id,
+                )
+            )
+
+            if next_stage_id is None:
+                session.log.append(SessionCompletedEntry(type="session_completed", timestamp=_now()))
+                _save(session)
+                return _assemble_character_sheet(session)
+
+            # Continue the loop — the next stage may start with automatic events
+            continue
+
+        # Not all events done — check if next pending event is automatic
+        if state.injected_event_ids:
+            next_event_id = state.injected_event_ids[0]
+            event = next((e for e in stage.events if e.id == next_event_id), None)
+        else:
+            event = (
+                stage.events[state.pending_event_index]
+                if state.pending_event_index < len(stage.events)
+                else None
+            )
+
+        if event is None or event.event_type != EventType.AUTOMATIC or not event.outcomes:
+            break  # waiting for player input (or unresolvable automatic event)
+
+        # Auto-resolve the automatic event using its sole outcome
+        outcome = event.outcomes[0]
+        session.log.append(
+            EventResolvedEntry(
+                type="event_resolved",
+                timestamp=_now(),
+                stage_id=stage.id,
+                event_id=event.id,
+                outcome_id=outcome.id,
+                attribute_modifiers=outcome.attribute_modifiers,
+                features_granted=outcome.features_granted,
+                injected_event_ids=list(outcome.triggers_events),
+                next_stage_override=outcome.next_stage_override,
+                context_updates=dict(outcome.context_updates),
+            )
+        )
+        # Continue to check if stage is now done or more automatics exist
 
     _save(session)
     return None
@@ -269,6 +303,7 @@ def roll_event(session_id: str, event_id: str, body: RollEventRequest) -> EventR
             features_granted=outcome.features_granted,
             injected_event_ids=list(outcome.triggers_events),
             next_stage_override=outcome.next_stage_override,
+            context_updates=dict(outcome.context_updates),
         )
     )
 
@@ -307,11 +342,28 @@ def choose_event(session_id: str, event_id: str, body: ChooseEventRequest) -> Ev
     if len(matched_outcomes) != len(body.choice_keys):
         raise HTTPException(status_code=422, detail="One or more choice keys did not match any outcome")
 
+    # Validate requires_context against the current session context
+    for outcome in matched_outcomes:
+        for ctx_key, allowed_values in outcome.requires_context.items():
+            actual = state.resolved_context.get(ctx_key)
+            if actual not in allowed_values:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Outcome '{outcome.id}' requires context "
+                        f"'{ctx_key}' to be one of {allowed_values}, "
+                        f"but current value is {actual!r}"
+                    ),
+                )
+
     # Aggregate effects across all chosen outcomes
     all_modifiers = [mod for o in matched_outcomes for mod in o.attribute_modifiers]
     all_features = [f for o in matched_outcomes for f in o.features_granted]
     all_injected = [eid for o in matched_outcomes for eid in o.triggers_events]
     next_stage_override = next((o.next_stage_override for o in matched_outcomes if o.next_stage_override), None)
+    aggregate_context: dict[str, str] = {}
+    for o in matched_outcomes:
+        aggregate_context.update(o.context_updates)
 
     session.log.append(
         EventResolvedEntry(
@@ -325,6 +377,7 @@ def choose_event(session_id: str, event_id: str, body: ChooseEventRequest) -> Ev
             features_granted=all_features,
             injected_event_ids=all_injected,
             next_stage_override=next_stage_override,
+            context_updates=aggregate_context,
         )
     )
 
