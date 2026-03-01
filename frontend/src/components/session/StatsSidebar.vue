@@ -31,6 +31,23 @@ defineProps({
 
     <div
       class="sidebar-section"
+      v-if="sessionState && Object.keys(sessionState.current_skills).length > 0"
+    >
+      <h3>Skills</h3>
+      <dl class="attr-list">
+        <div
+          v-for="attr in Object.keys(sessionState.current_skills).sort()"
+          :key="attr"
+          class="attr-row"
+        >
+          <dt>{{ attr.replace(/_/g, ' ') }}</dt>
+          <dd>{{ sessionState.current_skills[attr] }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div
+      class="sidebar-section"
       v-if="sessionState && sessionState.current_features.length > 0"
     >
       <h3>Features</h3>

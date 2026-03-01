@@ -29,6 +29,11 @@ defineProps({
         <AttributeGrid :attributes="characterSheet.attributes" />
       </section>
 
+      <section class="sheet-section" v-if="characterSheet.skills && Object.keys(characterSheet.skills).length > 0">
+        <h2>Skills</h2>
+        <AttributeGrid :attributes="Object.fromEntries(Object.keys(characterSheet.skills).sort().map(k => [k, characterSheet.skills[k]]))" />
+      </section>
+
       <section class="sheet-section">
         <h2>Features</h2>
         <FeatureList :features="characterSheet.features" />
