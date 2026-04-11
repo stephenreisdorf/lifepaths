@@ -5,12 +5,11 @@ import CreationScreen from './components/CreationScreen.vue'
 import CharacterSheet from './components/CharacterSheet.vue'
 
 const currentScreen = ref('welcome')
-const characteristics = ref({})
-const skillOptions = ref([])
-const requiredSkillCount = ref(0)
-const characterData = ref(null)
-const error = ref('')
 const sessionId = ref(null)
+const characterData = ref(null)
+const resolvedSteps = ref([])
+const currentPrompt = ref(null)
+const error = ref('')
 
 async function startCreation() {
   error.value = ''
@@ -18,14 +17,13 @@ async function startCreation() {
   const data = await res.json()
 
   sessionId.value = data.session_id
-  characteristics.value = data.character.characteristics
-  skillOptions.value = data.next_prompt.options
-  requiredSkillCount.value = data.next_prompt.required_count
-  characterData.value = null
-  currentScreen.value = 'creation'
+  characterData.value = data.character
+  resolvedSteps.value = data.resolved_steps
+  currentPrompt.value = data.next_prompt
+  currentScreen.value = data.next_prompt ? 'creation' : 'sheet'
 }
 
-async function confirmSkills(selections) {
+async function submitInput(selections) {
   error.value = ''
   const res = await fetch('/api/submit', {
     method: 'POST',
@@ -44,7 +42,12 @@ async function confirmSkills(selections) {
 
   const data = await res.json()
   characterData.value = data.character
-  currentScreen.value = 'sheet'
+  resolvedSteps.value = data.resolved_steps
+  currentPrompt.value = data.next_prompt
+
+  if (!data.next_prompt) {
+    currentScreen.value = 'sheet'
+  }
 }
 </script>
 
@@ -56,11 +59,11 @@ async function confirmSkills(selections) {
     />
     <CreationScreen
       v-else-if="currentScreen === 'creation'"
-      :characteristics="characteristics"
-      :skill-options="skillOptions"
-      :required-skill-count="requiredSkillCount"
+      :characteristics="characterData?.characteristics"
+      :prompt="currentPrompt"
+      :resolved-steps="resolvedSteps"
       :error="error"
-      @confirm="confirmSkills"
+      @confirm="submitInput"
     />
     <CharacterSheet
       v-else-if="currentScreen === 'sheet'"
