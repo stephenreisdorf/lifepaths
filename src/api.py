@@ -39,7 +39,9 @@ def submit(req: SubmitRequest) -> dict:
     """Submit player input for the current step and return the next prompt or final result."""
     game = sessions.get(req.session_id)
     if game is None:
-        raise HTTPException(status_code=400, detail="Invalid session. Call /api/start first.")
+        raise HTTPException(
+            status_code=400, detail="Invalid session. Call /api/start first."
+        )
 
     try:
         result = game.submit(req.player_input)

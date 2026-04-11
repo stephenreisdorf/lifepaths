@@ -27,7 +27,9 @@ class RollCharacteristicsStep(Step):
     def apply(self) -> None:
         """Add each rolled characteristic to the character."""
         for characteristic, value in self.characteristics.items():
-            self.character.add_characteristic(characteristic=characteristic, value=value)
+            self.character.add_characteristic(
+                characteristic=characteristic, value=value
+            )
 
     def prompt(self) -> StepPrompt:
         """Return rolled characteristic data (called after resolve for auto steps)."""
@@ -98,7 +100,9 @@ class ChooseBackgroundSkillsStep(Step):
         selections = player_input.get("selections", [])
         required_choices = self.required_skill_count()
         if len(selections) != required_choices:
-            raise ValueError(f"You need to choose exactly {required_choices} skills (3 + EDU DM)!")
+            raise ValueError(
+                f"You need to choose exactly {required_choices} skills (3 + EDU DM)!"
+            )
         self.selections: list[str] = selections
 
     def apply(self) -> None:

@@ -57,9 +57,7 @@ class Character(BaseModel):
         """Add a skill at base rank 0. No-op if the skill already exists."""
         if self.has_skill(name):
             return
-        new_skill = Skill(
-            name=name, specialties={}, base_rank=0
-        )
+        new_skill = Skill(name=name, specialties={}, base_rank=0)
         self.skills[name] = new_skill
 
     def increment_skill(self, name: str, specialty: str, increment: int = 1) -> None:
