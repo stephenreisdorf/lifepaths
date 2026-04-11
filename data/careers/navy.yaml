@@ -1,0 +1,205 @@
+name: Navy
+description: >
+  Members of the interstellar navy which patrols space between
+  the stars. The navy is responsible for protecting society from
+  hostile forces and maintaining order among the stars.
+
+qualification:
+  characteristic: Intelligence
+  target: 6
+
+# Skills gained at rank 0 during basic training (first term only)
+service_skills:
+  - Athletics
+  - Vacc Suit
+  - Electronics
+  - Gunner
+  - Mechanic
+  - Gun Combat
+
+# Assignments available within this career
+assignments:
+  - name: Line/Crew
+    description: You serve as a general crewmember aboard a warship.
+    survival:
+      characteristic: Strength
+      target: 5
+    advancement:
+      characteristic: Education
+      target: 7
+
+  - name: Engineering/Gunnery
+    description: You serve as an engineer or gunner aboard a warship.
+    survival:
+      characteristic: Dexterity
+      target: 7
+    advancement:
+      characteristic: Education
+      target: 6
+
+  - name: Flight
+    description: You are a pilot of a fighter or shuttle.
+    survival:
+      characteristic: Dexterity
+      target: 7
+    advancement:
+      characteristic: Education
+      target: 5
+
+# Skill tables — player picks a table, then rolls d6 for a result
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Dexterity +1
+    - Endurance +1
+    - Intelligence +1
+    - Education +1
+    - Social Standing +1
+
+  Service Skills:
+    - Athletics
+    - Vacc Suit
+    - Electronics
+    - Gunner
+    - Mechanic
+    - Gun Combat
+
+  Advanced Education:
+    - Electronics
+    - Astrogation
+    - Engineer
+    - Drive
+    - Navigation
+    - Admin
+
+  # Only available if Education 8+
+  Advanced Education (Officer):
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Medic
+      - Leadership
+      - Tactics (Naval)
+      - Admin
+      - Advocate
+      - Electronics
+
+  # Assignment-specific skill tables
+  Line/Crew:
+    - Electronics
+    - Mechanic
+    - Gun Combat
+    - Flyer
+    - Melee
+    - Vacc Suit
+
+  Engineering/Gunnery:
+    - Engineer
+    - Mechanic
+    - Electronics
+    - Engineer
+    - Gunner
+    - Flyer
+
+  Flight:
+    - Pilot
+    - Flyer
+    - Gunner
+    - Pilot (Small Craft)
+    - Astrogation
+    - Electronics
+
+# Ranks and automatic skills/bonuses earned at each rank
+ranks:
+  - rank: 0
+    title: Crewman
+  - rank: 1
+    title: Able Spacehand
+    bonus_skill: Mechanic
+  - rank: 2
+    title: Petty Officer 3rd Class
+    bonus_skill: Vacc Suit
+  - rank: 3
+    title: Petty Officer 2nd Class
+  - rank: 4
+    title: Petty Officer 1st Class
+    bonus_skill: Endurance +1
+  - rank: 5
+    title: Chief Petty Officer
+  - rank: 6
+    title: Master Chief
+
+# Mustering-out benefits when leaving the career
+benefits:
+  cash:
+    - 1000
+    - 5000
+    - 5000
+    - 10000
+    - 20000
+    - 50000
+    - 50000
+
+  material:
+    - Personal Vehicle
+    - Intelligence +1
+    - Education +2
+    - Weapon
+    - TAS Membership
+    - Ship's Boat
+    - Two Ship Shares
+
+# Events table — roll 2d6 during each term
+events:
+  2: >
+    Disaster! Roll on the Mishap table, but you are not ejected
+    from this career.
+  3: >
+    You join a gambling circle on board. Roll Gambler 8+.
+    If you succeed, gain an extra Benefit roll. If you fail, lose
+    one Benefit roll.
+  4: >
+    You are assigned a special mission. Gain DM+1 to any one
+    Benefit roll.
+  5: >
+    You are given advanced training in a specialist field. Roll
+    Education 8+ to gain any one skill.
+  6: >
+    Your vessel participates in a notable engagement. Gain one
+    of Electronics, Engineer, Gunner, or Pilot.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    Your vessel participates in a diplomatic mission. Gain one
+    of Diplomat, Investigate, or Recon.
+  9: >
+    You foil an attempted crime aboard your vessel. Gain an Enemy
+    and increase one of Melee, Gun Combat, or Investigate.
+  10: >
+    You are recognized for your valor. Gain DM+2 to your next
+    Advancement roll.
+  11: >
+    You are befriended by a senior officer. Gain an Ally and
+    either Tactics (Naval) or Admin.
+  12: >
+    You display extraordinary heroism in battle. You are
+    automatically promoted.
+
+# Mishap table — roll d6 when survival fails
+mishaps:
+  1: >
+    Severely injured in action. Roll twice on the Injury table
+    and take the lower result.
+  2: >
+    A loss in battle forces you to evacuate. Lose one personal
+    possession (one Benefit roll).
+  3: >
+    You are tormented by or quarrel with an officer or fellow
+    crewman. Gain that character as a Rival.
+  4: >
+    You are blamed for an accident aboard ship. Lose one Social
+    Standing.
+  5: >
+    You are isolated and stranded during a mission. Gain Survival
+    or Mechanic.
+  6: Injured. Roll on the Injury table.
