@@ -65,12 +65,16 @@ skill_tables:
     - Gun Combat
 
   Advanced Education:
-    - Electronics
-    - Astrogation
-    - Engineer
-    - Drive
-    - Navigation
-    - Admin
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Electronics
+      - Astrogation
+      - Engineer
+      - Drive
+      - Navigation
+      - Admin
 
   # Only available if Education 8+
   Advanced Education (Officer):

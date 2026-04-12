@@ -16,6 +16,9 @@ class GameSession:
         self.term: Term = ChildhoodTerm(self.character)
         self.current_career_data: dict | None = None
         self.career_term_count: int = 0
+        # Name of the career that was just left (mishap); blocks re-entry
+        # for exactly the immediately-following Career Selection prompt.
+        self.blocked_career: str | None = None
 
     def _character_summary(self) -> dict:
         """Serialize current character state for API responses."""
@@ -33,6 +36,15 @@ class GameSession:
                 }
                 for name, s in self.character.skills.items()
             },
+            "associates": [
+                {
+                    "name": a.name,
+                    "type": a.type.value,
+                    "description": a.description,
+                    "source_event": a.source_event,
+                }
+                for a in self.character.associates
+            ],
         }
 
     def _auto_advance(self) -> tuple[list[StepPrompt], StepPrompt | None]:

@@ -17,6 +17,31 @@ if TYPE_CHECKING:
     from src.engine import GameSession
 
 
+def parse_skill_entry(entry: str) -> tuple[str, str | None, int | None]:
+    """Parse a skill-table entry into (name, specialty, level).
+
+    Forms handled:
+      - "Skill"                → (name, None, None)  bare: +1, or grant at 1
+      - "Skill 0"              → (name, None, 0)     ensure exists at 0
+      - "Skill N"              → (name, None, N)     raise to N
+      - "Parent (Specialty)"   → (parent, specialty, None)
+      - "Parent (Specialty) N" → (parent, specialty, N)
+    """
+    entry = entry.strip()
+    level: int | None = None
+    tokens = entry.rsplit(" ", 1)
+    if len(tokens) == 2 and tokens[1].lstrip("-").isdigit():
+        entry, level = tokens[0].rstrip(), int(tokens[1])
+
+    specialty: str | None = None
+    if entry.endswith(")") and "(" in entry:
+        paren = entry.rfind("(")
+        specialty = entry[paren + 1 : -1].strip()
+        entry = entry[:paren].rstrip()
+
+    return entry, specialty, level
+
+
 def try_apply_characteristic_bonus(character: Character, entry: str) -> bool:
     """If `entry` is '<Characteristic> +<N>', bump that characteristic.
 
@@ -111,14 +136,41 @@ class ChooseAssignmentStep(Step):
 
 
 class ChooseCareerSkillsTable(Step):
-    """Choose which skill table to roll on."""
+    """Choose which skill table to roll on.
+
+    Tables may declare a per-table requirement (e.g. EDU 8+ to access the
+    Advanced Education table); only tables the character currently meets
+    are offered as options.
+    """
 
     step_id = "choose_career_skills_table"
     step_type = StepType.CHOICE
 
-    def __init__(self, character: Character, skill_tables: list[str]):
+    def __init__(
+        self,
+        character: Character,
+        skill_tables: list[str],
+        requirements: dict[str, dict] | None = None,
+    ):
         super().__init__(character=character)
         self.skill_tables = skill_tables
+        self.requirements = requirements or {}
+
+    def _meets_requirement(self, table_name: str) -> bool:
+        req = self.requirements.get(table_name)
+        if not req:
+            return True
+        characteristic = req.get("characteristic")
+        minimum = req.get("minimum")
+        if characteristic is None or minimum is None:
+            return True
+        stat = self.character.characteristics.get(characteristic)
+        if stat is None:
+            return False
+        return stat.value >= minimum
+
+    def available_tables(self) -> list[str]:
+        return [t for t in self.skill_tables if self._meets_requirement(t)]
 
     def prompt(self) -> StepPrompt:
         if self.outcome is not None:
@@ -131,7 +183,7 @@ class ChooseCareerSkillsTable(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description="Choose a skill table to roll on.",
-            options=self.skill_tables,
+            options=self.available_tables(),
             required_count=1,
         )
 
@@ -141,7 +193,12 @@ class ChooseCareerSkillsTable(Step):
         selections = player_input.get("selections", [])
         if len(selections) != 1:
             raise ValueError("Must choose a single skill table.")
-        self._selected_skill_table_pending: str = selections[0]
+        chosen = selections[0]
+        if not self._meets_requirement(chosen):
+            raise ValueError(
+                f"You do not meet the requirements for the {chosen} skill table."
+            )
+        self._selected_skill_table_pending: str = chosen
 
     def apply(self) -> None:
         table = self._selected_skill_table_pending
@@ -168,7 +225,8 @@ class RollForSkillStep(Step):
         # Skill tables can contain '<Characteristic> +<N>' entries that
         # should bump a characteristic rather than grant a skill.
         if not try_apply_characteristic_bonus(self.character, self.skill):
-            self.character.increment_skill(self.skill, specialty="TODO")
+            name, specialty, level = parse_skill_entry(self.skill)
+            self.character.grant_skill(name, level=level, specialty=specialty)
         self.outcome = StepOutcome(
             status="ROLLED",
             description=(
@@ -532,6 +590,9 @@ class TransitionTerm(Term):
             career_name = outcome.data["career"]
             session.current_career_data = load_career(career_name)
             session.career_term_count = 0
+            # Block only applies to the immediately-following selection;
+            # once a new career is picked the block is lifted.
+            session.blocked_career = None
             kwargs = career_to_term_kwargs(
                 session.current_career_data, is_first_term=True
             )
@@ -576,6 +637,7 @@ class CareerTerm(Term):
         service_skills: list[str],
         assignments: list[dict],
         skill_tables: dict[str, list[str]],
+        skill_table_requirements: dict[str, dict] | None = None,
         events: dict | None = None,
         mishaps: dict | None = None,
         ranks: list[dict] | None = None,
@@ -587,6 +649,7 @@ class CareerTerm(Term):
         self.service_skills = service_skills
         self.assignments = assignments
         self.skill_tables = skill_tables
+        self.skill_table_requirements = skill_table_requirements or {}
         self.events = events or {}
         self.mishaps = mishaps or {}
         self.ranks = ranks or []
@@ -640,7 +703,9 @@ class CareerTerm(Term):
             else:
                 self.steps.append(
                     ChooseCareerSkillsTable(
-                        self.character, list(self.skill_tables.keys())
+                        self.character,
+                        list(self.skill_tables.keys()),
+                        requirements=self.skill_table_requirements,
                     )
                 )
 
@@ -668,6 +733,8 @@ class CareerTerm(Term):
                 self.steps.append(MishapRollStep(self.character, self.mishaps))
 
         elif isinstance(step, MishapRollStep):
+            self.character.mark_career_ejected(self.career_name)
+            self.character.record_career_term(self.career_name)
             self.outcome = StepOutcome(
                 status="MISHAP",
                 description="Career ended by mishap.",
@@ -696,7 +763,12 @@ class CareerTerm(Term):
         status = self.outcome.status if self.outcome else None
 
         if status == "FAILED_QUAL":
-            careers = get_available_careers()
+            # A failed qualification doesn't lift an outstanding re-entry
+            # block from an earlier mishap.
+            careers = [
+                c for c in get_available_careers()
+                if c["name"] != session.blocked_career
+            ]
             return TransitionTerm(
                 session.character, ChooseCareerStep(session.character, careers)
             )
@@ -704,7 +776,11 @@ class CareerTerm(Term):
         if status == "MISHAP":
             session.current_career_data = None
             session.career_term_count = 0
-            careers = get_available_careers()
+            session.blocked_career = self.career_name
+            careers = [
+                c for c in get_available_careers()
+                if c["name"] != session.blocked_career
+            ]
             return TransitionTerm(
                 session.character, ChooseCareerStep(session.character, careers)
             )

@@ -25,11 +25,15 @@ def load_career(career_name: str) -> dict:
 def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
     """Transform parsed career YAML into kwargs for CareerTerm.__init__."""
     # Normalize skill tables: gated tables have a {requirement, skills} structure,
-    # while normal tables are flat lists. Extract just the skill lists.
+    # while normal tables are flat lists. Extract skills and (separately) the
+    # per-table requirement so CareerTerm can gate access at prompt time.
     skill_tables: dict[str, list[str]] = {}
+    skill_table_requirements: dict[str, dict] = {}
     for table_name, table_value in career_data["skill_tables"].items():
         if isinstance(table_value, dict) and "skills" in table_value:
             skill_tables[table_name] = table_value["skills"]
+            if "requirement" in table_value:
+                skill_table_requirements[table_name] = table_value["requirement"]
         else:
             skill_tables[table_name] = table_value
 
@@ -40,6 +44,7 @@ def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
         "service_skills": career_data["service_skills"],
         "assignments": career_data["assignments"],
         "skill_tables": skill_tables,
+        "skill_table_requirements": skill_table_requirements,
         "events": career_data.get("events", {}),
         "mishaps": career_data.get("mishaps", {}),
         "ranks": career_data.get("ranks", []),
