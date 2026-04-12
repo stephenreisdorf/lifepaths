@@ -11,7 +11,6 @@ One file per open issue. Index below.
 - [Officer skill table and rank track](officer-track.md)
 - [Advancement roll ≤ terms served forces exit](advancement-roll-forces-exit.md)
 - [Natural 12 on advancement forces you to stay](natural-12-forces-stay.md)
-- [Natural 2 on survival is always a failure](natural-2-survival-failure.md)
 
 ## Missing mechanics — effects
 

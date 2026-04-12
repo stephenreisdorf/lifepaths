@@ -191,7 +191,11 @@ class RollForSkillStep(Step):
 
 
 class SurvivalCheckStep(PassFailRollStep):
-    """Roll 2d6 + DM vs the assignment's survival target."""
+    """Roll 2d6 + DM vs the assignment's survival target.
+
+    Per the rules, a natural 2 on the dice is always a failure, even if
+    the modified total clears the target.
+    """
 
     step_id = "survival_check"
     check_label = "Survival"
@@ -206,6 +210,32 @@ class SurvivalCheckStep(PassFailRollStep):
             target=survival["target"],
         )
         self.assignment = assignment
+
+    def apply(self) -> None:
+        passed = self.total_roll >= self.target and self.raw_roll != 2
+        status = self.status_pass if passed else self.status_fail
+        self.outcome = StepOutcome(
+            status=status,
+            description=self._post_description(status),
+            data={
+                "raw_roll": self.raw_roll,
+                "total_roll": self.total_roll,
+                "target": self.target,
+                "modifier": self.modifier,
+                "characteristic": self.check_characteristic,
+                "natural_2_failure": self.raw_roll == 2
+                and self.total_roll >= self.target,
+            },
+        )
+
+    def _post_description(self, status: str) -> str:
+        if status == self.status_fail and self.raw_roll == 2 and self.total_roll >= self.target:
+            return (
+                f"Survival check on {self.check_characteristic}: "
+                f"rolled {self.total_roll} vs target {self.target} — "
+                f"FAILED (natural 2)."
+            )
+        return super()._post_description(status)
 
 
 class MishapRollStep(Step):
