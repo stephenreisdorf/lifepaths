@@ -47,6 +47,3 @@ One file per open issue. Index below.
 - [terms_served is not incremented on mishap-ended terms](terms-served-on-mishap.md)
 - [Aging](aging.md)
 
-## Architecture
-
-- [Step outcome protocol + term-owned routing](step-outcome-and-term-routing.md)

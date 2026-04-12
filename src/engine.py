@@ -1,14 +1,5 @@
-from src.career_loader import career_to_term_kwargs, get_available_careers, load_career
 from src.character import Character
-from src.terms.base import StepPrompt, StepType, SubmitResult
-from src.terms.careers import (
-    CareerTerm,
-    ChooseCareerStep,
-    ContinueOrMusterOutStep,
-    MishapRollStep,
-    RollQualificationStep,
-    TransitionTerm,
-)
+from src.terms.base import StepPrompt, StepType, SubmitResult, Term
 from src.terms.childhood import ChildhoodTerm
 
 
@@ -16,14 +7,13 @@ class GameSession:
     """Owns a character and its current term, driving the step lifecycle.
 
     The engine auto-advances through automatic steps so callers only
-    interact when player input is needed.  When a term completes it
-    determines the next term via _next_term(), transparently chaining
-    childhood → career selection → career terms → muster out.
+    interact when player input is needed. Term-to-term transitions are
+    owned by each term via `Term.next_term(session)`.
     """
 
     def __init__(self) -> None:
         self.character = Character(name="Traveller", characteristics={}, skills={})
-        self.term = ChildhoodTerm(self.character)
+        self.term: Term = ChildhoodTerm(self.character)
         self.current_career_data: dict | None = None
         self.career_term_count: int = 0
 
@@ -45,63 +35,6 @@ class GameSession:
             },
         }
 
-    def _next_term(self):
-        """Determine the next term after the current one finishes, or None if creation is done."""
-        finished = self.term
-
-        if isinstance(finished, ChildhoodTerm):
-            careers = get_available_careers()
-            return TransitionTerm(self.character, ChooseCareerStep(self.character, careers))
-
-        if isinstance(finished, TransitionTerm):
-            inner = finished.steps[0]
-
-            if isinstance(inner, ChooseCareerStep):
-                self.current_career_data = load_career(inner.selected_career)
-                self.career_term_count = 0
-                kwargs = career_to_term_kwargs(self.current_career_data, is_first_term=True)
-                return CareerTerm(
-                    self.character, term_number=self.career_term_count + 1, **kwargs
-                )
-
-            if isinstance(inner, ContinueOrMusterOutStep):
-                if inner.decision == "Continue":
-                    kwargs = career_to_term_kwargs(self.current_career_data, is_first_term=False)
-                    return CareerTerm(
-                        self.character, term_number=self.career_term_count + 1, **kwargs
-                    )
-                return None  # Muster Out — creation is done
-
-        if isinstance(finished, CareerTerm):
-            # Check for qualification failure (term ended after only the qualification step)
-            qual_step = finished.steps[0]
-            if (
-                isinstance(qual_step, RollQualificationStep)
-                and hasattr(qual_step, "qualification_status")
-                and qual_step.qualification_status == "FAILED"
-            ):
-                careers = get_available_careers()
-                return TransitionTerm(
-                    self.character, ChooseCareerStep(self.character, careers)
-                )
-
-            # Mishap ends the career — route back to career selection.
-            if any(isinstance(s, MishapRollStep) for s in finished.steps):
-                self.current_career_data = None
-                self.career_term_count = 0
-                careers = get_available_careers()
-                return TransitionTerm(
-                    self.character, ChooseCareerStep(self.character, careers)
-                )
-
-            self.career_term_count += 1
-            return TransitionTerm(
-                self.character,
-                ContinueOrMusterOutStep(self.character, finished.career_name),
-            )
-
-        return None
-
     def _auto_advance(self) -> tuple[list[StepPrompt], StepPrompt | None]:
         """Resolve consecutive automatic steps, return their prompts and the next interactive prompt."""
         resolved: list[StepPrompt] = []
@@ -117,7 +50,7 @@ class GameSession:
 
         # If current term is exhausted, try to transition to the next term
         if prompt is None:
-            next_term = self._next_term()
+            next_term = self.term.next_term(self)
             if next_term is not None:
                 self.term = next_term
                 more_resolved, prompt = self._auto_advance()

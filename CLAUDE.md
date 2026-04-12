@@ -62,12 +62,13 @@ Three layers: **Domain** (`src/terms/`, `src/character.py`) → **Engine** (`src
 - **Self-describing steps**: every step declares its `step_type` and `prompt()` so the API and frontend handle any step generically. Adding a new term/step requires only new domain code — no API or frontend changes.
 - **Uniform resolve interface**: all steps accept `resolve(player_input: dict | None = None)`. Automatic steps ignore input; interactive steps read `player_input["selections"]`.
 - **Auto-advancement**: the engine resolves consecutive automatic steps silently, collecting their prompts in `SubmitResult.resolved_steps`.
-- **Prompts are re-rendered post-resolve**: `prompt()` on roll/choice steps checks for the presence of an outcome attribute (e.g. `hasattr(self, "qualification_status")`) and returns either a "before" description or an "after" description with the result. The frontend displays both.
+- **Prompts are re-rendered post-resolve**: step `apply()` populates `self.outcome: StepOutcome | None` with a status tag and a human-readable description; `prompt()` reads `self.outcome.description` when present and otherwise renders a "before" description. The frontend displays both.
+- **Pass/fail roll steps**: `RollQualificationStep`, `SurvivalCheckStep`, and `AdvancementRollStep` all inherit from `PassFailRollStep` in `src/terms/base.py`, which handles the 2d6 + DM vs target boilerplate. Subclasses declare `step_id`, `check_label`, `status_pass`, `status_fail`.
+- **Term-owned routing**: each `Term` implements `next_term(session) -> Term | None`. The engine's transition logic is just `self.term.next_term(self)`. `CareerTerm` synthesizes its own terminal outcome (`FAILED_QUAL` / `MISHAP` / `COMPLETED`) at the end of its step machine so `next_term` can branch on status strings rather than `isinstance` checks.
 - **Imports use `src.` prefix** (e.g., `from src.character import Character`).
 
 ## Known rough edges
 
-- Step outcome state is stored as ad-hoc attributes on the step instance (`qualification_status`, `survival_status`, `decision`, `selected_career`, `mishap_text`, …) and consumers probe via `hasattr`. `GameSession._next_term` inspects finished terms with `isinstance` chains and peeks at `finished.steps[0]`. A refactor RFC is captured in `Backlog/step-outcome-and-term-routing.md`.
 - `utilities.roll()` uses the global `random` module directly, so step logic is untestable without monkeypatching or seeding.
 
 ## Backlog

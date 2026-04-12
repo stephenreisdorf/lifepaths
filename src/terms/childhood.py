@@ -1,6 +1,13 @@
-from src.terms.base import Step, StepPrompt, StepType, Term
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from src.character import Character
+from src.terms.base import Step, StepOutcome, StepPrompt, StepType, Term
 from src.utilities import roll
+
+if TYPE_CHECKING:
+    from src.engine import GameSession
 
 
 class RollCharacteristicsStep(Step):
@@ -19,24 +26,31 @@ class RollCharacteristicsStep(Step):
     ]
 
     def resolve(self, player_input: dict | None = None) -> None:
-        """Roll 2d6 for each characteristic and store the results."""
         self.characteristics: dict[str, int] = {
             name: roll(2) for name in self.CHARACTERISTIC_NAMES
         }
 
     def apply(self) -> None:
-        """Add each rolled characteristic to the character."""
         for characteristic, value in self.characteristics.items():
             self.character.add_characteristic(
                 characteristic=characteristic, value=value
             )
+        self.outcome = StepOutcome(
+            status="ROLLED",
+            description="Roll 2d6 for each of the six core characteristics.",
+            data={"characteristics": dict(self.characteristics)},
+        )
 
     def prompt(self) -> StepPrompt:
-        """Describe this step. The rolled values are visible in the stats table."""
+        description = (
+            self.outcome.description
+            if self.outcome
+            else "Roll 2d6 for each of the six core characteristics."
+        )
         return StepPrompt(
             step_id=self.step_id,
             step_type=self.step_type,
-            description="Roll 2d6 for each of the six core characteristics.",
+            description=description,
         )
 
 
@@ -72,7 +86,12 @@ class ChooseBackgroundSkillsStep(Step):
         return 3 + education.modifier()
 
     def prompt(self) -> StepPrompt:
-        """Return the available skill options and required count."""
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
         return StepPrompt(
             step_id=self.step_id,
             step_type=self.step_type,
@@ -82,7 +101,6 @@ class ChooseBackgroundSkillsStep(Step):
         )
 
     def resolve(self, player_input: dict | None = None) -> None:
-        """Validate and store the player's skill selections."""
         if player_input is None:
             raise ValueError("Skill selections are required.")
         selections = player_input.get("selections", [])
@@ -91,12 +109,16 @@ class ChooseBackgroundSkillsStep(Step):
             raise ValueError(
                 f"You need to choose exactly {required_choices} skills (3 + EDU DM)!"
             )
-        self.selections: list[str] = selections
+        self._selections_pending: list[str] = selections
 
     def apply(self) -> None:
-        """Add each selected skill to the character."""
-        for skill in self.selections:
+        for skill in self._selections_pending:
             self.character.add_skill(skill)
+        self.outcome = StepOutcome(
+            status="SELECTED",
+            description=f"Background skills: {', '.join(self._selections_pending)}.",
+            data={"skills": list(self._selections_pending)},
+        )
 
 
 class ChildhoodTerm(Term):
@@ -111,3 +133,13 @@ class ChildhoodTerm(Term):
 
     def label(self) -> str:
         return "Childhood"
+
+    def next_term(self, session: "GameSession") -> "Term | None":
+        # Local imports to avoid circular references.
+        from src.career_loader import get_available_careers
+        from src.terms.careers import ChooseCareerStep, TransitionTerm
+
+        careers = get_available_careers()
+        return TransitionTerm(
+            session.character, ChooseCareerStep(session.character, careers)
+        )
