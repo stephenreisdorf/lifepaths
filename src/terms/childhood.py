@@ -32,23 +32,11 @@ class RollCharacteristicsStep(Step):
             )
 
     def prompt(self) -> StepPrompt:
-        """Return rolled characteristic data (called after resolve for auto steps)."""
-        data = None
-        if hasattr(self, "characteristics"):
-            data = {
-                "characteristics": {
-                    name: {
-                        "value": self.character.characteristics[name].value,
-                        "modifier": self.character.characteristics[name].modifier(),
-                    }
-                    for name in self.characteristics
-                }
-            }
+        """Describe this step. The rolled values are visible in the stats table."""
         return StepPrompt(
             step_id=self.step_id,
             step_type=self.step_type,
             description="Roll 2d6 for each of the six core characteristics.",
-            data=data,
         )
 
 
@@ -120,3 +108,6 @@ class ChildhoodTerm(Term):
             RollCharacteristicsStep(self.character),
             ChooseBackgroundSkillsStep(self.character),
         ]
+
+    def label(self) -> str:
+        return "Childhood"

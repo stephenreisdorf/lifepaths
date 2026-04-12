@@ -21,6 +21,7 @@ class StepPrompt(BaseModel):
     data: dict | None = None
     options: list[str] | None = None
     required_count: int | None = None
+    term_label: str | None = None
 
 
 class SubmitResult(BaseModel):
@@ -82,6 +83,10 @@ class Term:
         self.character: Character = character
         self.steps: list[Step] = []
         self.current_step_index: int = 0
+
+    def label(self) -> str:
+        """Human-readable label for this term, used to group step history."""
+        return type(self).__name__
 
     @property
     def current_step(self) -> Step | None:

@@ -33,7 +33,15 @@ class GameSession:
                 name: {"value": c.value, "modifier": c.modifier()}
                 for name, c in self.character.characteristics.items()
             },
-            "skills": list(self.character.skills.keys()),
+            "skills": {
+                name: {
+                    "base_rank": s.base_rank,
+                    "specialties": {
+                        sp_name: sp.rank for sp_name, sp in s.specialties.items()
+                    },
+                }
+                for name, s in self.character.skills.items()
+            },
         }
 
     def _next_term(self):
@@ -83,13 +91,15 @@ class GameSession:
     def _auto_advance(self) -> tuple[list[StepPrompt], StepPrompt | None]:
         """Resolve consecutive automatic steps, return their prompts and the next interactive prompt."""
         resolved: list[StepPrompt] = []
-        prompt = self.term.current_step_prompt()
+        prompt = self._current_prompt_with_label()
         while prompt and prompt.step_type == StepType.AUTOMATIC:
             self.term.submit()  # resolve + apply + advance (no player input)
             # Re-read the prompt after resolution so it includes result data
             step = self.term.steps[self.term.current_step_index - 1]
-            resolved.append(step.prompt())
-            prompt = self.term.current_step_prompt()
+            step_prompt = step.prompt()
+            step_prompt.term_label = self.term.label()
+            resolved.append(step_prompt)
+            prompt = self._current_prompt_with_label()
 
         # If current term is exhausted, try to transition to the next term
         if prompt is None:
@@ -100,6 +110,13 @@ class GameSession:
                 resolved.extend(more_resolved)
 
         return resolved, prompt
+
+    def _current_prompt_with_label(self) -> StepPrompt | None:
+        """Return the current term's next prompt with the term label attached."""
+        prompt = self.term.current_step_prompt()
+        if prompt is not None:
+            prompt.term_label = self.term.label()
+        return prompt
 
     def start(self) -> SubmitResult:
         """Begin the term: auto-resolve initial automatic steps and return the first interactive prompt."""
