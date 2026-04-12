@@ -10,7 +10,6 @@ One file per open issue. Index below.
 - [Commission step for military careers](commission-step.md)
 - [Officer skill table and rank track](officer-track.md)
 - [Advancement roll ≤ terms served forces exit](advancement-roll-forces-exit.md)
-- [Natural 12 on advancement forces you to stay](natural-12-forces-stay.md)
 
 ## Missing mechanics — effects
 

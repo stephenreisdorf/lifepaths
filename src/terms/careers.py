@@ -362,6 +362,7 @@ class AdvancementRollStep(PassFailRollStep):
             status = self.status_fail
             self.new_rank_title = None
 
+        self.forced_stay: bool = self.raw_roll == 12
         self.outcome = StepOutcome(
             status=status,
             description=self._post_description(status),
@@ -372,6 +373,7 @@ class AdvancementRollStep(PassFailRollStep):
                 "modifier": self.modifier,
                 "characteristic": self.check_characteristic,
                 "new_rank_title": self.new_rank_title,
+                "forced_stay": self.forced_stay,
             },
         )
 
@@ -382,9 +384,11 @@ class AdvancementRollStep(PassFailRollStep):
             outcome_str = "already at top rank — no promotion"
         else:
             outcome_str = status
+        suffix = " (natural 12 — forced to stay)" if self.raw_roll == 12 else ""
         return (
             f"Advancement check on {self.check_characteristic}: "
-            f"rolled {self.total_roll} vs target {self.target} — {outcome_str}."
+            f"rolled {self.total_roll} vs target {self.target} — "
+            f"{outcome_str}{suffix}."
         )
 
     def _apply_rank_bonus(self, new_rank: int) -> str | None:
@@ -670,11 +674,18 @@ class CareerTerm(Term):
             )
 
         elif isinstance(step, AdvancementRollStep):
-            # End of a normal term. No more steps.
-            self.outcome = StepOutcome(
-                status="COMPLETED",
-                description="Term completed.",
-            )
+            # End of a normal term. A natural 12 forces the character to
+            # stay in the career; skip the Continue / Muster Out prompt.
+            if step.forced_stay:
+                self.outcome = StepOutcome(
+                    status="FORCED_STAY",
+                    description="Natural 12 — forced to stay in the career.",
+                )
+            else:
+                self.outcome = StepOutcome(
+                    status="COMPLETED",
+                    description="Term completed.",
+                )
 
     def next_term(self, session: "GameSession") -> "Term | None":
         from src.career_loader import (
@@ -703,6 +714,19 @@ class CareerTerm(Term):
             return TransitionTerm(
                 session.character,
                 ContinueOrMusterOutStep(session.character, self.career_name),
+            )
+
+        if status == "FORCED_STAY":
+            # Natural 12 on advancement — skip continue/muster and start
+            # the next term in the same career immediately.
+            session.career_term_count += 1
+            kwargs = career_to_term_kwargs(
+                session.current_career_data, is_first_term=False
+            )
+            return CareerTerm(
+                session.character,
+                term_number=session.career_term_count + 1,
+                **kwargs,
             )
 
         return None
