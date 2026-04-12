@@ -1,0 +1,215 @@
+name: Merchant
+description: >
+  Members of a commercial enterprise. Merchants may crew the ships
+  of huge trading corporations or work for independent free traders
+  who carry chance cargoes and passengers between worlds.
+
+qualification:
+  characteristic: Intelligence
+  target: 4
+
+# Skills gained at rank 0 during basic training (first term only)
+service_skills:
+  - Drive
+  - Vacc Suit
+  - Broker
+  - Steward
+  - Electronics
+  - Persuade
+
+# Assignments available within this career
+assignments:
+  - name: Merchant Marine
+    description: >
+      You work on one of the massive cargo haulers run by the
+      Imperium or a megacorporation.
+    survival:
+      characteristic: Education
+      target: 5
+    advancement:
+      characteristic: Intelligence
+      target: 7
+
+  - name: Free Trader
+    description: You are part of the crew of a tramp trader.
+    survival:
+      characteristic: Dexterity
+      target: 6
+    advancement:
+      characteristic: Intelligence
+      target: 6
+
+  - name: Broker
+    description: You work in a planetside brokerage or starport.
+    survival:
+      characteristic: Education
+      target: 5
+    advancement:
+      characteristic: Intelligence
+      target: 7
+
+# Skill tables — player picks a table, then rolls d6 for a result
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Dexterity +1
+    - Endurance +1
+    - Intelligence +1
+    - Language
+    - Streetwise
+
+  Service Skills:
+    - Drive
+    - Vacc Suit
+    - Broker
+    - Steward
+    - Electronics
+    - Persuade
+
+  # Only available if Education 8+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Engineer
+      - Astrogation
+      - Electronics
+      - Pilot
+      - Admin
+      - Advocate
+
+  # Assignment-specific skill tables
+  Merchant Marine:
+    - Pilot
+    - Vacc Suit
+    - Athletics
+    - Mechanic
+    - Engineer
+    - Electronics
+
+  Free Trader:
+    - Pilot (spacecraft)
+    - Vacc Suit
+    - Deception
+    - Mechanic
+    - Streetwise
+    - Gunner
+
+  Broker:
+    - Admin
+    - Advocate
+    - Broker
+    - Streetwise
+    - Deception
+    - Persuade
+
+# Ranks and automatic skills/bonuses earned at each rank.
+# Using the Merchant Marine rank track as the default; Free Trader
+# and Broker use sparser alternate rank tracks in the source rules.
+ranks:
+  - rank: 0
+    title: Crewman
+  - rank: 1
+    title: Senior Crewman
+    bonus_skill: Mechanic
+  - rank: 2
+    title: 4th Officer
+  - rank: 3
+    title: 3rd Officer
+  - rank: 4
+    title: 2nd Officer
+    bonus_skill: Pilot
+  - rank: 5
+    title: 1st Officer
+    bonus_skill: Social Standing +1
+  - rank: 6
+    title: Captain
+
+# Mustering-out benefits when leaving the career
+benefits:
+  cash:
+    - 1000
+    - 5000
+    - 10000
+    - 20000
+    - 20000
+    - 40000
+    - 40000
+
+  material:
+    - Blade
+    - Intelligence +1
+    - Education +1
+    - Gun
+    - Ship Share
+    - Free Trader
+    - Free Trader
+
+# Events table — roll 2d6 during each term
+events:
+  2: >
+    Disaster! Roll on the Mishap table, but you are not ejected
+    from this career.
+  3: >
+    You are offered the opportunity to smuggle illegal items
+    onto a planet. If you accept, roll Deception 8+ or Persuade
+    8+ to gain Streetwise 1 and an extra Benefit roll. If you
+    refuse, gain an Enemy in the criminal sphere.
+  4: >
+    Gain any one of Profession, Electronics, Engineer, Animals
+    or Science, reflecting time spent dealing with suppliers
+    and spacers.
+  5: >
+    You have a chance to risk your fortune on a possibly
+    lucrative deal. Gamble any number of Benefit rolls and roll
+    Gambler 8+ or Broker 8+. Success: gain half as many rolls
+    as you risked (round up). Failure: lose all risked rolls.
+    Either way, gain one level in the skill you used.
+  6: >
+    You make an unexpected connection outside your normal
+    circles. Gain a Contact.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    You are embroiled in legal trouble. Gain one of Advocate,
+    Admin, Diplomat or Investigate. Then roll 2d6; on a 2, take
+    the Prisoner career next term.
+  9: >
+    You are given advanced training in a specialist field. Roll
+    Education 8+ to increase any one skill you already have by
+    one level.
+  10: >
+    A good deal ensures you are living the high life for a few
+    years. Gain DM+1 to any one Benefit roll.
+  11: >
+    You befriend a useful ally. Gain an Ally and either gain a
+    level in Carouse or DM+4 to your next advancement roll
+    thanks to their aid.
+  12: >
+    Your business or ship thrives. You are automatically
+    promoted.
+
+# Mishap table — roll d6 when survival fails
+mishaps:
+  1: >
+    Severely injured. Roll twice on the Injury table and take
+    the lower result.
+  2: >
+    You are bankrupted by a rival. Lose all Benefits from this
+    career and gain the other trader as a Rival.
+  3: >
+    A sudden war destroys your trade routes and contacts,
+    forcing you to flee that region of space. Gain Gun Combat 1
+    or Pilot 1.
+  4: >
+    Your ship or starport is destroyed by criminals. Gain them
+    as an Enemy.
+  5: >
+    Imperial trade restrictions force you out of business. You
+    may take the Rogue career for your next term without
+    needing to roll for qualification.
+  6: >
+    A series of bad deals and decisions force you into
+    bankruptcy. You salvage what you can. You may take a
+    Benefit roll for this term as well as any others you are
+    entitled to.

@@ -1,0 +1,207 @@
+name: Rogue
+description: >
+  Criminal elements familiar with the rougher or more illegal
+  methods of attaining goals. Rogues include thieves, enforcers
+  and pirates operating outside the law.
+
+qualification:
+  characteristic: Dexterity
+  target: 6
+
+# Skills gained at rank 0 during basic training (first term only)
+service_skills:
+  - Deception
+  - Recon
+  - Athletics
+  - Gun Combat
+  - Stealth
+  - Streetwise
+
+# Assignments available within this career
+assignments:
+  - name: Thief
+    description: You steal from the rich and give to — well, yourself, actually.
+    survival:
+      characteristic: Intelligence
+      target: 6
+    advancement:
+      characteristic: Dexterity
+      target: 6
+
+  - name: Enforcer
+    description: You are a leg breaker, thug or assassin for a criminal group.
+    survival:
+      characteristic: Endurance
+      target: 6
+    advancement:
+      characteristic: Strength
+      target: 6
+
+  - name: Pirate
+    description: You are a space-going corsair.
+    survival:
+      characteristic: Dexterity
+      target: 6
+    advancement:
+      characteristic: Intelligence
+      target: 6
+
+# Skill tables — player picks a table, then rolls d6 for a result
+skill_tables:
+  Personal Development:
+    - Carouse
+    - Dexterity +1
+    - Endurance +1
+    - Gambler
+    - Melee
+    - Gun Combat
+
+  Service Skills:
+    - Deception
+    - Recon
+    - Athletics
+    - Gun Combat
+    - Stealth
+    - Streetwise
+
+  # Only available if Education 10+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 10
+    skills:
+      - Electronics
+      - Navigation
+      - Medic
+      - Investigate
+      - Broker
+      - Advocate
+
+  # Assignment-specific skill tables
+  Thief:
+    - Stealth
+    - Electronics
+    - Recon
+    - Streetwise
+    - Deception
+    - Athletics
+
+  Enforcer:
+    - Gun Combat
+    - Melee
+    - Streetwise
+    - Persuade
+    - Athletics
+    - Drive
+
+  Pirate:
+    - Pilot
+    - Astrogation
+    - Gunner
+    - Engineer
+    - Vacc Suit
+    - Melee
+
+# Ranks and automatic skills/bonuses earned at each rank.
+# Using the Pirate rank track as the default; Thief and Enforcer
+# have alternate rank tracks in the source rules.
+ranks:
+  - rank: 0
+    title: Recruit
+  - rank: 1
+    title: Henchman
+    bonus_skill: Pilot
+  - rank: 2
+    title: Crew
+  - rank: 3
+    title: Corsair
+    bonus_skill: Gun Combat
+  - rank: 4
+    title: Lieutenant
+  - rank: 5
+    title: Leader
+    bonus_skill: Leadership
+  - rank: 6
+    title: Captain
+
+# Mustering-out benefits when leaving the career
+benefits:
+  cash:
+    - 0
+    - 0
+    - 10000
+    - 10000
+    - 50000
+    - 100000
+    - 100000
+
+  material:
+    - Ship Share
+    - Weapon
+    - Intelligence +1
+    - Ship Share
+    - Armour
+    - Dexterity +1
+    - Two Ship Shares
+
+# Events table — roll 2d6 during each term
+events:
+  2: >
+    Disaster! Roll on the Mishap table, but you are not ejected
+    from this career.
+  3: >
+    You are arrested and charged. You can defend yourself (roll
+    Advocate 8+; success: charges dropped; failure: gain an
+    Enemy and take the Prisoner career next term) or hire a
+    lawyer (gain them as a Contact and lose a Benefit roll).
+  4: >
+    You are involved in the planning of an impressive heist.
+    Gain Electronics or Mechanic.
+  5: >
+    One of your crimes pays off. Gain DM+2 to any one Benefit
+    roll and gain your victim as an Enemy.
+  6: >
+    You have the opportunity to backstab a fellow rogue for
+    personal gain. If you do so, gain DM+4 to your next
+    advancement roll. If you refuse, gain them as an Ally.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    You spend months in the dangerous criminal underworld. Gain
+    one of Streetwise, Stealth, Melee or Gun Combat.
+  9: >
+    You become involved in a feud with a rival criminal
+    organisation. Roll Stealth or Gun Combat 8+. Failure: roll
+    on the Injury table. Success: gain an extra Benefit roll.
+  10: >
+    You are involved in a gambling ring. Gain Gambler. You may
+    wager any number of Benefit rolls; roll Gambler 8+. Failure:
+    lose all wagered rolls. Success: gain half as many rolls as
+    you wagered (round up).
+  11: >
+    A crime lord considers you their protege. Either gain
+    Tactics (military) or DM+4 to your next advancement roll
+    thanks to their aid.
+  12: >
+    You commit a legendary crime. You are automatically promoted.
+
+# Mishap table — roll d6 when survival fails
+mishaps:
+  1: >
+    Severely injured. Roll twice on the Injury table and take
+    the lower result.
+  2: >
+    Arrested. You must take the Prisoner career in your next term.
+  3: >
+    Betrayed by a friend. One of your Contacts or Allies betrays
+    you, ending your career. That Contact or Ally becomes a
+    Rival or Enemy. If you have no Contacts or Allies, gain a
+    Rival or Enemy anyway. Additionally, roll 2d6; if you roll
+    a 2, take the Prisoner career next term.
+  4: >
+    A job goes wrong, forcing you to flee off-planet. Gain one
+    of Deception, Pilot (small craft or spacecraft), Athletics
+    (dexterity) or Gunner.
+  5: >
+    A police detective or rival criminal forces you to flee and
+    vows to hunt you down. Gain an Enemy.
+  6: Injured. Roll on the Injury table.

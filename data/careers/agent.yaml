@@ -1,0 +1,211 @@
+name: Agent
+description: >
+  Law enforcement agencies, corporate operatives, spies and others
+  who work in the shadows. Agents investigate crimes, gather
+  intelligence, and conduct covert operations.
+
+qualification:
+  characteristic: Intelligence
+  target: 6
+
+# Skills gained at rank 0 during basic training (first term only)
+service_skills:
+  - Streetwise
+  - Drive
+  - Investigate
+  - Flyer
+  - Recon
+  - Gun Combat
+
+# Assignments available within this career
+assignments:
+  - name: Law Enforcement
+    description: You are a police officer or detective.
+    survival:
+      characteristic: Endurance
+      target: 6
+    advancement:
+      characteristic: Intelligence
+      target: 6
+
+  - name: Intelligence
+    description: You work as a spy or saboteur.
+    survival:
+      characteristic: Intelligence
+      target: 7
+    advancement:
+      characteristic: Intelligence
+      target: 5
+
+  - name: Corporate
+    description: You work for a corporation, spying on rival organisations.
+    survival:
+      characteristic: Intelligence
+      target: 5
+    advancement:
+      characteristic: Intelligence
+      target: 7
+
+# Skill tables — player picks a table, then rolls d6 for a result
+skill_tables:
+  Personal Development:
+    - Gun Combat
+    - Dexterity +1
+    - Endurance +1
+    - Melee
+    - Intelligence +1
+    - Athletics
+
+  Service Skills:
+    - Streetwise
+    - Drive
+    - Investigate
+    - Flyer
+    - Recon
+    - Gun Combat
+
+  # Only available if Education 8+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Advocate
+      - Language
+      - Explosives
+      - Medic
+      - Vacc Suit
+      - Electronics
+
+  # Assignment-specific skill tables
+  Law Enforcement:
+    - Investigate
+    - Recon
+    - Streetwise
+    - Stealth
+    - Melee
+    - Advocate
+
+  Intelligence:
+    - Investigate
+    - Recon
+    - Electronics (comms)
+    - Stealth
+    - Persuade
+    - Deception
+
+  Corporate:
+    - Investigate
+    - Electronics (computers)
+    - Stealth
+    - Carouse
+    - Deception
+    - Streetwise
+
+# Ranks and automatic skills/bonuses earned at each rank.
+# Using the Law Enforcement rank track as the default; Intelligence
+# and Corporate share an alternate track in the source rules.
+ranks:
+  - rank: 0
+    title: Rookie
+  - rank: 1
+    title: Corporal
+    bonus_skill: Streetwise
+  - rank: 2
+    title: Sergeant
+  - rank: 3
+    title: Detective
+  - rank: 4
+    title: Lieutenant
+    bonus_skill: Investigate
+  - rank: 5
+    title: Chief
+    bonus_skill: Admin
+  - rank: 6
+    title: Commissioner
+    bonus_skill: Social Standing +1
+
+# Mustering-out benefits when leaving the career
+benefits:
+  cash:
+    - 1000
+    - 2000
+    - 5000
+    - 7500
+    - 10000
+    - 25000
+    - 50000
+
+  material:
+    - Scientific Equipment
+    - Intelligence +1
+    - Ship Share
+    - Weapon
+    - Cybernetic Implant
+    - Social Standing +1
+    - TAS Membership
+
+# Events table — roll 2d6 during each term
+events:
+  2: >
+    Disaster! Roll on the Mishap table, but you are not ejected
+    from this career.
+  3: >
+    An investigation takes a dangerous turn. Roll Investigate 8+
+    or Streetwise 8+. Failure: roll on the Mishap table. Success:
+    increase one of Deception, Jack-of-all-Trades, Persuade or
+    Tactics by one level.
+  4: >
+    You complete a mission for your superiors and are suitably
+    rewarded. Gain DM+1 to any one Benefit roll from this career.
+  5: >
+    You establish a network of contacts. Gain D3 Contacts.
+  6: >
+    You are given advanced training in a specialist field. Roll
+    Education 8+ to increase any one skill you already have by
+    one level.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    You go undercover to investigate an enemy. Roll Deception 8+.
+    Success: roll immediately on the Rogue or Citizen Events
+    table and make one roll on any Specialist skill table for
+    that career. Failure: roll immediately on the Rogue or
+    Citizen Mishap table.
+  9: >
+    You go above and beyond the call of duty. Gain DM+2 to your
+    next advancement roll.
+  10: >
+    You are given specialist training in vehicles. Gain one of
+    Drive, Flyer, Pilot or Gunner.
+  11: >
+    You are befriended by a senior agent. Either increase
+    Investigate by one level or DM+4 to an advancement roll
+    thanks to their aid.
+  12: >
+    Your efforts uncover a major conspiracy against your
+    employers. You are automatically promoted.
+
+# Mishap table — roll d6 when survival fails
+mishaps:
+  1: >
+    Severely injured. Roll twice on the Injury table and take
+    the lower result.
+  2: >
+    A criminal under investigation offers you a deal. Accept to
+    leave the career without further penalty (losing this term's
+    Benefit roll as normal). Refuse and roll twice on the Injury
+    table, taking the lower result; gain an Enemy and one level
+    in any skill you choose.
+  3: >
+    An investigation goes critically wrong or leads to the top,
+    ruining your career. Roll Advocate 8+. Success: keep the
+    Benefit roll from this term. If you roll a 2, you must take
+    the Prisoner career next term.
+  4: >
+    You learn something you should not know and people want to
+    kill you for it. Gain an Enemy and Deception 1.
+  5: >
+    Your work ends up coming home with you and someone gets
+    hurt. Choose one Contact, Ally or family member and roll
+    twice on the Injury table for them, taking the lower result.
+  6: Injured. Roll on the Injury table.

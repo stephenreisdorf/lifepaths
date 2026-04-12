@@ -1,0 +1,216 @@
+name: Scout
+description: >
+  Members of the exploratory service. Scouts explore new areas,
+  map and survey known or newly discovered regions, and maintain
+  communication ships which carry information and messages
+  between the worlds of the galaxy.
+
+qualification:
+  characteristic: Intelligence
+  target: 5
+
+# Skills gained at rank 0 during basic training (first term only)
+service_skills:
+  - Pilot (small craft or spacecraft)
+  - Survival
+  - Mechanic
+  - Astrogation
+  - Vacc Suit
+  - Gun Combat
+
+# Assignments available within this career
+assignments:
+  - name: Courier
+    description: >
+      You are responsible for shuttling messages and high value
+      packages around the galaxy.
+    survival:
+      characteristic: Endurance
+      target: 5
+    advancement:
+      characteristic: Education
+      target: 9
+
+  - name: Surveyor
+    description: You visit border worlds and assess their worth.
+    survival:
+      characteristic: Endurance
+      target: 6
+    advancement:
+      characteristic: Intelligence
+      target: 8
+
+  - name: Explorer
+    description: >
+      You go wherever the map is blank, exploring unknown worlds
+      and uncharted space.
+    survival:
+      characteristic: Endurance
+      target: 7
+    advancement:
+      characteristic: Education
+      target: 7
+
+# Skill tables — player picks a table, then rolls d6 for a result
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Dexterity +1
+    - Endurance +1
+    - Intelligence +1
+    - Education +1
+    - Jack-of-all-Trades
+
+  Service Skills:
+    - Pilot (small craft or spacecraft)
+    - Survival
+    - Mechanic
+    - Astrogation
+    - Vacc Suit
+    - Gun Combat
+
+  # Only available if Education 8+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Medic
+      - Language
+      - Seafarer
+      - Explosives
+      - Science
+      - Jack-of-all-Trades
+
+  # Assignment-specific skill tables
+  Courier:
+    - Electronics
+    - Flyer
+    - Pilot (spacecraft)
+    - Engineer
+    - Athletics
+    - Astrogation
+
+  Surveyor:
+    - Electronics
+    - Persuade
+    - Pilot
+    - Navigation
+    - Diplomat
+    - Streetwise
+
+  Explorer:
+    - Electronics
+    - Pilot
+    - Engineer
+    - Science
+    - Stealth
+    - Recon
+
+# Ranks and automatic skills/bonuses earned at each rank.
+# Scouts use a single rank track regardless of assignment.
+ranks:
+  - rank: 0
+    title: Scout
+  - rank: 1
+    title: Scout
+    bonus_skill: Vacc Suit
+  - rank: 2
+    title: Scout
+  - rank: 3
+    title: Senior Scout
+    bonus_skill: Pilot
+  - rank: 4
+    title: Senior Scout
+  - rank: 5
+    title: Senior Scout
+  - rank: 6
+    title: Senior Scout
+
+# Mustering-out benefits when leaving the career
+benefits:
+  cash:
+    - 20000
+    - 20000
+    - 30000
+    - 30000
+    - 50000
+    - 50000
+    - 50000
+
+  material:
+    - Ship Share
+    - Intelligence +1
+    - Education +1
+    - Weapon
+    - Weapon
+    - Scout Ship
+    - Scout Ship
+
+# Events table — roll 2d6 during each term
+events:
+  2: >
+    Disaster! Roll on the Mishap table, but you are not ejected
+    from this career.
+  3: >
+    Your ship is ambushed by enemy vessels. Either run (roll
+    Pilot 8+ to escape) or treat with them (roll Persuade 10+
+    to bargain). Failure: ship is destroyed; you may not
+    re-enlist in the Scouts at end of this term. Success:
+    survive and gain Electronics (sensors) 1. Either way, gain
+    an Enemy.
+  4: >
+    You survey an alien world. Gain one of Animals (riding or
+    training), Survival, Recon or Science.
+  5: >
+    You perform an exemplary service for the scouts. Gain DM+1
+    to any one Benefit roll.
+  6: >
+    You spend several years jumping from world to world in your
+    scout ship. Gain one of Astrogation, Electronics, Navigation,
+    Pilot (small craft) or Mechanic.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    When dealing with an alien species, you have an opportunity
+    to gather extra intelligence about them. Roll Electronics
+    8+ or Deception 8+. Success: gain an Ally in the Imperium
+    and DM+2 to your next advancement roll. Failure: roll on
+    the Mishap table but you are not ejected from this career.
+  9: >
+    Your scout ship is one of the first on the scene to rescue
+    the survivors of a disaster. Roll Medic 8+ or Engineer 8+.
+    Success: gain a Contact and DM+2 to your next advancement
+    roll. Failure: gain an Enemy.
+  10: >
+    You spend a great deal of time on the fringes of Charted
+    Space. Roll Survival 8+ or Pilot 8+. Success: gain a
+    Contact in an alien species and one level in any skill of
+    your choice. Failure: roll on the Mishap table but you are
+    not ejected from this career.
+  11: >
+    You serve as the courier for an important message from the
+    Imperium. Either gain one level of Diplomat or DM+4 to your
+    next advancement roll.
+  12: >
+    You discover a world, item or information of worth to the
+    Imperium. You are automatically promoted.
+
+# Mishap table — roll d6 when survival fails
+mishaps:
+  1: >
+    Severely injured. Roll twice on the Injury table and take
+    the lower result.
+  2: >
+    Psychologically damaged by your time in the scouts. Reduce
+    your Intelligence or Social Standing by 1.
+  3: >
+    Your ship is damaged and you have to hitch-hike your way
+    back across the stars to the nearest scout base. Gain 1d6
+    Contacts and D3 Enemies.
+  4: >
+    You inadvertently cause a conflict between the Imperium and
+    a minor world or species. Gain a Rival and Diplomat 1.
+  5: >
+    You have no idea what happened to you — they found your
+    ship drifting on the fringes of friendly space.
+  6: Injured. Roll on the Injury table.

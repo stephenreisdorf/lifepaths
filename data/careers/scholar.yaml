@@ -1,0 +1,222 @@
+name: Scholar
+description: >
+  Individuals trained in technological or research sciences who
+  conduct scientific investigations into materials, situations
+  and phenomena, or who practise medicine.
+
+qualification:
+  characteristic: Intelligence
+  target: 6
+
+# Skills gained at rank 0 during basic training (first term only)
+service_skills:
+  - Drive
+  - Electronics
+  - Diplomat
+  - Medic
+  - Investigate
+  - Science
+
+# Assignments available within this career
+assignments:
+  - name: Field Researcher
+    description: >
+      You are an explorer or field researcher, equally at home in
+      the laboratory or wilderness.
+    survival:
+      characteristic: Endurance
+      target: 6
+    advancement:
+      characteristic: Intelligence
+      target: 6
+
+  - name: Scientist
+    description: >
+      You are a researcher in some corporation or research
+      institution, or a mad scientist in an orbiting laboratory.
+    survival:
+      characteristic: Education
+      target: 4
+    advancement:
+      characteristic: Intelligence
+      target: 8
+
+  - name: Physician
+    description: You are a doctor, healer or medical researcher.
+    survival:
+      characteristic: Education
+      target: 4
+    advancement:
+      characteristic: Education
+      target: 8
+
+# Skill tables — player picks a table, then rolls d6 for a result
+skill_tables:
+  Personal Development:
+    - Intelligence +1
+    - Education +1
+    - Social Standing +1
+    - Dexterity +1
+    - Endurance +1
+    - Language
+
+  Service Skills:
+    - Drive
+    - Electronics
+    - Diplomat
+    - Medic
+    - Investigate
+    - Science
+
+  # Only available if Education 10+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 10
+    skills:
+      - Art
+      - Advocate
+      - Electronics
+      - Language
+      - Engineer
+      - Science
+
+  # Assignment-specific skill tables
+  Field Researcher:
+    - Electronics
+    - Vacc Suit
+    - Navigation
+    - Survival
+    - Investigate
+    - Science
+
+  Scientist:
+    - Admin
+    - Engineer
+    - Science
+    - Science
+    - Electronics
+    - Science
+
+  Physician:
+    - Medic
+    - Electronics
+    - Investigate
+    - Medic
+    - Persuade
+    - Science
+
+# Ranks and automatic skills/bonuses earned at each rank.
+# Using the Field Researcher / Scientist rank track as the default;
+# the Physician track substitutes Medic at rank 1 in the source rules.
+ranks:
+  - rank: 0
+    title: Student
+  - rank: 1
+    title: Researcher
+    bonus_skill: Science
+  - rank: 2
+    title: Associate
+    bonus_skill: Electronics (computers)
+  - rank: 3
+    title: Fellow
+    bonus_skill: Investigate
+  - rank: 4
+    title: Senior Fellow
+  - rank: 5
+    title: Professor
+    bonus_skill: Science
+  - rank: 6
+    title: Dean
+
+# Mustering-out benefits when leaving the career
+benefits:
+  cash:
+    - 5000
+    - 10000
+    - 20000
+    - 30000
+    - 40000
+    - 60000
+    - 100000
+
+  material:
+    - Intelligence +1
+    - Education +1
+    - Two Ship Shares
+    - Social Standing +1
+    - Scientific Equipment
+    - Lab Ship
+    - Lab Ship
+
+# Events table — roll 2d6 during each term
+events:
+  2: >
+    Disaster! Roll on the Mishap table, but you are not ejected
+    from this career.
+  3: >
+    You are called upon to perform research that goes against
+    your conscience. If you accept, gain an extra Benefit roll,
+    a level in each of any two Science skill specialties and
+    D3 Enemies.
+  4: >
+    You are assigned to work on a secret project for a patron
+    or organisation. Gain one of Medic, Science, Engineer,
+    Electronics or Investigate.
+  5: >
+    You win a prestigious prize for your work, garnering both
+    the praise and envy of your peers. Gain DM+1 to any one
+    Benefit roll.
+  6: >
+    You are given advanced training in a specialist field. Roll
+    Education 8+ to gain any one skill of your choice at level 1.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    You have the opportunity to cheat in some fashion. If you
+    refuse, you gain nothing. If you accept, roll Deception 8+
+    or Admin 8+. Success: gain DM+2 to any one Benefit roll and
+    increase any skill by one level, but also gain an Enemy.
+    Failure: gain an Enemy and lose one Benefit roll.
+  9: >
+    You make a breakthrough in your field. Gain DM+2 to your
+    next advancement roll.
+  10: >
+    You become entangled in a bureaucratic or legal morass.
+    Gain one of Admin, Advocate, Persuade or Diplomat.
+  11: >
+    You work for an eccentric but brilliant mentor, who becomes
+    an Ally. Either increase Science by one level or DM+4 to
+    your next advancement roll thanks to their aid.
+  12: >
+    Your work leads to a considerable breakthrough. You are
+    automatically promoted.
+
+# Mishap table — roll d6 when survival fails
+mishaps:
+  1: >
+    Severely injured. Roll twice on the Injury table and take
+    the lower result.
+  2: >
+    A disaster leaves several injured and others blame you,
+    forcing you to leave your career. Roll on the Injury table
+    twice, taking the higher result, and gain a Rival.
+  3: >
+    The planetary government interferes with your research for
+    political or religious reasons. If you continue openly,
+    increase Science by one level and gain an Enemy. If you
+    continue secretly, increase Science by one level and reduce
+    Social Standing by 2. You are not ejected from this career.
+  4: >
+    An expedition or voyage goes wrong, leaving you stranded in
+    the wilderness. Gain Survival or Athletics (dexterity or
+    endurance). By the time you find your way home, your job
+    is gone.
+  5: >
+    Your work is sabotaged by unknown parties. You may salvage
+    what you can and give up (leave the career but retain this
+    term's Benefit roll) or start again from scratch (lose all
+    Benefit rolls from this career but you do not have to leave).
+  6: >
+    A rival researcher blackens your name or steals your
+    research. Gain a Rival, but you do not have to leave this
+    career.
