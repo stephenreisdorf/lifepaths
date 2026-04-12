@@ -7,7 +7,7 @@ import CharacterSheet from './components/CharacterSheet.vue'
 const currentScreen = ref('welcome')
 const sessionId = ref(null)
 const characterData = ref(null)
-const resolvedSteps = ref([])
+const stepHistory = ref([])
 const currentPrompt = ref(null)
 const error = ref('')
 
@@ -18,13 +18,25 @@ async function startCreation() {
 
   sessionId.value = data.session_id
   characterData.value = data.character
-  resolvedSteps.value = data.resolved_steps
+  stepHistory.value = [...data.resolved_steps]
   currentPrompt.value = data.next_prompt
   currentScreen.value = data.next_prompt ? 'creation' : 'sheet'
 }
 
 async function submitInput(selections) {
   error.value = ''
+
+  // Capture the interactive step + its selections as a synthetic history entry
+  const choiceEntry = currentPrompt.value
+    ? {
+        step_id: currentPrompt.value.step_id,
+        step_type: 'choice',
+        description: currentPrompt.value.description,
+        data: { selected: selections },
+        term_label: currentPrompt.value.term_label,
+      }
+    : null
+
   const res = await fetch('/api/submit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -42,7 +54,8 @@ async function submitInput(selections) {
 
   const data = await res.json()
   characterData.value = data.character
-  resolvedSteps.value = data.resolved_steps
+  if (choiceEntry) stepHistory.value.push(choiceEntry)
+  stepHistory.value.push(...data.resolved_steps)
   currentPrompt.value = data.next_prompt
 
   if (!data.next_prompt) {
@@ -52,24 +65,28 @@ async function submitInput(selections) {
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" :class="{ wide: currentScreen !== 'welcome' }">
     <WelcomeScreen
       v-if="currentScreen === 'welcome'"
       @start="startCreation"
     />
     <CreationScreen
       v-else-if="currentScreen === 'creation'"
-      :characteristics="characterData?.characteristics"
+      :character-data="characterData"
       :prompt="currentPrompt"
-      :resolved-steps="resolvedSteps"
+      :history="stepHistory"
       :error="error"
       @confirm="submitInput"
     />
     <CharacterSheet
       v-else-if="currentScreen === 'sheet'"
-      :characteristics="characterData.characteristics"
-      :skills="characterData.skills"
+      :character-data="characterData"
+      :history="stepHistory"
       @restart="startCreation"
     />
   </div>
 </template>
+
+<style>
+.container.wide { max-width: 1200px; }
+</style>

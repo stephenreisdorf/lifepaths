@@ -1,12 +1,12 @@
 <script setup>
 import { reactive, computed, watch } from 'vue'
-import StatsTable from './StatsTable.vue'
 import SkillGrid from './SkillGrid.vue'
+import CharacterCanvas from './CharacterCanvas.vue'
 
 const props = defineProps({
-  characteristics: Object,
+  characterData: Object,
   prompt: Object,
-  resolvedSteps: Array,
+  history: Array,
   error: String,
 })
 
@@ -37,33 +37,59 @@ function confirm() {
 </script>
 
 <template>
-  <div>
-    <h2>Characteristics</h2>
-    <StatsTable :characteristics="characteristics" />
-
-    <div v-if="resolvedSteps?.length" class="resolved-steps">
-      <div v-for="step in resolvedSteps" :key="step.step_id" class="resolved-step">
-        <p><strong>{{ step.description }}</strong></p>
-        <pre v-if="step.data">{{ JSON.stringify(step.data, null, 2) }}</pre>
+  <div class="creation-layout">
+    <main class="prompt-column">
+      <div v-if="prompt">
+        <h2>{{ prompt.description }}</h2>
+        <p v-if="prompt.required_count" class="skill-counter">
+          Select <span>{{ prompt.required_count }}</span>:
+        </p>
+        <SkillGrid
+          v-if="prompt.options"
+          :skills="prompt.options"
+          :selected="selected"
+          @toggle="toggleOption"
+        />
+        <p v-if="prompt.required_count" class="skill-counter">
+          <span>{{ selected.size }}</span> / <span>{{ prompt.required_count }}</span> selected
+        </p>
+        <p v-if="error" class="error">{{ error }}</p>
+        <button :disabled="!canConfirm" @click="confirm">Confirm</button>
       </div>
-    </div>
+    </main>
 
-    <div v-if="prompt">
-      <h2>{{ prompt.description }}</h2>
-      <p v-if="prompt.required_count" class="skill-counter">
-        Select <span>{{ prompt.required_count }}</span>:
-      </p>
-      <SkillGrid
-        v-if="prompt.options"
-        :skills="prompt.options"
-        :selected="selected"
-        @toggle="toggleOption"
-      />
-      <p v-if="prompt.required_count" class="skill-counter">
-        <span>{{ selected.size }}</span> / <span>{{ prompt.required_count }}</span> selected
-      </p>
-      <p v-if="error" class="error">{{ error }}</p>
-      <button :disabled="!canConfirm" @click="confirm">Confirm</button>
-    </div>
+    <CharacterCanvas
+      class="canvas-column"
+      :characteristics="characterData?.characteristics"
+      :skills="characterData?.skills"
+      :history="history"
+    />
   </div>
 </template>
+
+<style scoped>
+.creation-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+.prompt-column {
+  flex: 1 1 60%;
+  min-width: 0;
+}
+.canvas-column {
+  flex: 0 0 38%;
+  position: sticky;
+  top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .creation-layout { flex-direction: column; }
+  .prompt-column,
+  .canvas-column {
+    flex: 1 1 auto;
+    width: 100%;
+    position: static;
+  }
+}
+</style>
