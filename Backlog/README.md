@@ -40,3 +40,20 @@ One file per open issue. Index below.
 - [terms_served is not incremented on mishap-ended terms](terms-served-on-mishap.md)
 - [Aging](aging.md)
 
+## Careers to add
+
+Only Navy is implemented so far. One issue per remaining core-rules career:
+
+- [Agent](career-agent.md)
+- [Army](career-army.md)
+- [Citizen](career-citizen.md)
+- [Drifter](career-drifter.md)
+- [Entertainer](career-entertainer.md)
+- [Marine](career-marine.md)
+- [Merchant](career-merchant.md)
+- [Noble](career-noble.md)
+- [Rogue](career-rogue.md)
+- [Scholar](career-scholar.md)
+- [Scout](career-scout.md)
+- [Prisoner](career-prisoner.md) (special — entry via events/mishaps only)
+
