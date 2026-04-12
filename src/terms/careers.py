@@ -286,6 +286,7 @@ class AdvancementRollStep(PassFailRollStep):
     check_label = "Advancement"
     status_pass = "PROMOTED"
     status_fail = "NOT_PROMOTED"
+    status_at_max_rank = "AT_MAX_RANK"
 
     def __init__(
         self,
@@ -303,15 +304,30 @@ class AdvancementRollStep(PassFailRollStep):
         self.career_name = career_name
         self.assignment = assignment
         self.ranks = ranks
+        self.max_rank: int | None = (
+            max(r["rank"] for r in ranks) if ranks else None
+        )
 
     def apply(self) -> None:
         # Always tick terms_served at the end of a successful term.
         self.character.record_career_term(self.career_name)
 
+        current_rank = self.character.careers.get(self.career_name)
+        at_max = (
+            self.max_rank is not None
+            and current_rank is not None
+            and current_rank.rank >= self.max_rank
+        )
+
         if self.total_roll >= self.target:
-            record = self.character.promote(self.career_name)
-            status = self.status_pass
-            self.new_rank_title: str | None = self._apply_rank_bonus(record.rank)
+            if at_max:
+                # Successful roll but already at top of the rank ladder.
+                status = self.status_at_max_rank
+                self.new_rank_title: str | None = None
+            else:
+                record = self.character.promote(self.career_name)
+                status = self.status_pass
+                self.new_rank_title = self._apply_rank_bonus(record.rank)
         else:
             status = self.status_fail
             self.new_rank_title = None
@@ -332,6 +348,8 @@ class AdvancementRollStep(PassFailRollStep):
     def _post_description(self, status: str) -> str:
         if status == self.status_pass and self.new_rank_title:
             outcome_str = f"PROMOTED to {self.new_rank_title}"
+        elif status == self.status_at_max_rank:
+            outcome_str = "already at top rank — no promotion"
         else:
             outcome_str = status
         return (

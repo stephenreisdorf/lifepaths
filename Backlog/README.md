@@ -2,10 +2,6 @@
 
 One file per open issue. Index below.
 
-## Known bugs (from original BACKLOG.md)
-
-- [Career rank is uncapped](career-rank-cap.md)
-
 ## Missing mechanics — career term sequence
 
 - [Muster-out benefit rolls](muster-out-benefits.md)
