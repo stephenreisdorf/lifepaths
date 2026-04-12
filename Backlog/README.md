@@ -2,6 +2,10 @@
 
 One file per open issue. Index below.
 
+## Planning
+
+- [Implementation sequencing](implementation-sequencing.md) — wave-by-wave execution plan to maximize concurrency across the items below.
+
 ## Missing mechanics — career term sequence
 
 - [Muster-out benefit rolls](muster-out-benefits.md)
