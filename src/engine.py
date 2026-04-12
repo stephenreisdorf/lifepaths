@@ -5,6 +5,7 @@ from src.terms.careers import (
     CareerTerm,
     ChooseCareerStep,
     ContinueOrMusterOutStep,
+    MishapRollStep,
     RollQualificationStep,
     TransitionTerm,
 )
@@ -59,12 +60,16 @@ class GameSession:
                 self.current_career_data = load_career(inner.selected_career)
                 self.career_term_count = 0
                 kwargs = career_to_term_kwargs(self.current_career_data, is_first_term=True)
-                return CareerTerm(self.character, **kwargs)
+                return CareerTerm(
+                    self.character, term_number=self.career_term_count + 1, **kwargs
+                )
 
             if isinstance(inner, ContinueOrMusterOutStep):
                 if inner.decision == "Continue":
                     kwargs = career_to_term_kwargs(self.current_career_data, is_first_term=False)
-                    return CareerTerm(self.character, **kwargs)
+                    return CareerTerm(
+                        self.character, term_number=self.career_term_count + 1, **kwargs
+                    )
                 return None  # Muster Out — creation is done
 
         if isinstance(finished, CareerTerm):
@@ -75,6 +80,15 @@ class GameSession:
                 and hasattr(qual_step, "qualification_status")
                 and qual_step.qualification_status == "FAILED"
             ):
+                careers = get_available_careers()
+                return TransitionTerm(
+                    self.character, ChooseCareerStep(self.character, careers)
+                )
+
+            # Mishap ends the career — route back to career selection.
+            if any(isinstance(s, MishapRollStep) for s in finished.steps):
+                self.current_career_data = None
+                self.career_term_count = 0
                 careers = get_available_careers()
                 return TransitionTerm(
                     self.character, ChooseCareerStep(self.character, careers)

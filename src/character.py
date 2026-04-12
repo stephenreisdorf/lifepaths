@@ -35,12 +35,21 @@ class Skill(BaseModel):
         self.specialties[name] = SkillSpecialty(name=name, rank=rank)
 
 
+class CareerRecord(BaseModel):
+    """A character's standing within a specific career."""
+
+    name: str
+    rank: int = 0
+    terms_served: int = 0
+
+
 class Character(BaseModel):
     """A player character with characteristics and skills."""
 
     name: str
     characteristics: dict[str, Characteristic]
     skills: dict[str, Skill]
+    careers: dict[str, CareerRecord] = {}
 
     def add_characteristic(self, characteristic: str, value: int) -> None:
         """Add or replace a characteristic with the given value."""
@@ -69,3 +78,21 @@ class Character(BaseModel):
             skill.add_specialty(specialty, increment)
         else:
             skill.specialties[specialty].rank += increment
+
+    def ensure_career(self, name: str) -> CareerRecord:
+        """Return the CareerRecord for `name`, creating it at rank 0 if missing."""
+        if name not in self.careers:
+            self.careers[name] = CareerRecord(name=name)
+        return self.careers[name]
+
+    def promote(self, name: str) -> CareerRecord:
+        """Increment the character's rank in the given career and return the record."""
+        record = self.ensure_career(name)
+        record.rank += 1
+        return record
+
+    def record_career_term(self, name: str) -> CareerRecord:
+        """Increment terms_served for the given career and return the record."""
+        record = self.ensure_career(name)
+        record.terms_served += 1
+        return record

@@ -24,9 +24,6 @@ def load_career(career_name: str) -> dict:
 
 def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
     """Transform parsed career YAML into kwargs for CareerTerm.__init__."""
-    # Extract flat assignment name list from rich assignment objects
-    assignments = [a["name"] for a in career_data["assignments"]]
-
     # Normalize skill tables: gated tables have a {requirement, skills} structure,
     # while normal tables are flat lists. Extract just the skill lists.
     skill_tables: dict[str, list[str]] = {}
@@ -41,7 +38,10 @@ def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
         "qualification_characteristic": career_data["qualification"]["characteristic"],
         "qualification_target": career_data["qualification"]["target"],
         "service_skills": career_data["service_skills"],
-        "assignments": assignments,
+        "assignments": career_data["assignments"],
         "skill_tables": skill_tables,
+        "events": career_data.get("events", {}),
+        "mishaps": career_data.get("mishaps", {}),
+        "ranks": career_data.get("ranks", []),
         "is_first_term": is_first_term,
     }
