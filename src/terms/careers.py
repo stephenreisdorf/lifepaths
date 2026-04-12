@@ -17,6 +17,24 @@ if TYPE_CHECKING:
     from src.engine import GameSession
 
 
+def try_apply_characteristic_bonus(character: Character, entry: str) -> bool:
+    """If `entry` is '<Characteristic> +<N>', bump that characteristic.
+
+    Returns True if the entry was consumed as a characteristic bonus, False
+    if the caller should fall back to treating it as a skill. Used by both
+    rank bonuses and skill-table rolls (Personal Development et al.).
+    """
+    parts = entry.rsplit(" +", 1)
+    if len(parts) != 2 or not parts[1].isdigit():
+        return False
+    name, delta = parts[0], int(parts[1])
+    if name not in character.characteristics:
+        return False
+    current = character.characteristics[name].value
+    character.add_characteristic(name, current + delta)
+    return True
+
+
 class RollQualificationStep(PassFailRollStep):
     """Roll 2d6 + DM to see if you qualify for the career."""
 
@@ -147,7 +165,10 @@ class RollForSkillStep(Step):
         self.skill: str = self.skill_options[self.skill_roll - 1]
 
     def apply(self) -> None:
-        self.character.increment_skill(self.skill, specialty="TODO")
+        # Skill tables can contain '<Characteristic> +<N>' entries that
+        # should bump a characteristic rather than grant a skill.
+        if not try_apply_characteristic_bonus(self.character, self.skill):
+            self.character.increment_skill(self.skill, specialty="TODO")
         self.outcome = StepOutcome(
             status="ROLLED",
             description=(
@@ -330,14 +351,8 @@ class AdvancementRollStep(PassFailRollStep):
 
     def _apply_bonus(self, bonus: str) -> None:
         """Apply a rank bonus. '<Name> +<N>' against a known characteristic bumps it; otherwise add as a skill."""
-        parts = bonus.rsplit(" +", 1)
-        if len(parts) == 2 and parts[1].isdigit():
-            name, delta = parts[0], int(parts[1])
-            if name in self.character.characteristics:
-                current = self.character.characteristics[name].value
-                self.character.add_characteristic(name, current + delta)
-                return
-        self.character.add_skill(bonus)
+        if not try_apply_characteristic_bonus(self.character, bonus):
+            self.character.add_skill(bonus)
 
 
 class ChooseCareerStep(Step):

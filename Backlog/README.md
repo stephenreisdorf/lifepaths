@@ -4,7 +4,6 @@ One file per open issue. Index below.
 
 ## Known bugs (from original BACKLOG.md)
 
-- [Skill table "+N" entries parsed as skills](skill-table-plus-n-parsing.md)
 - [Career rank is uncapped](career-rank-cap.md)
 
 ## Missing mechanics — career term sequence
