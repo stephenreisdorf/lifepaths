@@ -9,48 +9,67 @@ Lifepaths is a TTRPG life path character creation system (inspired by Traveller-
 ## Development Commands
 
 ```bash
-# Install dependencies
+# Backend — install deps and run the API (FastAPI on http://127.0.0.1:8000, reload enabled)
 uv sync
-
-# Run the entry point
 uv run python main.py
 
-# Run a specific module
+# Run a specific module directly
 uv run python -m src.terms.childhood
+
+# Frontend (Vue 3 + Vite)
+cd frontend
+npm install
+npm run dev           # dev server
+npm run build         # production build into frontend/dist
 ```
+
+No tests or linter are configured yet.
 
 ## Tech Stack
 
 - **Python 3.12**, managed with `uv`
-- **FastAPI** web framework with **Pydantic v2** for data models
+- **FastAPI** + **Pydantic v2**
+- **PyYAML** for career data files
 - **Vue 3 + Vite** frontend in `frontend/`
-- No tests or linter configured yet
 
 ## Architecture
 
-Three layers: **Domain** (terms/steps/character) → **Engine** (game session orchestration) → **API** (thin HTTP).
+Three layers: **Domain** (`src/terms/`, `src/character.py`) → **Engine** (`src/engine.py`) → **API** (`src/api.py`). Career data is loaded from YAML (`data/careers/*.yaml`) by `src/career_loader.py`.
 
 ### Domain layer
 
-- **`src/character.py`** — `Character` model with `Characteristic`s (stat + modifier) and `Skill`s (with specialties). All Pydantic `BaseModel`s.
-- **`src/terms/base.py`** — `StepType` enum (`AUTOMATIC`/`CHOICE`), `StepPrompt` model (self-describing step metadata), `SubmitResult` model (uniform response). Abstract `Step` (with `step_id`, `step_type`, `prompt()`, uniform `resolve(player_input)`, `apply()`) and `Term` (sequences steps, owns resolve/apply/advance lifecycle via `submit()`).
-- **`src/terms/childhood.py`** — `RollCharacteristicsStep` (automatic, rolls 2d6 per stat), `ChooseBackgroundSkillsStep` (choice, pick N skills based on EDU DM). `ChildhoodTerm` sequences these.
-- **`src/utilities.py`** — `roll(d)` helper that rolls `d` six-sided dice and sums.
+- **`src/character.py`** — `Character` with `Characteristic`s (value + `modifier()` computed as `value // 3 - 2`, Traveller-style DM) and `Skill`s (with specialties). All Pydantic `BaseModel`s. Dicts keyed by name; methods `add_skill`, `increment_skill`, `has_skill`, `promote`, `record_career_term`.
+- **`src/terms/base.py`** — `StepType` enum (`AUTOMATIC` / `CHOICE`), `StepPrompt` (self-describing step metadata for the frontend), `SubmitResult` (uniform API response). Abstract `Step` (`step_id`, `step_type`, `prompt()`, `resolve(player_input)`, `apply()`) and `Term` (sequences steps, owns the `resolve → apply → advance` lifecycle via `submit()`).
+- **`src/terms/childhood.py`** — `RollCharacteristicsStep` (2d6 per stat), `ChooseBackgroundSkillsStep` (pick N based on EDU DM); `ChildhoodTerm`.
+- **`src/terms/careers.py`** — The largest domain file. Contains the full career flow: `RollQualificationStep`, `BasicTrainingStep`, `ChooseAssignmentStep`, `ChooseCareerSkillsTable`, `RollForSkillStep`, `SurvivalCheckStep`, `EventsRollStep`, `MishapRollStep`, `AdvancementRollStep`, plus `ChooseCareerStep` / `ContinueOrMusterOutStep`. `CareerTerm.advance()` dynamically appends the next steps based on prior outcomes. `TransitionTerm` is a one-step term used for career selection and continue/muster choices.
+- **`src/utilities.py`** — `roll(d)` rolls `d` six-sided dice and sums (uses global `random`).
 
 ### Engine layer
 
-- **`src/engine.py`** — `GameSession` owns a character and current term. `start()` and `submit()` drive the step lifecycle, auto-advancing through automatic steps, and return uniform `SubmitResult` responses.
+- **`src/engine.py`** — `GameSession` owns a character and current term. `start()` and `submit()` drive the lifecycle, auto-advancing through consecutive automatic steps. `_next_term()` decides the next term after one finishes, chaining Childhood → Career Selection → Career Term → Continue/Muster → repeat (or back to Career Selection on qualification failure or mishap).
 
 ### API layer
 
 - **`src/api.py`** — Two generic endpoints (`POST /api/start`, `POST /api/submit`) that delegate entirely to `GameSession`. No knowledge of specific step types. Session IDs for multi-user support.
 
-### Key patterns
+### Career data
 
-- **Self-describing steps**: Each step declares its `step_type` and `prompt()` so the API and frontend can handle any step generically without type-specific logic.
-- **Uniform resolve interface**: All steps accept `resolve(player_input: dict | None = None)`. Automatic steps ignore input; interactive steps read from it.
-- **Auto-advancement**: The engine automatically resolves consecutive automatic steps, collecting their results in `resolved_steps`.
-- **Adding new terms/steps** requires only new domain code — no API or frontend changes.
-- Character uses dicts keyed by name for both characteristics and skills, with methods like `add_skill`, `increment_skill`, `has_skill`.
-- `Characteristic.modifier()` computes `value // 3 - 2` (Traveller-style DM).
-- Imports use `src.` prefix (e.g., `from src.character import Character`).
+- **`data/careers/<name>.yaml`** — one YAML per career (qualification, service skills, assignments, skill tables, events, mishaps, ranks).
+- **`src/career_loader.py`** — `get_available_careers()`, `load_career(name)`, `career_to_term_kwargs(data, is_first_term)`. Normalizes gated skill tables (those with `{requirement, skills}` shape) to flat `dict[str, list[str]]` for `CareerTerm`.
+
+## Key patterns
+
+- **Self-describing steps**: every step declares its `step_type` and `prompt()` so the API and frontend handle any step generically. Adding a new term/step requires only new domain code — no API or frontend changes.
+- **Uniform resolve interface**: all steps accept `resolve(player_input: dict | None = None)`. Automatic steps ignore input; interactive steps read `player_input["selections"]`.
+- **Auto-advancement**: the engine resolves consecutive automatic steps silently, collecting their prompts in `SubmitResult.resolved_steps`.
+- **Prompts are re-rendered post-resolve**: `prompt()` on roll/choice steps checks for the presence of an outcome attribute (e.g. `hasattr(self, "qualification_status")`) and returns either a "before" description or an "after" description with the result. The frontend displays both.
+- **Imports use `src.` prefix** (e.g., `from src.character import Character`).
+
+## Known rough edges
+
+- Step outcome state is stored as ad-hoc attributes on the step instance (`qualification_status`, `survival_status`, `decision`, `selected_career`, `mishap_text`, …) and consumers probe via `hasattr`. `GameSession._next_term` inspects finished terms with `isinstance` chains and peeks at `finished.steps[0]`. A refactor RFC is captured in `Backlog/step-outcome-and-term-routing.md`.
+- `utilities.roll()` uses the global `random` module directly, so step logic is untestable without monkeypatching or seeding.
+
+## Backlog
+
+Open issues live as one file per issue under `Backlog/`, indexed by `Backlog/README.md`. Check there for the current list of known bugs, missing mechanics, and architectural RFCs before adding new features or refactors.
