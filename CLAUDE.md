@@ -25,6 +25,13 @@ npm run build         # production build into frontend/dist
 
 No tests or linter are configured yet.
 
+### Process cleanup
+
+When restarting dev servers, verify the port is actually free before starting a new one — leftover processes from prior sessions commonly linger:
+
+- Backend (FastAPI): `lsof -i :8000`
+- Frontend (Vite): `lsof -i :5173`
+
 ## Tech Stack
 
 - **Python 3.12**, managed with `uv`
