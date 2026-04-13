@@ -1,0 +1,186 @@
+name: Drifter
+description: >
+  Wanderers, hitchhikers and travellers — those who roam the stars
+  without obvious purpose or direction. Always available as a
+  fallback when qualification for another career fails.
+
+# Drifter has no qualification roll per RAW; any living character
+# passes. The engine expects a qualification block, so this is set
+# to Endurance target 2 to auto-pass.
+qualification:
+  characteristic: Endurance
+  target: 2
+
+# Drifters use their Assignment Skill table (not Service Skills) for
+# basic training per RAW — see the citizens-drifters-basic-training
+# backlog item. Until that lands, Service Skills still applies.
+service_skills:
+  - Athletics
+  - Melee
+  - Recon
+  - Streetwise
+  - Stealth
+  - Survival
+
+assignments:
+  - name: Barbarian
+    description: You live on a primitive world without the benefits of technology.
+    survival:
+      characteristic: Endurance
+      target: 7
+    advancement:
+      characteristic: Strength
+      target: 7
+
+  - name: Wanderer
+    description: You are a space bum, living hand-to-mouth in slums and spaceports across the galaxy.
+    survival:
+      characteristic: Endurance
+      target: 7
+    advancement:
+      characteristic: Intelligence
+      target: 7
+
+  - name: Scavenger
+    description: You work as a belter (asteroid miner) or on a salvage crew.
+    survival:
+      characteristic: Dexterity
+      target: 7
+    advancement:
+      characteristic: Endurance
+      target: 7
+
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Endurance +1
+    - Dexterity +1
+    - Language
+    - Profession
+    - Jack-of-all-Trades
+
+  Service Skills:
+    - Athletics
+    - Melee (unarmed)
+    - Recon
+    - Streetwise
+    - Stealth
+    - Survival
+
+  Barbarian:
+    - Animals
+    - Carouse
+    - Melee (blade)
+    - Stealth
+    - Seafarer
+    - Survival
+
+  Wanderer:
+    - Drive
+    - Deception
+    - Recon
+    - Stealth
+    - Streetwise
+    - Survival
+
+  Scavenger:
+    - Pilot (small craft)
+    - Mechanic
+    - Astrogation
+    - Vacc Suit
+    - Profession
+    - Gun Combat
+
+# Rank track: Drifter has per-assignment ranks in RAW; only Barbarian
+# has named titles. We use Barbarian as the default track (matching
+# the precedent set by rogue.yaml using Pirate).
+ranks:
+  - rank: 0
+    title: Drifter
+  - rank: 1
+    title: Drifter
+    bonus_skill: Survival
+  - rank: 2
+    title: Warrior
+    bonus_skill: Melee (blade)
+  - rank: 3
+    title: Warrior
+  - rank: 4
+    title: Chieftain
+    bonus_skill: Leadership
+  - rank: 5
+    title: Chieftain
+  - rank: 6
+    title: Warlord
+
+benefits:
+  cash:
+    - 0
+    - 0
+    - 1000
+    - 2000
+    - 3000
+    - 4000
+    - 8000
+
+  material:
+    - Contact
+    - Weapon
+    - Ally
+    - Weapon
+    - Education +1
+    - Ship Share
+    - Two Ship Shares
+
+events:
+  2: >
+    Disaster! Roll on the Mishap table but you are not ejected from
+    this career.
+  3: >
+    A patron offers you a chance at a job. If you accept, gain DM+4
+    to your next qualification roll but you owe that patron a favour.
+  4: >
+    You pick up a few useful skills here and there. Gain one level
+    of Jack-of-all-Trades, Survival, Streetwise or Melee (any).
+  5: >
+    You manage to scavenge something of use. Gain DM+1 to any one
+    Benefit roll.
+  6: >
+    You encounter something unusual. Go to the Life Events table
+    and have an Unusual Event.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    You are attacked by enemies. Gain an Enemy if you do not have
+    one already. Roll Melee 8+, Gun Combat 8+ or Stealth 8+ to
+    avoid a roll on the Injury table.
+  9: >
+    You are offered a chance to take part in a risky but rewarding
+    adventure. If you accept, roll 1D: on 1–2 you are injured or
+    arrested; on 3–4 you survive but gain nothing; on 5–6 you
+    succeed and gain DM+4 to one Benefit roll.
+  10: >
+    Life on the edge hones your abilities. Increase any skill you
+    already have by one level.
+  11: You are forcibly drafted. Roll for the Draft next term.
+  12: >
+    You thrive on adversity. You are automatically promoted.
+
+mishaps:
+  1: >
+    Severely injured. Roll twice on the Injury table and take the
+    lower result.
+  2: Injured. Roll on the Injury table.
+  3: >
+    You run afoul of a criminal gang, corrupt bureaucrat or other
+    foe. Gain an Enemy.
+  4: >
+    You suffer from a life-threatening illness. Reduce your
+    Endurance by 1.
+  5: >
+    Betrayed by a friend. One of your Contacts or Allies betrays
+    you, ending your career. That Contact or Ally becomes a Rival
+    or Enemy. Additionally, roll 2d6; on a 2, take the Prisoner
+    career next term.
+  6: >
+    You do not know what happened to you. There is a gap in your
+    memory.

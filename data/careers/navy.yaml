@@ -17,6 +17,10 @@ service_skills:
   - Mechanic
   - Gun Combat
 
+# Assignment change group: "qualification" means changing assignment
+# requires passing a fresh qualification roll and resets rank to 0.
+assignment_change_group: qualification
+
 # Assignments available within this career
 assignments:
   - name: Line/Crew

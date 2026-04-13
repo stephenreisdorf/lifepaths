@@ -16,9 +16,13 @@ class GameSession:
         self.term: Term = ChildhoodTerm(self.character)
         self.current_career_data: dict | None = None
         self.career_term_count: int = 0
-        # Name of the career that was just left (mishap); blocks re-entry
-        # for exactly the immediately-following Career Selection prompt.
+        # Name of the career that was just left (mishap or forced exit);
+        # blocks re-entry for exactly the immediately-following Career
+        # Selection prompt.
         self.blocked_career: str | None = None
+        # Most-recently-selected assignment under the current career.
+        # Used by the assignment-change flow to preserve state.
+        self.current_assignment: dict | None = None
 
     def _character_summary(self) -> dict:
         """Serialize current character state for API responses."""

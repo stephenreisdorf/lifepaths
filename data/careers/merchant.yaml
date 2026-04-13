@@ -17,6 +17,8 @@ service_skills:
   - Electronics
   - Persuade
 
+assignment_change_group: new_career
+
 # Assignments available within this career
 assignments:
   - name: Merchant Marine

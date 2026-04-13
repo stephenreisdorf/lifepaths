@@ -64,6 +64,9 @@ class Associate(BaseModel):
     source_event: str | None = None
 
 
+SKILL_MAX_LEVEL = 4  # RAW: no single skill may exceed level 4 during creation.
+
+
 class Character(BaseModel):
     """A player character with characteristics and skills."""
 
@@ -72,6 +75,26 @@ class Character(BaseModel):
     skills: dict[str, Skill]
     careers: dict[str, CareerRecord] = {}
     associates: list[Associate] = []
+
+    def total_skill_levels(self) -> int:
+        """Return the sum of every skill's base_rank plus all specialty ranks."""
+        total = 0
+        for skill in self.skills.values():
+            total += skill.base_rank
+            total += sum(sp.rank for sp in skill.specialties.values())
+        return total
+
+    def total_skill_level_cap(self) -> int:
+        """RAW cap: 3 × (INT + EDU). Returns a large fallback if stats absent."""
+        int_stat = self.characteristics.get("Intelligence")
+        edu_stat = self.characteristics.get("Education")
+        if int_stat is None or edu_stat is None:
+            return 10**9  # effectively uncapped pre-childhood
+        return 3 * (int_stat.value + edu_stat.value)
+
+    def _budget_allows_increment(self, amount: int = 1) -> bool:
+        """Return True if raising total skill levels by `amount` stays within the 3×(INT+EDU) cap."""
+        return self.total_skill_levels() + amount <= self.total_skill_level_cap()
 
     def add_characteristic(self, characteristic: str, value: int) -> None:
         """Add or replace a characteristic with the given value."""
@@ -92,14 +115,30 @@ class Character(BaseModel):
         self.skills[name] = new_skill
 
     def increment_skill(self, name: str, specialty: str, increment: int = 1) -> None:
-        """Increment a skill specialty's rank, creating the skill/specialty if needed."""
+        """Increment a skill specialty's rank, creating the skill/specialty if needed.
+
+        Silently clamps to the per-skill cap (SKILL_MAX_LEVEL) and refuses
+        further increments once the total-skill-levels cap (3 × (INT + EDU))
+        is reached. RAW treats over-cap grants as wasted.
+        """
         if not self.has_skill(name):
             self.add_skill(name)
         skill = self.skills[name]
+        current = (
+            skill.specialties[specialty].rank
+            if skill.has_specialty(specialty)
+            else 0
+        )
+        target = min(current + increment, SKILL_MAX_LEVEL)
+        delta = target - current
+        if delta <= 0:
+            return
+        if not self._budget_allows_increment(delta):
+            return
         if not skill.has_specialty(specialty):
-            skill.add_specialty(specialty, increment)
+            skill.add_specialty(specialty, target)
         else:
-            skill.specialties[specialty].rank += increment
+            skill.specialties[specialty].rank = target
 
     def grant_skill(
         self,
@@ -118,31 +157,52 @@ class Character(BaseModel):
 
         `specialty` targets the named specialty on the parent skill; when
         None the rank applies to the skill's `base_rank`.
+
+        Respects the per-skill cap (SKILL_MAX_LEVEL) and the total-skill-
+        levels cap (3 × (INT + EDU)) by silently clamping / refusing further
+        increments — RAW treats over-cap grants as wasted.
         """
         if not self.has_skill(name):
             self.add_skill(name)
         skill = self.skills[name]
 
         if specialty is not None:
-            if not skill.has_specialty(specialty):
-                start = 0 if level == 0 else max(level or 1, 1)
-                skill.add_specialty(specialty, start)
+            current = (
+                skill.specialties[specialty].rank
+                if skill.has_specialty(specialty)
+                else 0
+            )
+            target = self._clamp_target(current, level)
+            delta = target - current
+            if delta <= 0 and skill.has_specialty(specialty):
                 return
-            current = skill.specialties[specialty].rank
-            if level is None:
-                skill.specialties[specialty].rank = current + 1
-            elif level > current:
-                skill.specialties[specialty].rank = level
+            if delta > 0 and not self._budget_allows_increment(delta):
+                return
+            if not skill.has_specialty(specialty):
+                skill.add_specialty(specialty, target)
+            else:
+                skill.specialties[specialty].rank = target
             return
 
         current = skill.base_rank
-        if level is None:
-            skill.base_rank = current + 1
-        elif level == 0:
-            # No-op: skill already exists at base_rank >= 0.
+        target = self._clamp_target(current, level)
+        delta = target - current
+        if delta <= 0:
             return
-        elif level > current:
-            skill.base_rank = level
+        if not self._budget_allows_increment(delta):
+            return
+        skill.base_rank = target
+
+    @staticmethod
+    def _clamp_target(current: int, level: int | None) -> int:
+        """Resolve the skill-grant notation to a target rank, clamped to SKILL_MAX_LEVEL."""
+        if level is None:
+            target = current + 1
+        elif level == 0:
+            target = current  # no change; caller may have just added the skill
+        else:
+            target = max(current, level)
+        return min(target, SKILL_MAX_LEVEL)
 
     def ensure_career(self, name: str) -> CareerRecord:
         """Return the CareerRecord for `name`, creating it at rank 0 if missing."""

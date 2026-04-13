@@ -89,6 +89,55 @@ class BasicTrainingStep(Step):
         )
 
 
+class PickServiceSkillStep(Step):
+    """Subsequent-career basic training: pick one Service Skill at level 0."""
+
+    step_id = "pick_service_skill"
+    step_type = StepType.CHOICE
+
+    def __init__(self, character: Character, service_skills: list[str]):
+        super().__init__(character=character)
+        self.service_skills = service_skills
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=(
+                "Subsequent-career basic training: pick one Service Skill "
+                "at level 0."
+            ),
+            options=list(self.service_skills),
+            required_count=1,
+        )
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        if player_input is None:
+            raise ValueError("Service-skill selection is required.")
+        selections = player_input.get("selections", [])
+        if len(selections) != 1:
+            raise ValueError("Must choose a single service skill.")
+        chosen = selections[0]
+        if chosen not in self.service_skills:
+            raise ValueError(f"Unknown service skill: {chosen}")
+        self._selected_skill_pending: str = chosen
+
+    def apply(self) -> None:
+        skill = self._selected_skill_pending
+        self.character.add_skill(skill)
+        self.outcome = StepOutcome(
+            status="TRAINED",
+            description=f"Gained {skill} at level 0 (subsequent-career basic training).",
+            data={"service_skill": skill},
+        )
+
+
 class ChooseAssignmentStep(Step):
     """Choose an assignment under the given career."""
 
@@ -398,7 +447,8 @@ class AdvancementRollStep(PassFailRollStep):
 
     def apply(self) -> None:
         # Always tick terms_served at the end of a successful term.
-        self.character.record_career_term(self.career_name)
+        record = self.character.record_career_term(self.career_name)
+        terms_after = record.terms_served
 
         current_rank = self.character.careers.get(self.career_name)
         at_max = (
@@ -413,14 +463,19 @@ class AdvancementRollStep(PassFailRollStep):
                 status = self.status_at_max_rank
                 self.new_rank_title: str | None = None
             else:
-                record = self.character.promote(self.career_name)
+                promoted = self.character.promote(self.career_name)
                 status = self.status_pass
-                self.new_rank_title = self._apply_rank_bonus(record.rank)
+                self.new_rank_title = self._apply_rank_bonus(promoted.rank)
         else:
             status = self.status_fail
             self.new_rank_title = None
 
+        # Natural 12 forces the character to stay (overrides forced-exit);
+        # otherwise, a modified roll ≤ terms served forces them out.
         self.forced_stay: bool = self.raw_roll == 12
+        self.forced_exit: bool = (
+            not self.forced_stay and self.total_roll <= terms_after
+        )
         self.outcome = StepOutcome(
             status=status,
             description=self._post_description(status),
@@ -432,6 +487,8 @@ class AdvancementRollStep(PassFailRollStep):
                 "characteristic": self.check_characteristic,
                 "new_rank_title": self.new_rank_title,
                 "forced_stay": self.forced_stay,
+                "forced_exit": self.forced_exit,
+                "terms_served": terms_after,
             },
         )
 
@@ -442,7 +499,12 @@ class AdvancementRollStep(PassFailRollStep):
             outcome_str = "already at top rank — no promotion"
         else:
             outcome_str = status
-        suffix = " (natural 12 — forced to stay)" if self.raw_roll == 12 else ""
+        if self.raw_roll == 12:
+            suffix = " (natural 12 — forced to stay)"
+        elif getattr(self, "forced_exit", False):
+            suffix = " (roll ≤ terms served — forced to leave)"
+        else:
+            suffix = ""
         return (
             f"Advancement check on {self.check_characteristic}: "
             f"rolled {self.total_roll} vs target {self.target} — "
@@ -509,17 +571,50 @@ class ChooseCareerStep(Step):
 
 
 class ContinueOrMusterOutStep(Step):
-    """Ask whether to continue serving or muster out."""
+    """Ask whether to continue serving, muster out, or change assignment."""
 
     step_id = "continue_or_muster_out"
     step_type = StepType.CHOICE
 
     CONTINUE = "Continue"
     MUSTER_OUT = "Muster Out"
+    CHANGE_ASSIGNMENT = "Change Assignment"
 
-    def __init__(self, character: Character, career_name: str) -> None:
+    def __init__(
+        self,
+        character: Character,
+        career_name: str,
+        assignment_change_group: str | None = None,
+        current_assignment: dict | None = None,
+        assignments: list[dict] | None = None,
+    ) -> None:
         super().__init__(character)
         self.career_name = career_name
+        self.assignment_change_group = assignment_change_group
+        self.current_assignment = current_assignment
+        self.assignments = assignments or []
+
+    def _change_assignment_available(self) -> bool:
+        # Rule: cannot change assignment if ejected from the career.
+        record = self.character.careers.get(self.career_name)
+        if record is not None and record.ejected:
+            return False
+        if self.assignment_change_group is None:
+            return False
+        if self.current_assignment is None:
+            return False
+        # Need at least one other assignment to switch to.
+        others = [
+            a for a in self.assignments
+            if a["name"] != self.current_assignment["name"]
+        ]
+        return len(others) > 0
+
+    def _options(self) -> list[str]:
+        options = [self.CONTINUE, self.MUSTER_OUT]
+        if self._change_assignment_available():
+            options.append(self.CHANGE_ASSIGNMENT)
+        return options
 
     def prompt(self) -> StepPrompt:
         if self.outcome is not None:
@@ -533,9 +628,9 @@ class ContinueOrMusterOutStep(Step):
             step_type=self.step_type,
             description=(
                 f"Your term in the {self.career_name} is complete. "
-                "Continue serving or muster out?"
+                "Continue serving, muster out, or change assignment?"
             ),
-            options=[self.CONTINUE, self.MUSTER_OUT],
+            options=self._options(),
             required_count=1,
         )
 
@@ -545,11 +640,18 @@ class ContinueOrMusterOutStep(Step):
         selections = player_input.get("selections", [])
         if len(selections) != 1:
             raise ValueError("Must choose one option.")
-        self._decision_pending: str = selections[0]
+        decision = selections[0]
+        if decision not in self._options():
+            raise ValueError(f"Unavailable option: {decision}")
+        self._decision_pending: str = decision
 
     def apply(self) -> None:
         decision = self._decision_pending
-        status = "CONTINUE" if decision == self.CONTINUE else "MUSTER_OUT"
+        status = {
+            self.CONTINUE: "CONTINUE",
+            self.MUSTER_OUT: "MUSTER_OUT",
+            self.CHANGE_ASSIGNMENT: "CHANGE_ASSIGNMENT",
+        }[decision]
         self.outcome = StepOutcome(
             status=status,
             description=f"Decision: {decision}.",
@@ -612,7 +714,21 @@ class TransitionTerm(Term):
                     term_number=session.career_term_count + 1,
                     **kwargs,
                 )
+            if outcome.status == "CHANGE_ASSIGNMENT":
+                # Hand off to the assignment-change sub-term. It will
+                # roll qualification for the new assignment and, on
+                # success, start a new CareerTerm with rank reset to 0.
+                data = session.current_career_data
+                return AssignmentChangeTerm(
+                    session.character,
+                    career_name=data["name"],
+                    assignments=data["assignments"],
+                    current_assignment=session.current_assignment,
+                    qualification_characteristic=data["qualification"]["characteristic"],
+                    qualification_target=data["qualification"]["target"],
+                )
             # MUSTER_OUT — creation is done.
+            session.current_assignment = None
             return None
 
         return None
@@ -641,11 +757,15 @@ class CareerTerm(Term):
         events: dict | None = None,
         mishaps: dict | None = None,
         ranks: list[dict] | None = None,
+        assignment_change_group: str | None = None,
+        assignment_override: dict | None = None,
         is_first_term: bool = True,
         term_number: int = 1,
     ) -> None:
         super().__init__(character)
         self.career_name = career_name
+        self.qualification_characteristic = qualification_characteristic
+        self.qualification_target = qualification_target
         self.service_skills = service_skills
         self.assignments = assignments
         self.skill_tables = skill_tables
@@ -653,6 +773,7 @@ class CareerTerm(Term):
         self.events = events or {}
         self.mishaps = mishaps or {}
         self.ranks = ranks or []
+        self.assignment_change_group = assignment_change_group
         self.is_first_term = is_first_term
         self.term_number = term_number
         self._selected_assignment: dict | None = None
@@ -661,6 +782,18 @@ class CareerTerm(Term):
             self.steps = [
                 RollQualificationStep(
                     character, qualification_characteristic, qualification_target
+                )
+            ]
+        elif assignment_override is not None:
+            # Continuing within the same career without re-prompting for
+            # assignment (used by the assignment-change flow to carry
+            # forward the chosen / retained assignment).
+            self._selected_assignment = assignment_override
+            self.steps = [
+                ChooseCareerSkillsTable(
+                    character,
+                    list(self.skill_tables.keys()),
+                    requirements=self.skill_table_requirements,
                 )
             ]
         else:
@@ -681,9 +814,16 @@ class CareerTerm(Term):
 
         if isinstance(step, RollQualificationStep):
             if status == "QUALIFIED":
-                self.steps.append(
-                    BasicTrainingStep(self.character, self.service_skills)
-                )
+                # First career ever → full Basic Training at level 0.
+                # Subsequent career → pick one Service Skill at level 0.
+                if not self.character.careers:
+                    self.steps.append(
+                        BasicTrainingStep(self.character, self.service_skills)
+                    )
+                else:
+                    self.steps.append(
+                        PickServiceSkillStep(self.character, self.service_skills)
+                    )
                 self.steps.append(
                     ChooseAssignmentStep(self.character, self.assignments)
                 )
@@ -741,12 +881,21 @@ class CareerTerm(Term):
             )
 
         elif isinstance(step, AdvancementRollStep):
-            # End of a normal term. A natural 12 forces the character to
-            # stay in the career; skip the Continue / Muster Out prompt.
+            # End of a normal term. Natural 12 overrides everything else
+            # (forced stay). Otherwise a modified roll ≤ terms served
+            # forces the character out of the career.
             if step.forced_stay:
                 self.outcome = StepOutcome(
                     status="FORCED_STAY",
                     description="Natural 12 — forced to stay in the career.",
+                )
+            elif step.forced_exit:
+                self.outcome = StepOutcome(
+                    status="FORCED_EXIT",
+                    description=(
+                        "Advancement roll did not exceed terms served — "
+                        "forced to leave the career."
+                    ),
                 )
             else:
                 self.outcome = StepOutcome(
@@ -777,6 +926,7 @@ class CareerTerm(Term):
             session.current_career_data = None
             session.career_term_count = 0
             session.blocked_career = self.career_name
+            session.current_assignment = None
             careers = [
                 c for c in get_available_careers()
                 if c["name"] != session.blocked_career
@@ -787,9 +937,32 @@ class CareerTerm(Term):
 
         if status == "COMPLETED":
             session.career_term_count += 1
+            session.current_assignment = self._selected_assignment
             return TransitionTerm(
                 session.character,
-                ContinueOrMusterOutStep(session.character, self.career_name),
+                ContinueOrMusterOutStep(
+                    session.character,
+                    self.career_name,
+                    assignment_change_group=self.assignment_change_group,
+                    current_assignment=self._selected_assignment,
+                    assignments=self.assignments,
+                ),
+            )
+
+        if status == "FORCED_EXIT":
+            # Forced out by advancement ≤ terms served. No Continue /
+            # Muster choice — go straight to Career Selection. The
+            # "cannot re-enter next term" rule applies to any leaving.
+            session.current_career_data = None
+            session.career_term_count = 0
+            session.blocked_career = self.career_name
+            session.current_assignment = None
+            careers = [
+                c for c in get_available_careers()
+                if c["name"] != session.blocked_career
+            ]
+            return TransitionTerm(
+                session.character, ChooseCareerStep(session.character, careers)
             )
 
         if status == "FORCED_STAY":
@@ -803,6 +976,111 @@ class CareerTerm(Term):
                 session.character,
                 term_number=session.career_term_count + 1,
                 **kwargs,
+            )
+
+        return None
+
+
+class AssignmentChangeTerm(Term):
+    """Handle the assignment-change flow.
+
+    Pick a new assignment within the same career, then roll career
+    qualification. On success, a fresh term begins at the new
+    assignment with rank reset to 0 (per RAW). On failure, the
+    character is forced out of the career entirely.
+    """
+
+    def __init__(
+        self,
+        character: Character,
+        career_name: str,
+        assignments: list[dict],
+        current_assignment: dict,
+        qualification_characteristic: str,
+        qualification_target: int,
+    ) -> None:
+        super().__init__(character)
+        self.career_name = career_name
+        self.assignments = assignments
+        self.current_assignment = current_assignment
+        self.qualification_characteristic = qualification_characteristic
+        self.qualification_target = qualification_target
+        others = [
+            a for a in assignments if a["name"] != current_assignment["name"]
+        ]
+        self.steps = [ChooseAssignmentStep(character, others)]
+        self._chosen_assignment: dict | None = None
+
+    def label(self) -> str:
+        return f"{self.career_name} — Change Assignment"
+
+    def advance(self) -> None:
+        step = self.current_step
+        super().advance()
+        if step is None or step.outcome is None:
+            return
+
+        if isinstance(step, ChooseAssignmentStep):
+            self._chosen_assignment = step.outcome.data["assignment"]
+            self.steps.append(
+                RollQualificationStep(
+                    self.character,
+                    self.qualification_characteristic,
+                    self.qualification_target,
+                )
+            )
+        elif isinstance(step, RollQualificationStep):
+            if step.outcome.status == "QUALIFIED":
+                self.outcome = StepOutcome(
+                    status="CHANGED",
+                    description=(
+                        f"Qualified for {self._chosen_assignment['name']} — "
+                        "career begins afresh at rank 0."
+                    ),
+                )
+            else:
+                self.outcome = StepOutcome(
+                    status="CHANGE_FAILED",
+                    description=(
+                        "Failed to qualify for the new assignment — "
+                        "forced out of the career."
+                    ),
+                )
+
+    def next_term(self, session: "GameSession") -> "Term | None":
+        from src.career_loader import (
+            career_to_term_kwargs,
+            get_available_careers,
+        )
+
+        status = self.outcome.status if self.outcome else None
+
+        if status == "CHANGED":
+            # RAW: rank resets to 0 when the assignment changes.
+            record = self.character.ensure_career(self.career_name)
+            record.rank = 0
+            session.current_assignment = self._chosen_assignment
+            kwargs = career_to_term_kwargs(
+                session.current_career_data, is_first_term=False
+            )
+            return CareerTerm(
+                session.character,
+                term_number=session.career_term_count + 1,
+                assignment_override=self._chosen_assignment,
+                **kwargs,
+            )
+
+        if status == "CHANGE_FAILED":
+            session.current_career_data = None
+            session.career_term_count = 0
+            session.blocked_career = self.career_name
+            session.current_assignment = None
+            careers = [
+                c for c in get_available_careers()
+                if c["name"] != session.blocked_career
+            ]
+            return TransitionTerm(
+                session.character, ChooseCareerStep(session.character, careers)
             )
 
         return None

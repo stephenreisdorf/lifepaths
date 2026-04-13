@@ -17,6 +17,10 @@ service_skills:
   - Recon
   - Gun Combat
 
+# Assignment change group: "new_career" means the change is treated
+# like starting a new career — qualification roll, rank resets to 0.
+assignment_change_group: new_career
+
 # Assignments available within this career
 assignments:
   - name: Law Enforcement

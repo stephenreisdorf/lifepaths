@@ -17,6 +17,8 @@ service_skills:
   - Investigate
   - Science
 
+assignment_change_group: qualification
+
 # Assignments available within this career
 assignments:
   - name: Field Researcher

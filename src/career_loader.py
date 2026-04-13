@@ -48,5 +48,6 @@ def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
         "events": career_data.get("events", {}),
         "mishaps": career_data.get("mishaps", {}),
         "ranks": career_data.get("ranks", []),
+        "assignment_change_group": career_data.get("assignment_change_group"),
         "is_first_term": is_first_term,
     }
