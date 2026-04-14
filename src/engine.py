@@ -23,6 +23,8 @@ class GameSession:
         # Most-recently-selected assignment under the current career.
         # Used by the assignment-change flow to preserve state.
         self.current_assignment: dict | None = None
+        # Whether the Draft fallback has already been used (once-per-life).
+        self.draft_used: bool = False
 
     def _character_summary(self) -> dict:
         """Serialize current character state for API responses."""
@@ -49,6 +51,8 @@ class GameSession:
                 }
                 for a in self.character.associates
             ],
+            "cash": self.character.cash,
+            "possessions": list(self.character.possessions),
         }
 
     def _auto_advance(self) -> tuple[list[StepPrompt], StepPrompt | None]:

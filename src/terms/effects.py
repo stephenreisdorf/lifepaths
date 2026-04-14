@@ -24,6 +24,13 @@ Each effect dict declares a `type` and type-specific fields. Supported:
     The owning step exposes `forced_exit: bool` so CareerTerm can end
     the term with the FORCED_EXIT status rather than EVENT / COMPLETED.
 
+- `enter_career` — mark a forced career entry on the next term.
+    `{type: enter_career, name: <career>}`
+    Sets `character.pending_career_entry`; the engine's career-selection
+    routing picks this up and enters the named career directly with
+    automatic qualification (used by Prisoner and similar entry-only
+    careers).
+
 - `advancement_dm` / `benefit_dm` — flavor-only for now; recorded in
     the effect description so the player sees it, but no mechanical
     DM stacking is tracked yet.
@@ -74,6 +81,11 @@ def apply_effects(character: Character, effects: list[dict]) -> list[str]:
             descriptions.append(_apply_associate(character, effect))
         elif etype == "forced_exit":
             descriptions.append("Forced to leave the career at term end.")
+        elif etype == "enter_career":
+            name = str(effect.get("name", ""))
+            if name:
+                character.pending_career_entry = name
+                descriptions.append(f"Forced into the {name} career next term.")
         elif etype == "advancement_dm":
             descriptions.append(
                 f"Advancement DM {_signed(effect.get('value', 0))} this term."

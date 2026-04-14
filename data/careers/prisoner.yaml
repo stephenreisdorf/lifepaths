@@ -1,0 +1,200 @@
+name: Prisoner
+description: >
+  Incarcerated in a penal facility. Prisoner is not a career you
+  choose — it is forced on you by the fallout of events or mishaps
+  in other careers. Inmates, thugs, and fixers each navigate prison
+  life differently.
+
+# Prisoner is never offered during normal career selection; it is
+# entered only via an `enter_career` effect surfaced by another
+# career's mishap or event.
+entry_only: true
+
+# A qualification block is required by the engine but is bypassed
+# when entering Prisoner via a forced-entry effect (auto-qualified).
+qualification:
+  characteristic: Endurance
+  target: 2
+
+service_skills:
+  - Athletics
+  - Deception
+  - Gambler
+  - Melee (unarmed)
+  - Stealth
+  - Streetwise
+
+assignments:
+  - name: Inmate
+    description: >
+      You serve your time without aligning with a faction —
+      keeping your head down and surviving the routine.
+    survival:
+      characteristic: Endurance
+      target: 7
+    advancement:
+      characteristic: Strength
+      target: 7
+
+  - name: Thug
+    description: >
+      You are the muscle, trading violence for protection and
+      status inside the prison's social hierarchy.
+    survival:
+      characteristic: Strength
+      target: 8
+    advancement:
+      characteristic: Endurance
+      target: 6
+
+  - name: Fixer
+    description: >
+      You run the contraband, favors, and information economy
+      that every prison quietly depends on.
+    survival:
+      characteristic: Intelligence
+      target: 9
+    advancement:
+      characteristic: Endurance
+      target: 5
+
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Endurance +1
+    - Dexterity +1
+    - Intelligence +1
+    - Gambler
+    - Melee (unarmed)
+
+  Service Skills:
+    - Athletics
+    - Deception
+    - Gambler
+    - Melee (unarmed)
+    - Stealth
+    - Streetwise
+
+  Inmate:
+    - Melee (unarmed)
+    - Stealth
+    - Streetwise
+    - Athletics
+    - Deception
+    - Recon
+
+  Thug:
+    - Melee (unarmed)
+    - Melee (blade)
+    - Gun Combat
+    - Athletics
+    - Intimidate
+    - Recon
+
+  Fixer:
+    - Streetwise
+    - Deception
+    - Persuade
+    - Broker
+    - Gambler
+    - Carouse
+
+ranks:
+  - rank: 0
+    title: Convict
+  - rank: 1
+    title: Convict
+    bonus_skill: Melee (unarmed)
+  - rank: 2
+    title: Trustee
+    bonus_skill: Streetwise
+  - rank: 3
+    title: Trustee
+  - rank: 4
+    title: Foreman
+    bonus_skill: Leadership
+  - rank: 5
+    title: Foreman
+  - rank: 6
+    title: Kingpin
+
+benefits:
+  cash:
+    - 0
+    - 0
+    - 1000
+    - 2000
+    - 2000
+    - 5000
+    - 10000
+
+  material:
+    - Contact
+    - Weapon
+    - Ally
+    - Streetwise
+    - Rival
+    - Enemy
+    - Ship Share
+
+events:
+  2:
+    text: >
+      Disaster! Roll on the Mishap table but you are not ejected
+      from this career.
+  3: >
+    A guard takes a dislike to you. Gain an Enemy and Stealth.
+  4: >
+    You survive a brutal fight in the yard. Gain one of Melee
+    (unarmed), Athletics, or Endurance +1.
+  5:
+    text: You make a contact among the inmates.
+    effects:
+      - {type: associate, associate_type: contact, name: Fellow Inmate}
+  6: >
+    You take part in running contraband. Gain one of Streetwise,
+    Deception, or Broker.
+  7: Life Event. Roll on the Life Events table.
+  8: >
+    A riot sweeps the block. Roll Melee 8+ or Stealth 8+ to avoid
+    a roll on the Injury table; success also grants DM+1 to the
+    next advancement roll.
+  9:
+    text: You gain an ally in the prison's underground.
+    effects:
+      - {type: associate, associate_type: ally, name: Prison Ally}
+  10: >
+    You spend time in the prison library or workshop. Gain any
+    one skill at level 0.
+  11: >
+    You intimidate a rival out of your way. Gain Intimidate or
+    Melee (unarmed).
+  12: >
+    You orchestrate a clean operation inside. You are
+    automatically promoted.
+
+mishaps:
+  1: >
+    Severely injured in prison violence. Roll twice on the
+    Injury table and take the lower result.
+  2: Injured. Roll on the Injury table.
+  3:
+    text: >
+      A gang marks you as a target. Gain an Enemy.
+    effects:
+      - {type: associate, associate_type: enemy, name: Prison Gang}
+  4:
+    text: >
+      Solitary confinement grinds down your health. Reduce
+      Endurance by 1.
+    effects:
+      - {type: characteristic, name: Endurance, delta: -1}
+  5:
+    text: >
+      You are betrayed by someone you trusted. Gain a Rival;
+      lose one Benefit roll.
+    effects:
+      - {type: associate, associate_type: rival, name: Former Friend}
+  6: >
+    You are released but the years inside are a blur. There is a
+    gap in your memory.

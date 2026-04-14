@@ -11,9 +11,11 @@ qualification:
   characteristic: Endurance
   target: 2
 
-# Drifters use their Assignment Skill table (not Service Skills) for
-# basic training per RAW — see the citizens-drifters-basic-training
-# backlog item. Until that lands, Service Skills still applies.
+# Drifters draw basic training from their chosen assignment's skill
+# table rather than from service_skills (RAW: citizens/drifters
+# special case).
+basic_training_from_assignment: true
+
 service_skills:
   - Athletics
   - Melee

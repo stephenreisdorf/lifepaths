@@ -76,6 +76,15 @@ class Character(BaseModel):
     skills: dict[str, Skill]
     careers: dict[str, CareerRecord] = {}
     associates: list[Associate] = []
+    # Credits accumulated from Cash benefit rolls during muster-out.
+    cash: int = 0
+    # Material muster-out benefits that don't fit into skills / characteristics /
+    # associates (e.g. "Weapon", "Ship Share", "TAS Membership").
+    possessions: list[str] = []
+    # Set by an enter_career effect (typically from a mishap): the engine
+    # forces entry into this career on the next term transition and clears
+    # the flag. Does not bypass normal career selection when None.
+    pending_career_entry: str | None = None
 
     def total_skill_levels(self) -> int:
         """Return the sum of every skill's base_rank plus all specialty ranks."""

@@ -26,6 +26,35 @@ def _available_careers_for(character: Character, blocked: str | None) -> list[di
     careers = filter_eligible_careers(character, get_available_careers())
     return [c for c in careers if c["name"] != blocked]
 
+
+def _forced_entry_career_term(session: "GameSession") -> "CareerTerm | None":
+    """If an effect has queued a forced-career entry, consume it and
+    return a first-term CareerTerm for that career (auto-qualified).
+
+    Returns None if nothing is queued. Clears the flag and the re-entry
+    block on the way through — the forced career overrides both.
+    """
+    from src.career_loader import career_to_term_kwargs, load_career
+
+    career_name = session.character.pending_career_entry
+    if not career_name:
+        return None
+    session.character.pending_career_entry = None
+    session.current_career_data = load_career(career_name)
+    session.career_term_count = 0
+    session.blocked_career = None
+    session.current_assignment = None
+    kwargs = career_to_term_kwargs(
+        session.current_career_data, is_first_term=True
+    )
+    # Forced entry auto-qualifies regardless of YAML.
+    kwargs["qualification_auto"] = True
+    return CareerTerm(
+        session.character,
+        term_number=session.career_term_count + 1,
+        **kwargs,
+    )
+
 if TYPE_CHECKING:
     from src.engine import GameSession
 
@@ -908,6 +937,346 @@ class ContinueOrMusterOutStep(Step):
         )
 
 
+class ChooseDraftOrDrifterStep(Step):
+    """Offered after a failed qualification: Draft (once per life) or Drifter.
+
+    Draft rolls 1d6 to assign the character to a random service. Drifter
+    is always available. Chosen career is entered next with automatic
+    qualification (first term).
+    """
+
+    step_id = "choose_draft_or_drifter"
+    step_type = StepType.CHOICE
+
+    DRAFT = "Draft"
+    DRIFTER = "Drifter"
+
+    # 1d6 draft table per the rules.
+    DRAFT_TABLE: dict[int, str] = {
+        1: "Navy",
+        2: "Army",
+        3: "Marine",
+        4: "Merchant",
+        5: "Scout",
+        6: "Agent",
+    }
+
+    def __init__(self, character: Character, draft_used: bool) -> None:
+        super().__init__(character)
+        self.draft_used = draft_used
+        self._decision_pending: str | None = None
+        self.draft_roll: int | None = None
+        self.assigned_career: str | None = None
+
+    def _options(self) -> list[str]:
+        options = []
+        if not self.draft_used:
+            options.append(self.DRAFT)
+        options.append(self.DRIFTER)
+        return options
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        if self.draft_used:
+            description = (
+                "Qualification failed. The Draft has already been used — "
+                "your only remaining fallback is the Drifter career."
+            )
+        else:
+            description = (
+                "Qualification failed. You may enter the Draft (roll 1d6 for "
+                "a random service assignment, once per life) or fall back on "
+                "the Drifter career."
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=description,
+            options=self._options(),
+            required_count=1,
+        )
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        if player_input is None:
+            raise ValueError("Draft-or-Drifter decision is required.")
+        selections = player_input.get("selections", [])
+        if len(selections) != 1:
+            raise ValueError("Must choose one option.")
+        decision = selections[0]
+        if decision not in self._options():
+            raise ValueError(f"Unavailable option: {decision}")
+        self._decision_pending = decision
+        if decision == self.DRAFT:
+            self.draft_roll = roll(1)
+            self.assigned_career = self.DRAFT_TABLE.get(self.draft_roll)
+
+    def apply(self) -> None:
+        if self._decision_pending == self.DRIFTER:
+            self.assigned_career = "Drifter"
+            self.outcome = StepOutcome(
+                status="DRIFTER",
+                description="Fell back to the Drifter career.",
+                data={"career": "Drifter"},
+            )
+            return
+        assert self.draft_roll is not None and self.assigned_career is not None
+        self.outcome = StepOutcome(
+            status="DRAFTED",
+            description=(
+                f"Drafted — rolled {self.draft_roll} on the Draft table: "
+                f"assigned to the {self.assigned_career} career."
+            ),
+            data={
+                "career": self.assigned_career,
+                "roll": self.draft_roll,
+            },
+        )
+
+
+class MusterOutStep(Step):
+    """One benefit roll during muster-out.
+
+    The player chooses the Cash column or the Material Benefits column,
+    then 1d6 is rolled (indexed 1..7 for a table length of 7; DMs clamp
+    within the column length). Cash adds to `character.cash`; material
+    entries parse as characteristic bumps, skills, associates, or
+    generic possessions.
+    """
+
+    step_id = "muster_out_roll"
+    step_type = StepType.CHOICE
+
+    CASH = "Cash"
+    BENEFITS = "Benefits"
+
+    def __init__(
+        self,
+        character: Character,
+        career_name: str,
+        cash_table: list,
+        material_table: list,
+        roll_index: int,
+        total_rolls: int,
+        dm: int = 0,
+    ) -> None:
+        super().__init__(character)
+        self.career_name = career_name
+        self.cash_table = list(cash_table)
+        self.material_table = list(material_table)
+        self.roll_index = roll_index
+        self.total_rolls = total_rolls
+        self.dm = dm
+        self._decision_pending: str | None = None
+        self.roll_value: int | None = None
+
+    def _options(self) -> list[str]:
+        options: list[str] = []
+        if self.cash_table:
+            options.append(self.CASH)
+        if self.material_table:
+            options.append(self.BENEFITS)
+        return options
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        header = (
+            f"Muster-out benefit roll {self.roll_index} of {self.total_rolls} "
+            f"from the {self.career_name}. Pick Cash or Benefits, then roll 1d6"
+            + (f" {self.dm:+d}" if self.dm else "")
+            + "."
+        )
+        cash_preview = ", ".join(f"{i + 1}: {v}" for i, v in enumerate(self.cash_table))
+        mat_preview = ", ".join(
+            f"{i + 1}: {v}" for i, v in enumerate(self.material_table)
+        )
+        description = (
+            f"{header}\n"
+            f"Cash column — {cash_preview}.\n"
+            f"Benefits column — {mat_preview}."
+        )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=description,
+            options=self._options(),
+            required_count=1,
+            data={
+                "cash_table": self.cash_table,
+                "material_table": self.material_table,
+                "roll_index": self.roll_index,
+                "total_rolls": self.total_rolls,
+                "dm": self.dm,
+            },
+        )
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        if player_input is None:
+            raise ValueError("Muster-out column selection is required.")
+        selections = player_input.get("selections", [])
+        if len(selections) != 1:
+            raise ValueError("Must choose a single muster-out column.")
+        decision = selections[0]
+        if decision not in self._options():
+            raise ValueError(f"Unknown muster-out option: {decision}")
+        self._decision_pending = decision
+        self.raw_roll: int = roll(1)
+        self.roll_value = self.raw_roll + self.dm
+
+    def _table_entry(self, table: list) -> tuple[int, object]:
+        """Clamp the rolled index into [1, len(table)] and return (index, entry)."""
+        if not table:
+            return 0, ""
+        idx = max(1, min(len(table), self.roll_value or 1))
+        return idx, table[idx - 1]
+
+    def apply(self) -> None:
+        assert self._decision_pending is not None and self.roll_value is not None
+        if self._decision_pending == self.CASH:
+            idx, entry = self._table_entry(self.cash_table)
+            amount = int(entry) if isinstance(entry, (int, str)) and str(entry).lstrip("-").isdigit() else 0
+            self.character.cash += amount
+            self.outcome = StepOutcome(
+                status="CASH",
+                description=(
+                    f"Benefit roll {self.roll_index}/{self.total_rolls}: "
+                    f"rolled {self.roll_value} on the Cash column — "
+                    f"gained Cr{amount}."
+                ),
+                data={
+                    "column": "cash",
+                    "raw_roll": self.raw_roll,
+                    "roll_value": self.roll_value,
+                    "dm": self.dm,
+                    "index": idx,
+                    "amount": amount,
+                },
+            )
+            return
+
+        idx, entry = self._table_entry(self.material_table)
+        entry_text = str(entry).strip()
+        applied = self._apply_material(entry_text)
+        self.outcome = StepOutcome(
+            status="BENEFITS",
+            description=(
+                f"Benefit roll {self.roll_index}/{self.total_rolls}: "
+                f"rolled {self.roll_value} on the Benefits column — "
+                f"{entry_text} ({applied})."
+            ),
+            data={
+                "column": "material",
+                "raw_roll": self.raw_roll,
+                "roll_value": self.roll_value,
+                "dm": self.dm,
+                "index": idx,
+                "entry": entry_text,
+                "applied": applied,
+            },
+        )
+
+    def _apply_material(self, entry: str) -> str:
+        """Apply a material-column entry; return a short applied-description."""
+        if not entry:
+            return "nothing"
+        # Characteristic bump like "Intelligence +1".
+        if try_apply_characteristic_bonus(self.character, entry):
+            return f"{entry} applied"
+        # Associate: bare "Contact" / "Ally" / "Rival" / "Enemy".
+        lowered = entry.lower()
+        from src.character import AssociateType
+
+        assoc_map = {
+            "contact": AssociateType.CONTACT,
+            "ally": AssociateType.ALLY,
+            "rival": AssociateType.RIVAL,
+            "enemy": AssociateType.ENEMY,
+        }
+        if lowered in assoc_map:
+            self.character.add_associate(
+                name=f"Muster-out {entry}",
+                type=assoc_map[lowered],
+                description=f"Gained during muster-out from the {self.career_name}.",
+                source_event="muster_out",
+            )
+            return f"added {lowered}"
+        # Fallback: treat as a possession (gear, membership, ship share, etc.).
+        self.character.possessions.append(entry)
+        return "added to possessions"
+
+
+class MusterOutTerm(Term):
+    """Sequence N benefit rolls at the end of a career.
+
+    Roll count: one per term served in the career, plus a rank bonus of
+    `(rank + 1) // 2` for any promotion beyond rank 0 (rank 1–2 = +1,
+    rank 3–4 = +2, rank 5–6 = +3).
+    """
+
+    def __init__(
+        self,
+        character: Character,
+        career_name: str,
+        benefits: dict,
+        terms_served: int,
+        rank: int,
+    ) -> None:
+        super().__init__(character)
+        self.career_name = career_name
+        self.benefits = benefits or {}
+        self.terms_served = terms_served
+        self.rank = rank
+        self.total_rolls = self._compute_total_rolls(terms_served, rank)
+        cash = list(self.benefits.get("cash", []) or [])
+        material = list(self.benefits.get("material", []) or [])
+        for i in range(self.total_rolls):
+            self.steps.append(
+                MusterOutStep(
+                    character=character,
+                    career_name=career_name,
+                    cash_table=cash,
+                    material_table=material,
+                    roll_index=i + 1,
+                    total_rolls=self.total_rolls,
+                )
+            )
+
+    @staticmethod
+    def _compute_total_rolls(terms_served: int, rank: int) -> int:
+        """Base one per term, plus one per two ranks attained (clamped at 0)."""
+        base = max(0, terms_served)
+        rank_bonus = 0 if rank <= 0 else (rank + 1) // 2
+        return base + rank_bonus
+
+    def label(self) -> str:
+        return f"{self.career_name} — Muster Out"
+
+    def advance(self) -> None:
+        super().advance()
+        if self.current_step_index >= len(self.steps):
+            self.outcome = StepOutcome(
+                status="MUSTERED_OUT",
+                description=(
+                    f"Mustered out of the {self.career_name} — "
+                    f"{self.total_rolls} benefit roll(s) resolved."
+                ),
+            )
+
+    def next_term(self, session: "GameSession") -> "Term | None":
+        # Muster-out completes character creation in the current flow.
+        session.current_assignment = None
+        return None
+
+
 class TransitionTerm(Term):
     """A term containing a single decision step (career choice or muster out)."""
 
@@ -922,6 +1291,8 @@ class TransitionTerm(Term):
         if inner.step_id == ContinueOrMusterOutStep.step_id:
             # ContinueOrMusterOutStep carries career_name as an attribute.
             return f"{inner.career_name} — Term End"  # type: ignore[attr-defined]
+        if inner.step_id == ChooseDraftOrDrifterStep.step_id:
+            return "Draft or Drifter"
         return "Transition"
 
     def next_term(self, session: "GameSession") -> "Term | None":
@@ -953,6 +1324,24 @@ class TransitionTerm(Term):
                 **kwargs,
             )
 
+        if inner.step_id == ChooseDraftOrDrifterStep.step_id:
+            career_name = outcome.data["career"]
+            if outcome.status == "DRAFTED":
+                session.draft_used = True
+            session.current_career_data = load_career(career_name)
+            session.career_term_count = 0
+            session.blocked_career = None
+            kwargs = career_to_term_kwargs(
+                session.current_career_data, is_first_term=True
+            )
+            # Draft / Drifter fallback auto-qualifies regardless of YAML.
+            kwargs["qualification_auto"] = True
+            return CareerTerm(
+                session.character,
+                term_number=session.career_term_count + 1,
+                **kwargs,
+            )
+
         if inner.step_id == ContinueOrMusterOutStep.step_id:
             if outcome.status == "CONTINUE":
                 kwargs = career_to_term_kwargs(
@@ -978,9 +1367,21 @@ class TransitionTerm(Term):
                     qualification_options=options,
                     qualification_auto=auto,
                 )
-            # MUSTER_OUT — creation is done.
+            # MUSTER_OUT — run the benefit rolls before creation ends.
+            career_data = session.current_career_data or {}
+            benefits = career_data.get("benefits") or {}
+            record = session.character.careers.get(inner.career_name)  # type: ignore[attr-defined]
+            terms_served = record.terms_served if record else 0
+            rank = record.rank if record else 0
+            session.current_career_data = None
             session.current_assignment = None
-            return None
+            return MusterOutTerm(
+                session.character,
+                career_name=inner.career_name,  # type: ignore[attr-defined]
+                benefits=benefits,
+                terms_served=terms_served,
+                rank=rank,
+            )
 
         return None
 
@@ -1012,6 +1413,8 @@ class CareerTerm(Term):
         commission: dict | None = None,
         assignment_change_group: str | None = None,
         assignment_override: dict | None = None,
+        benefits: dict | None = None,
+        basic_training_from_assignment: bool = False,
         is_first_term: bool = True,
         term_number: int = 1,
     ) -> None:
@@ -1029,6 +1432,8 @@ class CareerTerm(Term):
         self.officer_ranks = officer_ranks or []
         self.commission = commission
         self.assignment_change_group = assignment_change_group
+        self.benefits = benefits or {}
+        self.basic_training_from_assignment = basic_training_from_assignment
         self.is_first_term = is_first_term
         self.term_number = term_number
         self._selected_assignment: dict | None = None
@@ -1110,19 +1515,27 @@ class CareerTerm(Term):
 
         if isinstance(step, (RollQualificationStep, AutoQualifyStep)):
             if status == "QUALIFIED":
-                # First career ever → full Basic Training at level 0.
-                # Subsequent career → pick one Service Skill at level 0.
-                if not self.character.careers:
+                # Citizens and Drifters draw basic training from their
+                # *assignment* skill table, so the assignment must be
+                # chosen first and training happens after.
+                if self.basic_training_from_assignment:
                     self.steps.append(
-                        BasicTrainingStep(self.character, self.service_skills)
+                        ChooseAssignmentStep(self.character, self.assignments)
                     )
                 else:
+                    # First career ever → full Basic Training at level 0.
+                    # Subsequent career → pick one Service Skill at level 0.
+                    if not self.character.careers:
+                        self.steps.append(
+                            BasicTrainingStep(self.character, self.service_skills)
+                        )
+                    else:
+                        self.steps.append(
+                            PickServiceSkillStep(self.character, self.service_skills)
+                        )
                     self.steps.append(
-                        PickServiceSkillStep(self.character, self.service_skills)
+                        ChooseAssignmentStep(self.character, self.assignments)
                     )
-                self.steps.append(
-                    ChooseAssignmentStep(self.character, self.assignments)
-                )
             else:
                 # Failed qualification ends the term immediately.
                 self.outcome = StepOutcome(
@@ -1133,6 +1546,20 @@ class CareerTerm(Term):
         elif isinstance(step, ChooseAssignmentStep):
             self._selected_assignment = step.outcome.data["assignment"]
             if self.is_first_term:
+                # Citizens/Drifters: insert basic training drawn from the
+                # assignment's skill table before the survival check.
+                if self.basic_training_from_assignment:
+                    asn_skills = self.skill_tables.get(
+                        self._selected_assignment["name"], []
+                    )
+                    if not self.character.careers:
+                        self.steps.append(
+                            BasicTrainingStep(self.character, asn_skills)
+                        )
+                    else:
+                        self.steps.append(
+                            PickServiceSkillStep(self.character, asn_skills)
+                        )
                 self.steps.append(
                     SurvivalCheckStep(self.character, self._selected_assignment)
                 )
@@ -1260,13 +1687,17 @@ class CareerTerm(Term):
         status = self.outcome.status if self.outcome else None
 
         if status == "FAILED_QUAL":
-            # A failed qualification doesn't lift an outstanding re-entry
-            # block from an earlier mishap.
-            careers = _available_careers_for(
-                session.character, session.blocked_career
-            )
+            forced = _forced_entry_career_term(session)
+            if forced is not None:
+                return forced
+            # Per RAW, a failed qualification routes to the Draft (once
+            # per life) or the Drifter career — never straight back to
+            # career selection.
             return TransitionTerm(
-                session.character, ChooseCareerStep(session.character, careers)
+                session.character,
+                ChooseDraftOrDrifterStep(
+                    session.character, draft_used=session.draft_used
+                ),
             )
 
         if status == "MISHAP":
@@ -1274,6 +1705,9 @@ class CareerTerm(Term):
             session.career_term_count = 0
             session.blocked_career = self.career_name
             session.current_assignment = None
+            forced = _forced_entry_career_term(session)
+            if forced is not None:
+                return forced
             careers = _available_careers_for(
                 session.character, session.blocked_career
             )
@@ -1303,6 +1737,9 @@ class CareerTerm(Term):
             session.career_term_count = 0
             session.blocked_career = self.career_name
             session.current_assignment = None
+            forced = _forced_entry_career_term(session)
+            if forced is not None:
+                return forced
             careers = _available_careers_for(
                 session.character, session.blocked_career
             )

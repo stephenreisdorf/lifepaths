@@ -32,7 +32,7 @@ def _qualification_summary(qual: dict) -> dict:
 
 
 def get_available_careers() -> list[dict]:
-    """Return a list of `{name, description, qualification}` dicts for every career YAML."""
+    """Return a list of `{name, description, qualification, entry_only}` dicts for every career YAML."""
     careers: list[dict] = []
     for path in sorted(DATA_DIR.glob("*.yaml")):
         with open(path) as f:
@@ -42,6 +42,7 @@ def get_available_careers() -> list[dict]:
                 "name": data["name"],
                 "description": data.get("description", ""),
                 "qualification": _qualification_summary(data["qualification"]),
+                "entry_only": bool(data.get("entry_only", False)),
             }
         )
     return careers
@@ -52,12 +53,17 @@ def filter_eligible_careers(
 ) -> list[dict]:
     """Drop careers the character cannot enter.
 
-    Currently only removes auto-qualification careers whose characteristic
-    threshold is not met. Non-auto careers are always listed — the player
-    is allowed to attempt a qualification roll regardless of DM.
+    - Entry-only careers (e.g. Prisoner) never appear in normal selection;
+      they are reached only via an `enter_career` effect.
+    - Auto-qualification careers are dropped if none of their options meet
+      the threshold.
+    - Non-auto careers are always listed — the player is allowed to attempt
+      a qualification roll regardless of DM.
     """
     eligible: list[dict] = []
     for career in careers:
+        if career.get("entry_only"):
+            continue
         qual = career.get("qualification") or {}
         if not qual.get("auto"):
             eligible.append(career)
@@ -113,5 +119,9 @@ def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
         "officer_ranks": career_data.get("officer_ranks", []),
         "commission": career_data.get("commission"),
         "assignment_change_group": career_data.get("assignment_change_group"),
+        "benefits": career_data.get("benefits") or {},
+        "basic_training_from_assignment": bool(
+            career_data.get("basic_training_from_assignment", False)
+        ),
         "is_first_term": is_first_term,
     }
