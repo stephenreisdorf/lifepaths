@@ -1,0 +1,220 @@
+name: Army
+description: >
+  Ground forces of a world's military. Soldiers serve on land, in
+  power-armour, and in atmospheric craft. Army careers mix enlisted
+  combat service with command opportunities for commissioned officers.
+
+qualification:
+  characteristic: Endurance
+  target: 5
+
+commission:
+  characteristic: Social Standing
+  target: 8
+
+service_skills:
+  - Drive
+  - Athletics
+  - Gun Combat
+  - Recon
+  - Melee (Blade)
+  - Heavy Weapons
+
+assignment_change_group: qualification
+
+assignments:
+  - name: Support
+    description: You serve in a support role — logistics, mechanics, or medical.
+    survival:
+      characteristic: Endurance
+      target: 5
+    advancement:
+      characteristic: Education
+      target: 7
+
+  - name: Infantry
+    description: Front-line ground troops.
+    survival:
+      characteristic: Strength
+      target: 6
+    advancement:
+      characteristic: Education
+      target: 6
+
+  - name: Cavalry
+    description: You serve in armored or mechanized cavalry.
+    survival:
+      characteristic: Dexterity
+      target: 7
+    advancement:
+      characteristic: Intelligence
+      target: 5
+
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Dexterity +1
+    - Endurance +1
+    - Gambler
+    - Melee (Unarmed)
+    - Gun Combat
+
+  Service Skills:
+    - Drive
+    - Athletics
+    - Gun Combat
+    - Recon
+    - Melee (Blade)
+    - Heavy Weapons
+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Tactics (Military)
+      - Electronics
+      - Navigation
+      - Explosives
+      - Engineer
+      - Survival
+
+  Officer:
+    requirement:
+      commissioned: true
+    skills:
+      - Tactics (Military)
+      - Leadership
+      - Advocate
+      - Diplomat
+      - Electronics
+      - Admin
+
+  Support:
+    - Mechanic
+    - Drive
+    - Profession
+    - Explosives
+    - Electronics
+    - Medic
+
+  Infantry:
+    - Gun Combat
+    - Melee (Blade)
+    - Heavy Weapons
+    - Stealth
+    - Recon
+    - Athletics
+
+  Cavalry:
+    - Mechanic
+    - Drive
+    - Recon
+    - Gun Combat
+    - Electronics (Sensors)
+    - Flyer
+
+ranks:
+  - rank: 0
+    title: Private
+  - rank: 1
+    title: Lance Corporal
+    bonus_skill: Gun Combat
+  - rank: 2
+    title: Corporal
+    bonus_skill: Recon
+  - rank: 3
+    title: Lance Sergeant
+  - rank: 4
+    title: Sergeant
+    bonus_skill: Leadership
+  - rank: 5
+    title: Gunnery Sergeant
+  - rank: 6
+    title: Sergeant Major
+
+officer_ranks:
+  - rank: 1
+    title: Lieutenant
+    bonus_skill: Leadership
+  - rank: 2
+    title: Captain
+  - rank: 3
+    title: Major
+    bonus_skill: Tactics (Military)
+  - rank: 4
+    title: Lieutenant Colonel
+    bonus_skill: Leadership
+  - rank: 5
+    title: Colonel
+    bonus_skill: Social Standing +1
+  - rank: 6
+    title: General
+
+benefits:
+  cash:
+    - 2000
+    - 5000
+    - 10000
+    - 10000
+    - 10000
+    - 20000
+    - 30000
+
+  material:
+    - Combat Implant
+    - Intelligence +1
+    - Gun
+    - Education +1
+    - Weapon
+    - Armour
+    - Social Standing +1
+
+events:
+  2:
+    text: >
+      Disaster! Roll on the Mishap table, but you are not ejected
+      from this career.
+    effects:
+      - {type: skill, name: Survival}
+  3:
+    text: You are put through a grueling deployment. Gain +1 END or Survival.
+    effects:
+      - {type: skill, name: Survival}
+  4: You take part in a large-scale action. Gain one of Gun Combat, Heavy Weapons, or Recon.
+  5: You are given advanced training in a specialist field. Roll Education 8+ to gain any one skill.
+  6:
+    text: Your unit sees heavy combat. Gain an Ally among your comrades.
+    effects:
+      - {type: associate, associate_type: ally, name: Squadmate}
+  7: Life Event. Roll on the Life Events table.
+  8: Diplomatic mission. Gain one of Diplomat, Investigate, or Recon.
+  9:
+    text: A rival officer takes a dislike to you. Gain a Rival.
+    effects:
+      - {type: associate, associate_type: rival, name: Rival Officer}
+  10: You are recognized for valor. Gain DM+2 to your next Advancement roll.
+  11:
+    text: You are befriended by a senior officer. Gain an Ally and Leadership.
+    effects:
+      - {type: associate, associate_type: ally, name: Senior Officer}
+      - {type: skill, name: Leadership}
+  12: You display heroism in battle. You are automatically promoted.
+
+mishaps:
+  1:
+    text: Severely injured. Roll twice on the Injury table and take the lower result.
+  2: A loss in battle forces you to flee. Lose one personal possession.
+  3:
+    text: Quarrel with a fellow soldier. Gain that character as a Rival.
+    effects:
+      - {type: associate, associate_type: rival, name: Fellow Soldier}
+  4:
+    text: You are blamed for an accident. Reduce Social Standing by 1.
+    effects:
+      - {type: characteristic, name: Social Standing, delta: -1}
+  5:
+    text: Left for dead after a mission. Gain Survival or Stealth.
+    effects:
+      - {type: skill, name: Survival, level: 0}
+  6: Injured. Roll on the Injury table.

@@ -2,17 +2,77 @@ from pathlib import Path
 
 import yaml
 
+from src.character import Character
+
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "careers"
 
 
+def _normalize_qualification(qual: dict) -> tuple[list[dict], bool]:
+    """Return (options, auto) for a qualification YAML block.
+
+    Supported shapes:
+      - single: `{characteristic: X, target: N}`           -> 1 option
+      - multi:  `{options: [{characteristic, target}, ...]}` -> N options (OR)
+    Either shape may set `auto: true` — the character auto-qualifies if
+    they meet *any* option's threshold; otherwise the career is
+    unavailable (filtered out of career selection).
+    """
+    auto = bool(qual.get("auto", False))
+    if "options" in qual:
+        options = [dict(o) for o in qual["options"]]
+    else:
+        options = [{"characteristic": qual["characteristic"], "target": qual["target"]}]
+    return options, auto
+
+
+def _qualification_summary(qual: dict) -> dict:
+    """Lightweight summary of a career's qualification for eligibility checks."""
+    options, auto = _normalize_qualification(qual)
+    return {"options": options, "auto": auto}
+
+
 def get_available_careers() -> list[dict]:
-    """Return a list of {name, description} dicts for every career YAML on disk."""
+    """Return a list of `{name, description, qualification}` dicts for every career YAML."""
     careers: list[dict] = []
     for path in sorted(DATA_DIR.glob("*.yaml")):
         with open(path) as f:
             data = yaml.safe_load(f)
-        careers.append({"name": data["name"], "description": data.get("description", "")})
+        careers.append(
+            {
+                "name": data["name"],
+                "description": data.get("description", ""),
+                "qualification": _qualification_summary(data["qualification"]),
+            }
+        )
     return careers
+
+
+def filter_eligible_careers(
+    character: Character, careers: list[dict]
+) -> list[dict]:
+    """Drop careers the character cannot enter.
+
+    Currently only removes auto-qualification careers whose characteristic
+    threshold is not met. Non-auto careers are always listed — the player
+    is allowed to attempt a qualification roll regardless of DM.
+    """
+    eligible: list[dict] = []
+    for career in careers:
+        qual = career.get("qualification") or {}
+        if not qual.get("auto"):
+            eligible.append(career)
+            continue
+        options = qual.get("options") or []
+        if any(_meets_option(character, opt) for opt in options):
+            eligible.append(career)
+    return eligible
+
+
+def _meets_option(character: Character, option: dict) -> bool:
+    stat = character.characteristics.get(option["characteristic"])
+    if stat is None:
+        return False
+    return stat.value >= option["target"]
 
 
 def load_career(career_name: str) -> dict:
@@ -37,10 +97,12 @@ def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
         else:
             skill_tables[table_name] = table_value
 
+    qual_options, qual_auto = _normalize_qualification(career_data["qualification"])
+
     return {
         "career_name": career_data["name"],
-        "qualification_characteristic": career_data["qualification"]["characteristic"],
-        "qualification_target": career_data["qualification"]["target"],
+        "qualification_options": qual_options,
+        "qualification_auto": qual_auto,
         "service_skills": career_data["service_skills"],
         "assignments": career_data["assignments"],
         "skill_tables": skill_tables,
@@ -48,6 +110,8 @@ def career_to_term_kwargs(career_data: dict, is_first_term: bool) -> dict:
         "events": career_data.get("events", {}),
         "mishaps": career_data.get("mishaps", {}),
         "ranks": career_data.get("ranks", []),
+        "officer_ranks": career_data.get("officer_ranks", []),
+        "commission": career_data.get("commission"),
         "assignment_change_group": career_data.get("assignment_change_group"),
         "is_first_term": is_first_term,
     }

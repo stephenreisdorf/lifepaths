@@ -1,0 +1,211 @@
+name: Marine
+description: >
+  Shipboard infantry and boarding specialists. Marines deploy from
+  warships to seize vessels, assault planetary targets, and defend
+  installations in hostile environments.
+
+qualification:
+  characteristic: Endurance
+  target: 6
+
+commission:
+  characteristic: Social Standing
+  target: 9
+
+service_skills:
+  - Athletics
+  - Vacc Suit
+  - Tactics (Military)
+  - Heavy Weapons
+  - Gun Combat
+  - Stealth
+
+assignment_change_group: qualification
+
+assignments:
+  - name: Support
+    description: You serve in a support role aboard ship or on deployment.
+    survival:
+      characteristic: Endurance
+      target: 5
+    advancement:
+      characteristic: Education
+      target: 7
+
+  - name: Star Marine
+    description: You are a shipboard marine, trained for zero-g boarding actions.
+    survival:
+      characteristic: Endurance
+      target: 6
+    advancement:
+      characteristic: Education
+      target: 6
+
+  - name: Ground Assault
+    description: You drop from orbit to strike planetary targets.
+    survival:
+      characteristic: Endurance
+      target: 7
+    advancement:
+      characteristic: Education
+      target: 5
+
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Dexterity +1
+    - Endurance +1
+    - Gambler
+    - Melee (Unarmed)
+    - Melee (Blade)
+
+  Service Skills:
+    - Athletics
+    - Vacc Suit
+    - Tactics (Military)
+    - Heavy Weapons
+    - Gun Combat
+    - Stealth
+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Medic
+      - Explosives
+      - Engineer
+      - Survival
+      - Electronics
+      - Navigation
+
+  Officer:
+    requirement:
+      commissioned: true
+    skills:
+      - Tactics (Military)
+      - Leadership
+      - Stealth
+      - Admin
+      - Advocate
+      - Electronics
+
+  Support:
+    - Electronics
+    - Mechanic
+    - Medic
+    - Heavy Weapons
+    - Gun Combat
+    - Drive
+
+  Star Marine:
+    - Vacc Suit
+    - Athletics (Zero-G)
+    - Gunner
+    - Melee (Blade)
+    - Gun Combat
+    - Gun Combat
+
+  Ground Assault:
+    - Vacc Suit
+    - Heavy Weapons
+    - Recon
+    - Melee (Blade)
+    - Gun Combat
+    - Explosives
+
+ranks:
+  - rank: 0
+    title: Marine
+  - rank: 1
+    title: Lance Corporal
+    bonus_skill: Gun Combat
+  - rank: 2
+    title: Corporal
+  - rank: 3
+    title: Lance Sergeant
+    bonus_skill: Gun Combat
+  - rank: 4
+    title: Sergeant
+  - rank: 5
+    title: Gunnery Sergeant
+    bonus_skill: Endurance +1
+  - rank: 6
+    title: Sergeant Major
+
+officer_ranks:
+  - rank: 1
+    title: Lieutenant
+    bonus_skill: Leadership
+  - rank: 2
+    title: Captain
+  - rank: 3
+    title: Force Commander
+    bonus_skill: Tactics (Military)
+  - rank: 4
+    title: Lieutenant Colonel
+    bonus_skill: Leadership
+  - rank: 5
+    title: Colonel
+  - rank: 6
+    title: Brigadier
+    bonus_skill: Social Standing +1
+
+benefits:
+  cash:
+    - 2000
+    - 5000
+    - 5000
+    - 10000
+    - 20000
+    - 30000
+    - 40000
+
+  material:
+    - Armour
+    - Intelligence +1
+    - Education +1
+    - Weapon
+    - TAS Membership
+    - Endurance +1
+    - Social Standing +2
+
+events:
+  2:
+    text: >
+      Disaster! Roll on the Mishap table, but you are not ejected
+      from this career.
+  3: Advanced training in a specialist field. Roll Education 8+ to gain any one skill.
+  4: Assigned to boarding action — gain Vacc Suit or Tactics (Military).
+  5:
+    text: Commended for bravery. Gain a contact among the senior ranks.
+    effects:
+      - {type: associate, associate_type: contact, name: Commanding Officer}
+  6: You lead a daring raid. Gain one of Stealth, Gun Combat, or Tactics (Military).
+  7: Life Event. Roll on the Life Events table.
+  8: Participate in a planetary assault. Gain one of Heavy Weapons, Recon, or Tactics (Military).
+  9:
+    text: A sergeant takes you under their wing. Gain an Ally and Gun Combat.
+    effects:
+      - {type: associate, associate_type: ally, name: Sergeant}
+      - {type: skill, name: Gun Combat}
+  10: You are recognized for valor. Gain DM+2 to your next Advancement roll.
+  11: Trained in exotic equipment. Gain one of Heavy Weapons, Vacc Suit, or Electronics.
+  12: Heroic action in battle. You are automatically promoted.
+
+mishaps:
+  1: Severely injured. Roll twice on the Injury table, take the lower.
+  2: Captured during action. Lose one Benefit roll.
+  3:
+    text: You clash with a superior. Gain that officer as an Enemy.
+    effects:
+      - {type: associate, associate_type: enemy, name: Superior Officer}
+  4:
+    text: A unit disaster costs you your career. Reduce Social Standing by 1.
+    effects:
+      - {type: characteristic, name: Social Standing, delta: -1}
+  5:
+    text: Stranded behind enemy lines. Gain Survival or Stealth at level 0.
+    effects:
+      - {type: skill, name: Survival, level: 0}
+  6: Injured. Roll on the Injury table.

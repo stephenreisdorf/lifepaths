@@ -1,0 +1,182 @@
+name: Entertainer
+description: >
+  Artists, journalists, and performers whose work graces the
+  entertainment-hungry worlds of charted space. Fame is fickle,
+  patronage precarious, and rivals abundant.
+
+qualification:
+  options:
+    - characteristic: Dexterity
+      target: 5
+    - characteristic: Intelligence
+      target: 5
+
+service_skills:
+  - Art
+  - Carouse
+  - Deception
+  - Stealth
+  - Streetwise
+  - Persuade
+
+assignment_change_group: qualification
+
+assignments:
+  - name: Artist
+    description: Painter, sculptor, musician — you create.
+    survival:
+      characteristic: Social Standing
+      target: 6
+    advancement:
+      characteristic: Intelligence
+      target: 6
+
+  - name: Journalist
+    description: Reporter for news feeds and data services.
+    survival:
+      characteristic: Education
+      target: 7
+    advancement:
+      characteristic: Intelligence
+      target: 5
+
+  - name: Performer
+    description: Stage, sim-show, and live broadcast performer.
+    survival:
+      characteristic: Intelligence
+      target: 5
+    advancement:
+      characteristic: Dexterity
+      target: 7
+
+skill_tables:
+  Personal Development:
+    - Dexterity +1
+    - Intelligence +1
+    - Social Standing +1
+    - Carouse
+    - Deception
+    - Streetwise
+
+  Service Skills:
+    - Art
+    - Carouse
+    - Deception
+    - Stealth
+    - Streetwise
+    - Persuade
+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Advocate
+      - Diplomat
+      - Language
+      - Admin
+      - Electronics
+      - Science
+
+  Artist:
+    - Art (Holography)
+    - Art (Instrument)
+    - Art (Sculpting)
+    - Art (Write)
+    - Art
+    - Profession
+
+  Journalist:
+    - Investigate
+    - Comms
+    - Streetwise
+    - Persuade
+    - Electronics
+    - Advocate
+
+  Performer:
+    - Art (Acting)
+    - Art (Dance)
+    - Art (Instrument)
+    - Deception
+    - Persuade
+    - Carouse
+
+ranks:
+  - rank: 0
+    title: Unknown
+  - rank: 1
+    title: Street-corner Performer
+    bonus_skill: Art
+  - rank: 2
+    title: Known Artist
+  - rank: 3
+    title: Successful Artist
+    bonus_skill: Persuade
+  - rank: 4
+    title: Famous Artist
+  - rank: 5
+    title: Megastar
+    bonus_skill: Social Standing +1
+  - rank: 6
+    title: Legend
+
+benefits:
+  cash:
+    - 500
+    - 1000
+    - 5000
+    - 10000
+    - 20000
+    - 20000
+    - 30000
+
+  material:
+    - Contact
+    - Instrument
+    - Intelligence +1
+    - Education +1
+    - Ally
+    - TAS Membership
+    - Social Standing +2
+
+events:
+  2:
+    text: >
+      Disaster! Roll on the Mishap table, but you are not ejected
+      from this career.
+  3:
+    text: You are blackballed by a major producer. Gain an Enemy.
+    effects:
+      - {type: associate, associate_type: enemy, name: Producer}
+  4: You make a breakthrough in your art. Gain Art or Profession.
+  5: You go on tour. Gain one of Carouse, Streetwise, or Persuade.
+  6:
+    text: You gain a devoted fan who becomes an Ally.
+    effects:
+      - {type: associate, associate_type: ally, name: Devoted Fan}
+  7: Life Event. Roll on the Life Events table.
+  8: You investigate a lead for a story. Gain Investigate or Streetwise.
+  9: Your work receives critical acclaim. Gain DM+2 to your next Advancement roll.
+  10:
+    text: A patron champions your career. Gain a Contact and +1 Social Standing.
+    effects:
+      - {type: associate, associate_type: contact, name: Patron}
+      - {type: characteristic, name: Social Standing, delta: 1}
+  11: You network at the highest levels. Gain an Ally and Carouse.
+  12: A defining performance. You are automatically promoted.
+
+mishaps:
+  1: Severely injured or ill. Roll twice on the Injury table, take lower.
+  2: Scandal! Your reputation is in ruins. Lose one Social Standing.
+  3:
+    text: A jealous rival crosses you. Gain that character as a Rival.
+    effects:
+      - {type: associate, associate_type: rival, name: Jealous Rival}
+  4:
+    text: A patron turns on you. Gain an Enemy and reduce Social Standing by 1.
+    effects:
+      - {type: associate, associate_type: enemy, name: Former Patron}
+      - {type: characteristic, name: Social Standing, delta: -1}
+  5: You burn out and need to take time away. Gain Carouse or Drug (any).
+  6: Injured in a performance gone wrong. Roll on the Injury table.

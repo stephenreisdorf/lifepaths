@@ -136,10 +136,12 @@ class ChildhoodTerm(Term):
 
     def next_term(self, session: "GameSession") -> "Term | None":
         # Local imports to avoid circular references.
-        from src.career_loader import get_available_careers
+        from src.career_loader import filter_eligible_careers, get_available_careers
         from src.terms.careers import ChooseCareerStep, TransitionTerm
 
-        careers = get_available_careers()
+        careers = filter_eligible_careers(
+            session.character, get_available_careers()
+        )
         return TransitionTerm(
             session.character, ChooseCareerStep(session.character, careers)
         )

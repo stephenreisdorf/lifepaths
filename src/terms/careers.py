@@ -11,7 +11,20 @@ from src.terms.base import (
     StepType,
     Term,
 )
+from src.terms.effects import (
+    apply_effects,
+    has_effect,
+    parse_entry as parse_effect_entry,
+)
 from src.utilities import roll
+
+
+def _available_careers_for(character: Character, blocked: str | None) -> list[dict]:
+    """Career list for ChooseCareerStep — filtered by eligibility and block."""
+    from src.career_loader import filter_eligible_careers, get_available_careers
+
+    careers = filter_eligible_careers(character, get_available_careers())
+    return [c for c in careers if c["name"] != blocked]
 
 if TYPE_CHECKING:
     from src.engine import GameSession
@@ -67,6 +80,53 @@ class RollQualificationStep(PassFailRollStep):
     check_label = "Qualification"
     status_pass = "QUALIFIED"
     status_fail = "FAILED"
+
+
+class AutoQualifyStep(Step):
+    """Automatic qualification for careers that gate entry on a characteristic minimum.
+
+    Used by careers whose qualification YAML sets `auto: true` (e.g. Noble).
+    Eligible characters reach this step only if their characteristic meets
+    the threshold (career selection filters the rest out), so qualification
+    always succeeds here.
+    """
+
+    step_id = "auto_qualify"
+    step_type = StepType.AUTOMATIC
+
+    def __init__(
+        self,
+        character: Character,
+        characteristic: str,
+        target: int,
+    ) -> None:
+        super().__init__(character=character)
+        self.characteristic = characteristic
+        self.target = target
+
+    def apply(self) -> None:
+        self.outcome = StepOutcome(
+            status="QUALIFIED",
+            description=(
+                f"Automatically qualified ({self.characteristic} "
+                f">= {self.target})."
+            ),
+            data={"characteristic": self.characteristic, "target": self.target},
+        )
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            description = self.outcome.description
+        else:
+            description = (
+                f"Automatic qualification on {self.characteristic} "
+                f">= {self.target}."
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=description,
+        )
 
 
 class BasicTrainingStep(Step):
@@ -200,23 +260,33 @@ class ChooseCareerSkillsTable(Step):
         character: Character,
         skill_tables: list[str],
         requirements: dict[str, dict] | None = None,
+        career_name: str | None = None,
     ):
         super().__init__(character=character)
         self.skill_tables = skill_tables
         self.requirements = requirements or {}
+        self.career_name = career_name
 
     def _meets_requirement(self, table_name: str) -> bool:
         req = self.requirements.get(table_name)
         if not req:
             return True
+        # Commission gate: table is only available to officers of this career.
+        if req.get("commissioned"):
+            if self.career_name is None:
+                return False
+            record = self.character.careers.get(self.career_name)
+            if record is None or not record.commissioned:
+                return False
         characteristic = req.get("characteristic")
         minimum = req.get("minimum")
-        if characteristic is None or minimum is None:
-            return True
-        stat = self.character.characteristics.get(characteristic)
-        if stat is None:
-            return False
-        return stat.value >= minimum
+        if characteristic is not None and minimum is not None:
+            stat = self.character.characteristics.get(characteristic)
+            if stat is None:
+                return False
+            if stat.value < minimum:
+                return False
+        return True
 
     def available_tables(self) -> list[str]:
         return [t for t in self.skill_tables if self._meets_requirement(t)]
@@ -346,7 +416,11 @@ class SurvivalCheckStep(PassFailRollStep):
 
 
 class MishapRollStep(Step):
-    """Roll d6 on the career's mishap table. Flavor text only — no mechanical effects applied."""
+    """Roll d6 on the career's mishap table and apply any structured effects.
+
+    YAML entries may be plain strings (flavor only) or `{text, effects}`
+    dicts; see `src.terms.effects` for the effect vocabulary.
+    """
 
     step_id = "mishap_roll"
     step_type = StepType.AUTOMATIC
@@ -357,17 +431,25 @@ class MishapRollStep(Step):
 
     def resolve(self, player_input: dict | None = None) -> None:
         self.mishap_roll: int = roll(1)
-        self.mishap_text: str = str(self.mishaps.get(self.mishap_roll, "")).strip()
+        entry = self.mishaps.get(self.mishap_roll, "")
+        self.mishap_text, self._effects = parse_effect_entry(entry)
 
     def apply(self) -> None:
-        # Flavor-only for now; effects are not auto-applied.
+        applied = apply_effects(self.character, self._effects)
+        detail = ""
+        if applied:
+            detail = " Effects: " + "; ".join(applied) + "."
         self.outcome = StepOutcome(
             status="MISHAP",
             description=(
                 f"Mishap! Rolled {self.mishap_roll}: {self.mishap_text} "
-                "Your career ends."
+                f"Your career ends.{detail}"
             ),
-            data={"roll": self.mishap_roll, "text": self.mishap_text},
+            data={
+                "roll": self.mishap_roll,
+                "text": self.mishap_text,
+                "effects_applied": applied,
+            },
         )
 
     def prompt(self) -> StepPrompt:
@@ -383,7 +465,13 @@ class MishapRollStep(Step):
 
 
 class EventsRollStep(Step):
-    """Roll 2d6 on the career's events table. Flavor text only — no mechanical effects applied."""
+    """Roll 2d6 on the career's events table and apply any structured effects.
+
+    YAML entries may be plain strings (flavor only) or `{text, effects}`
+    dicts; see `src.terms.effects` for the effect vocabulary. A
+    `forced_exit` effect surfaces as `self.forced_exit=True` so the
+    owning `CareerTerm` can end the term with FORCED_EXIT status.
+    """
 
     step_id = "events_roll"
     step_type = StepType.AUTOMATIC
@@ -391,17 +479,30 @@ class EventsRollStep(Step):
     def __init__(self, character: Character, events: dict) -> None:
         super().__init__(character=character)
         self.events = events
+        self.forced_exit: bool = False
 
     def resolve(self, player_input: dict | None = None) -> None:
         self.event_roll: int = roll(2)
-        self.event_text: str = str(self.events.get(self.event_roll, "")).strip()
+        entry = self.events.get(self.event_roll, "")
+        self.event_text, self._effects = parse_effect_entry(entry)
 
     def apply(self) -> None:
-        # Flavor-only for now; effects are not auto-applied.
+        applied = apply_effects(self.character, self._effects)
+        self.forced_exit = has_effect(self._effects, "forced_exit")
+        detail = ""
+        if applied:
+            detail = " Effects: " + "; ".join(applied) + "."
         self.outcome = StepOutcome(
             status="EVENT",
-            description=f"Event (2d6 = {self.event_roll}): {self.event_text}",
-            data={"roll": self.event_roll, "text": self.event_text},
+            description=(
+                f"Event (2d6 = {self.event_roll}): {self.event_text}{detail}"
+            ),
+            data={
+                "roll": self.event_roll,
+                "text": self.event_text,
+                "effects_applied": applied,
+                "forced_exit": self.forced_exit,
+            },
         )
 
     def prompt(self) -> StepPrompt:
@@ -431,6 +532,7 @@ class AdvancementRollStep(PassFailRollStep):
         career_name: str,
         assignment: dict,
         ranks: list[dict],
+        officer_ranks: list[dict] | None = None,
     ) -> None:
         advancement = assignment["advancement"]
         super().__init__(
@@ -440,9 +542,18 @@ class AdvancementRollStep(PassFailRollStep):
         )
         self.career_name = career_name
         self.assignment = assignment
-        self.ranks = ranks
+        self.enlisted_ranks = ranks
+        self.officer_ranks = officer_ranks or []
+        # Pick enlisted vs officer rank track at apply-time from the
+        # character's commissioned flag for this career.
+        record = character.careers.get(career_name)
+        self.ranks = (
+            self.officer_ranks
+            if (record is not None and record.commissioned and self.officer_ranks)
+            else self.enlisted_ranks
+        )
         self.max_rank: int | None = (
-            max(r["rank"] for r in ranks) if ranks else None
+            max(r["rank"] for r in self.ranks) if self.ranks else None
         )
 
     def apply(self) -> None:
@@ -525,6 +636,144 @@ class AdvancementRollStep(PassFailRollStep):
         """Apply a rank bonus. '<Name> +<N>' against a known characteristic bumps it; otherwise add as a skill."""
         if not try_apply_characteristic_bonus(self.character, bonus):
             self.character.add_skill(bonus)
+
+
+class CommissionStep(Step):
+    """Optional commission attempt for military careers.
+
+    Player first chooses Attempt or Skip. On Attempt, roll 2d6 + DM vs the
+    commission target. Success makes the character a rank 1 officer and
+    replaces the advancement roll for this term (so `terms_served` is
+    ticked here).
+
+    Eligibility is decided at append-time by `CareerTerm`: first term,
+    or SOC >= 9 in any term (with DM -1 per term after the first).
+    """
+
+    step_id = "commission"
+    step_type = StepType.CHOICE
+
+    ATTEMPT = "Attempt"
+    SKIP = "Skip"
+
+    def __init__(
+        self,
+        character: Character,
+        career_name: str,
+        characteristic: str,
+        target: int,
+        dm: int,
+        officer_ranks: list[dict],
+    ) -> None:
+        super().__init__(character=character)
+        self.career_name = career_name
+        self.characteristic = characteristic
+        self.target = target
+        self.dm = dm
+        self.officer_ranks = officer_ranks
+        self._decision_pending: str | None = None
+        self.raw_roll: int | None = None
+        self.total_roll: int | None = None
+
+    def _total_dm(self) -> int:
+        stat = self.character.characteristics.get(self.characteristic)
+        stat_mod = stat.modifier() if stat is not None else 0
+        return stat_mod + self.dm
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        total_dm = self._total_dm()
+        sign = "+" if total_dm >= 0 else ""
+        description = (
+            f"You may attempt a commission. Roll 2d6 {sign}{total_dm} "
+            f"on {self.characteristic} vs {self.target}. "
+            "On success you become a rank 1 officer and skip this term's "
+            "advancement roll."
+        )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=description,
+            options=[self.ATTEMPT, self.SKIP],
+            required_count=1,
+        )
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        if player_input is None:
+            raise ValueError("Commission decision is required.")
+        selections = player_input.get("selections", [])
+        if len(selections) != 1:
+            raise ValueError("Must choose a single commission option.")
+        decision = selections[0]
+        if decision not in (self.ATTEMPT, self.SKIP):
+            raise ValueError(f"Unknown commission option: {decision}")
+        self._decision_pending = decision
+        if decision == self.ATTEMPT:
+            self.raw_roll = roll(2)
+            self.total_roll = self.raw_roll + self._total_dm()
+
+    def apply(self) -> None:
+        if self._decision_pending == self.SKIP:
+            self.outcome = StepOutcome(
+                status="SKIPPED",
+                description="Declined to attempt a commission this term.",
+                data={"decision": "skip"},
+            )
+            return
+
+        assert self.total_roll is not None and self.raw_roll is not None
+        if self.total_roll >= self.target:
+            record = self.character.ensure_career(self.career_name)
+            record.commissioned = True
+            record.rank = 1
+            new_rank_title = self._apply_officer_rank_bonus(1)
+            # Commission replaces advancement this term — tick terms_served
+            # here so the count is correct when the term ends.
+            self.character.record_career_term(self.career_name)
+            self.outcome = StepOutcome(
+                status="COMMISSIONED",
+                description=(
+                    f"Commission check on {self.characteristic}: rolled "
+                    f"{self.total_roll} vs target {self.target} — COMMISSIONED"
+                    + (f" as {new_rank_title}." if new_rank_title else ".")
+                ),
+                data={
+                    "raw_roll": self.raw_roll,
+                    "total_roll": self.total_roll,
+                    "target": self.target,
+                    "new_rank_title": new_rank_title,
+                },
+            )
+        else:
+            self.outcome = StepOutcome(
+                status="FAILED_COMMISSION",
+                description=(
+                    f"Commission check on {self.characteristic}: rolled "
+                    f"{self.total_roll} vs target {self.target} — FAILED."
+                ),
+                data={
+                    "raw_roll": self.raw_roll,
+                    "total_roll": self.total_roll,
+                    "target": self.target,
+                },
+            )
+
+    def _apply_officer_rank_bonus(self, new_rank: int) -> str | None:
+        entry = next(
+            (r for r in self.officer_ranks if r.get("rank") == new_rank),
+            None,
+        )
+        if entry is None:
+            return None
+        bonus = entry.get("bonus_skill")
+        if bonus and not try_apply_characteristic_bonus(self.character, bonus):
+            self.character.add_skill(bonus)
+        return entry.get("title")
 
 
 class ChooseCareerStep(Step):
@@ -719,13 +968,15 @@ class TransitionTerm(Term):
                 # roll qualification for the new assignment and, on
                 # success, start a new CareerTerm with rank reset to 0.
                 data = session.current_career_data
+                from src.career_loader import _normalize_qualification
+                options, auto = _normalize_qualification(data["qualification"])
                 return AssignmentChangeTerm(
                     session.character,
                     career_name=data["name"],
                     assignments=data["assignments"],
                     current_assignment=session.current_assignment,
-                    qualification_characteristic=data["qualification"]["characteristic"],
-                    qualification_target=data["qualification"]["target"],
+                    qualification_options=options,
+                    qualification_auto=auto,
                 )
             # MUSTER_OUT — creation is done.
             session.current_assignment = None
@@ -748,8 +999,8 @@ class CareerTerm(Term):
         self,
         character: Character,
         career_name: str,
-        qualification_characteristic: str,
-        qualification_target: int,
+        qualification_options: list[dict],
+        qualification_auto: bool,
         service_skills: list[str],
         assignments: list[dict],
         skill_tables: dict[str, list[str]],
@@ -757,6 +1008,8 @@ class CareerTerm(Term):
         events: dict | None = None,
         mishaps: dict | None = None,
         ranks: list[dict] | None = None,
+        officer_ranks: list[dict] | None = None,
+        commission: dict | None = None,
         assignment_change_group: str | None = None,
         assignment_override: dict | None = None,
         is_first_term: bool = True,
@@ -764,8 +1017,8 @@ class CareerTerm(Term):
     ) -> None:
         super().__init__(character)
         self.career_name = career_name
-        self.qualification_characteristic = qualification_characteristic
-        self.qualification_target = qualification_target
+        self.qualification_options = qualification_options
+        self.qualification_auto = qualification_auto
         self.service_skills = service_skills
         self.assignments = assignments
         self.skill_tables = skill_tables
@@ -773,17 +1026,42 @@ class CareerTerm(Term):
         self.events = events or {}
         self.mishaps = mishaps or {}
         self.ranks = ranks or []
+        self.officer_ranks = officer_ranks or []
+        self.commission = commission
         self.assignment_change_group = assignment_change_group
         self.is_first_term = is_first_term
         self.term_number = term_number
         self._selected_assignment: dict | None = None
 
+        # Best-of-options: for OR-qualification (e.g. Entertainer DEX or
+        # INT), pick the option that yields the highest modifier for this
+        # character so they make a single roll at their best DM.
+        best_option = max(
+            qualification_options,
+            key=lambda o: character.characteristics[o["characteristic"]].modifier()
+            if o["characteristic"] in character.characteristics
+            else -99,
+        )
+        self.qualification_characteristic: str = best_option["characteristic"]
+        self.qualification_target: int = best_option["target"]
+
         if is_first_term:
-            self.steps = [
-                RollQualificationStep(
-                    character, qualification_characteristic, qualification_target
-                )
-            ]
+            if qualification_auto:
+                self.steps = [
+                    AutoQualifyStep(
+                        character,
+                        self.qualification_characteristic,
+                        self.qualification_target,
+                    )
+                ]
+            else:
+                self.steps = [
+                    RollQualificationStep(
+                        character,
+                        self.qualification_characteristic,
+                        self.qualification_target,
+                    )
+                ]
         elif assignment_override is not None:
             # Continuing within the same career without re-prompting for
             # assignment (used by the assignment-change flow to carry
@@ -794,6 +1072,7 @@ class CareerTerm(Term):
                     character,
                     list(self.skill_tables.keys()),
                     requirements=self.skill_table_requirements,
+                    career_name=self.career_name,
                 )
             ]
         else:
@@ -801,6 +1080,23 @@ class CareerTerm(Term):
 
     def label(self) -> str:
         return f"{self.career_name} — Term {self.term_number}"
+
+    def _commission_eligible(self) -> bool:
+        """Whether to offer the commission step this term.
+
+        Requires a commission config in the career; the character must
+        not already be commissioned in this career; first term, OR
+        SOC >= 9 in any subsequent term.
+        """
+        if self.commission is None:
+            return False
+        record = self.character.careers.get(self.career_name)
+        if record is not None and record.commissioned:
+            return False
+        if self.is_first_term:
+            return True
+        soc = self.character.characteristics.get("Social Standing")
+        return soc is not None and soc.value >= 9
 
     def advance(self) -> None:
         """Complete the current step and dynamically append the next steps based on outcomes."""
@@ -812,7 +1108,7 @@ class CareerTerm(Term):
 
         status = step.outcome.status
 
-        if isinstance(step, RollQualificationStep):
+        if isinstance(step, (RollQualificationStep, AutoQualifyStep)):
             if status == "QUALIFIED":
                 # First career ever → full Basic Training at level 0.
                 # Subsequent career → pick one Service Skill at level 0.
@@ -846,6 +1142,7 @@ class CareerTerm(Term):
                         self.character,
                         list(self.skill_tables.keys()),
                         requirements=self.skill_table_requirements,
+                        career_name=self.career_name,
                     )
                 )
 
@@ -861,16 +1158,67 @@ class CareerTerm(Term):
         elif isinstance(step, SurvivalCheckStep):
             if status == "SURVIVED":
                 self.steps.append(EventsRollStep(self.character, self.events))
+            else:
+                self.steps.append(MishapRollStep(self.character, self.mishaps))
+
+        elif isinstance(step, EventsRollStep):
+            # An event may force the character out of the career. Terms
+            # served still counts — tick it here because advancement
+            # won't run. No commission or advancement rolls follow.
+            if step.forced_exit:
+                self.character.record_career_term(self.career_name)
+                self.outcome = StepOutcome(
+                    status="FORCED_EXIT",
+                    description=(
+                        "Event forced you out of the career — term complete."
+                    ),
+                )
+                return
+            # Commission is attempted between events and advancement for
+            # eligible careers. If ineligible, skip straight to advancement.
+            if self._commission_eligible():
+                assert self.commission is not None
+                dm = 0 if self.is_first_term else -(self.term_number - 1)
+                self.steps.append(
+                    CommissionStep(
+                        self.character,
+                        self.career_name,
+                        self.commission["characteristic"],
+                        self.commission["target"],
+                        dm=dm,
+                        officer_ranks=self.officer_ranks,
+                    )
+                )
+            else:
                 self.steps.append(
                     AdvancementRollStep(
                         self.character,
                         self.career_name,
                         self._selected_assignment,
                         self.ranks,
+                        officer_ranks=self.officer_ranks,
                     )
                 )
+
+        elif isinstance(step, CommissionStep):
+            if status == "COMMISSIONED":
+                # Commission replaces advancement this term. terms_served
+                # was ticked in CommissionStep.apply(). No forced-exit check
+                # because there was no advancement roll.
+                self.outcome = StepOutcome(
+                    status="COMPLETED",
+                    description="Term completed (commissioned).",
+                )
             else:
-                self.steps.append(MishapRollStep(self.character, self.mishaps))
+                self.steps.append(
+                    AdvancementRollStep(
+                        self.character,
+                        self.career_name,
+                        self._selected_assignment,
+                        self.ranks,
+                        officer_ranks=self.officer_ranks,
+                    )
+                )
 
         elif isinstance(step, MishapRollStep):
             self.character.mark_career_ejected(self.career_name)
@@ -914,10 +1262,9 @@ class CareerTerm(Term):
         if status == "FAILED_QUAL":
             # A failed qualification doesn't lift an outstanding re-entry
             # block from an earlier mishap.
-            careers = [
-                c for c in get_available_careers()
-                if c["name"] != session.blocked_career
-            ]
+            careers = _available_careers_for(
+                session.character, session.blocked_career
+            )
             return TransitionTerm(
                 session.character, ChooseCareerStep(session.character, careers)
             )
@@ -927,10 +1274,9 @@ class CareerTerm(Term):
             session.career_term_count = 0
             session.blocked_career = self.career_name
             session.current_assignment = None
-            careers = [
-                c for c in get_available_careers()
-                if c["name"] != session.blocked_career
-            ]
+            careers = _available_careers_for(
+                session.character, session.blocked_career
+            )
             return TransitionTerm(
                 session.character, ChooseCareerStep(session.character, careers)
             )
@@ -957,10 +1303,9 @@ class CareerTerm(Term):
             session.career_term_count = 0
             session.blocked_career = self.career_name
             session.current_assignment = None
-            careers = [
-                c for c in get_available_careers()
-                if c["name"] != session.blocked_career
-            ]
+            careers = _available_careers_for(
+                session.character, session.blocked_career
+            )
             return TransitionTerm(
                 session.character, ChooseCareerStep(session.character, careers)
             )
@@ -996,15 +1341,24 @@ class AssignmentChangeTerm(Term):
         career_name: str,
         assignments: list[dict],
         current_assignment: dict,
-        qualification_characteristic: str,
-        qualification_target: int,
+        qualification_options: list[dict],
+        qualification_auto: bool,
     ) -> None:
         super().__init__(character)
         self.career_name = career_name
         self.assignments = assignments
         self.current_assignment = current_assignment
-        self.qualification_characteristic = qualification_characteristic
-        self.qualification_target = qualification_target
+        self.qualification_options = qualification_options
+        self.qualification_auto = qualification_auto
+        # Best-of-options: match CareerTerm's qualification choice.
+        best = max(
+            qualification_options,
+            key=lambda o: character.characteristics[o["characteristic"]].modifier()
+            if o["characteristic"] in character.characteristics
+            else -99,
+        )
+        self.qualification_characteristic = best["characteristic"]
+        self.qualification_target = best["target"]
         others = [
             a for a in assignments if a["name"] != current_assignment["name"]
         ]
@@ -1022,14 +1376,23 @@ class AssignmentChangeTerm(Term):
 
         if isinstance(step, ChooseAssignmentStep):
             self._chosen_assignment = step.outcome.data["assignment"]
-            self.steps.append(
-                RollQualificationStep(
-                    self.character,
-                    self.qualification_characteristic,
-                    self.qualification_target,
+            if self.qualification_auto:
+                self.steps.append(
+                    AutoQualifyStep(
+                        self.character,
+                        self.qualification_characteristic,
+                        self.qualification_target,
+                    )
                 )
-            )
-        elif isinstance(step, RollQualificationStep):
+            else:
+                self.steps.append(
+                    RollQualificationStep(
+                        self.character,
+                        self.qualification_characteristic,
+                        self.qualification_target,
+                    )
+                )
+        elif isinstance(step, (RollQualificationStep, AutoQualifyStep)):
             if step.outcome.status == "QUALIFIED":
                 self.outcome = StepOutcome(
                     status="CHANGED",
@@ -1075,10 +1438,9 @@ class AssignmentChangeTerm(Term):
             session.career_term_count = 0
             session.blocked_career = self.career_name
             session.current_assignment = None
-            careers = [
-                c for c in get_available_careers()
-                if c["name"] != session.blocked_career
-            ]
+            careers = _available_careers_for(
+                session.character, session.blocked_career
+            )
             return TransitionTerm(
                 session.character, ChooseCareerStep(session.character, careers)
             )

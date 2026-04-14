@@ -1,0 +1,183 @@
+name: Noble
+description: >
+  The landed and titled aristocracy of the Imperium. Nobles are
+  born to their rank — only those of sufficient social standing
+  may enter this career.
+
+qualification:
+  auto: true
+  characteristic: Social Standing
+  target: 10
+
+service_skills:
+  - Admin
+  - Advocate
+  - Diplomat
+  - Language
+  - Leadership
+  - Persuade
+
+assignment_change_group: qualification
+
+assignments:
+  - name: Administrator
+    description: You govern fiefs, corporations, or state bureaus.
+    survival:
+      characteristic: Intelligence
+      target: 4
+    advancement:
+      characteristic: Education
+      target: 6
+
+  - name: Diplomat
+    description: You represent your house abroad.
+    survival:
+      characteristic: Intelligence
+      target: 5
+    advancement:
+      characteristic: Social Standing
+      target: 7
+
+  - name: Dilettante
+    description: You dabble in courtly pursuits.
+    survival:
+      characteristic: Social Standing
+      target: 5
+    advancement:
+      characteristic: Intelligence
+      target: 8
+
+skill_tables:
+  Personal Development:
+    - Intelligence +1
+    - Education +1
+    - Social Standing +1
+    - Carouse
+    - Persuade
+    - Deception
+
+  Service Skills:
+    - Admin
+    - Advocate
+    - Diplomat
+    - Language
+    - Leadership
+    - Persuade
+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Medic
+      - Electronics
+      - Pilot
+      - Science
+      - Admin
+      - Art
+
+  Administrator:
+    - Admin
+    - Advocate
+    - Diplomat
+    - Electronics
+    - Language
+    - Leadership
+
+  Diplomat:
+    - Diplomat
+    - Persuade
+    - Deception
+    - Streetwise
+    - Language
+    - Admin
+
+  Dilettante:
+    - Carouse
+    - Deception
+    - Gambler
+    - Streetwise
+    - Persuade
+    - Jack-of-all-Trades
+
+ranks:
+  - rank: 0
+    title: Knight
+  - rank: 1
+    title: Baron
+    bonus_skill: Social Standing +1
+  - rank: 2
+    title: Marquis
+  - rank: 3
+    title: Count
+    bonus_skill: Diplomat
+  - rank: 4
+    title: Duke
+    bonus_skill: Social Standing +1
+  - rank: 5
+    title: Archduke
+  - rank: 6
+    title: Emperor
+
+benefits:
+  cash:
+    - 5000
+    - 10000
+    - 10000
+    - 20000
+    - 50000
+    - 100000
+    - 200000
+
+  material:
+    - Contact
+    - Education +1
+    - Ally
+    - Yacht
+    - Social Standing +2
+    - TAS Membership
+    - Title of Nobility
+
+events:
+  2:
+    text: >
+      Disaster! Roll on the Mishap table, but you are not ejected
+      from this career.
+  3:
+    text: Scandal touches your house. Lose one Social Standing.
+    effects:
+      - {type: characteristic, name: Social Standing, delta: -1}
+  4: You become entangled in court intrigue. Gain Deception or Advocate.
+  5: You hold court. Gain one of Diplomat, Persuade, or Leadership.
+  6:
+    text: You gain a political Contact at the highest levels.
+    effects:
+      - {type: associate, associate_type: contact, name: Court Contact}
+  7: Life Event. Roll on the Life Events table.
+  8: You broker a trade agreement. Gain one of Admin, Broker, or Diplomat.
+  9:
+    text: You are presented at court. Gain a Contact and +1 Social Standing.
+    effects:
+      - {type: associate, associate_type: contact, name: Court Patron}
+      - {type: characteristic, name: Social Standing, delta: 1}
+  10: You receive an audience with imperial authority. Gain DM+2 to your next Advancement roll.
+  11: A secret is entrusted to you. Gain Advocate or Deception.
+  12: Elevated by imperial favor. You are automatically promoted.
+
+mishaps:
+  1: Political injury or assassination attempt. Roll twice on the Injury table, take lower.
+  2:
+    text: Your fortune is ruined by a bad investment. Lose one Benefit roll.
+  3:
+    text: A rival noble moves against you. Gain an Enemy.
+    effects:
+      - {type: associate, associate_type: enemy, name: Rival Noble}
+  4:
+    text: Scandal forces you out. Lose 1 Social Standing.
+    effects:
+      - {type: characteristic, name: Social Standing, delta: -1}
+  5:
+    text: Exiled by your house. Gain Streetwise or Stealth.
+    effects:
+      - {type: skill, name: Streetwise}
+  6: Injured in a duel or accident. Roll on the Injury table.

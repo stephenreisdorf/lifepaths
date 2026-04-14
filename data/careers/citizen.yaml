@@ -1,0 +1,183 @@
+name: Citizen
+description: >
+  Ordinary workers in a charted-space civilization — corporate
+  professionals, skilled laborers, and frontier colonists. The
+  citizen career covers the many civilian lives that don't fit
+  better-known archetypes.
+
+qualification:
+  characteristic: Education
+  target: 5
+
+service_skills:
+  - Drive
+  - Electronics
+  - Mechanic
+  - Persuade
+  - Profession
+  - Streetwise
+
+assignment_change_group: qualification
+
+assignments:
+  - name: Corporate
+    description: You work for a megacorp or regional firm.
+    survival:
+      characteristic: Social Standing
+      target: 6
+    advancement:
+      characteristic: Intelligence
+      target: 6
+
+  - name: Worker
+    description: Skilled or semi-skilled labor on industrial worlds.
+    survival:
+      characteristic: Endurance
+      target: 4
+    advancement:
+      characteristic: Education
+      target: 8
+
+  - name: Colonist
+    description: You are part of a frontier colony settlement.
+    survival:
+      characteristic: Intelligence
+      target: 7
+    advancement:
+      characteristic: Endurance
+      target: 5
+
+skill_tables:
+  Personal Development:
+    - Strength +1
+    - Endurance +1
+    - Intelligence +1
+    - Education +1
+    - Social Standing +1
+    - Athletics
+
+  Service Skills:
+    - Drive
+    - Electronics
+    - Mechanic
+    - Persuade
+    - Profession
+    - Streetwise
+
+  Advanced Education:
+    requirement:
+      characteristic: Education
+      minimum: 8
+    skills:
+      - Admin
+      - Advocate
+      - Engineer
+      - Language
+      - Medic
+      - Science
+
+  Corporate:
+    - Admin
+    - Advocate
+    - Persuade
+    - Profession
+    - Diplomat
+    - Electronics
+
+  Worker:
+    - Mechanic
+    - Profession
+    - Drive
+    - Electronics
+    - Athletics
+    - Engineer
+
+  Colonist:
+    - Animals
+    - Profession
+    - Survival
+    - Recon
+    - Gun Combat
+    - Drive
+
+ranks:
+  - rank: 0
+    title: Worker
+  - rank: 1
+    title: Specialist
+    bonus_skill: Profession
+  - rank: 2
+    title: Supervisor
+  - rank: 3
+    title: Manager
+    bonus_skill: Admin
+  - rank: 4
+    title: Senior Manager
+  - rank: 5
+    title: Director
+    bonus_skill: Social Standing +1
+  - rank: 6
+    title: Executive
+
+benefits:
+  cash:
+    - 1000
+    - 5000
+    - 10000
+    - 10000
+    - 10000
+    - 50000
+    - 100000
+
+  material:
+    - Contact
+    - Intelligence +1
+    - Education +1
+    - Ally
+    - Social Standing +1
+    - TAS Membership
+    - Ship Share
+
+events:
+  2:
+    text: >
+      Disaster! Roll on the Mishap table, but you are not ejected
+      from this career.
+  3: Financial strife. Gain Streetwise or Advocate.
+  4: You are offered additional training. Gain any one Service Skill at level 0.
+  5: You take on new responsibilities at work. Gain Admin, Leadership, or Profession.
+  6:
+    text: You meet a professional Contact.
+    effects:
+      - {type: associate, associate_type: contact, name: Professional Contact}
+  7: Life Event. Roll on the Life Events table.
+  8: You are rewarded for exceptional work. Gain DM+2 to your next Advancement roll.
+  9:
+    text: Company politics. Gain an Enemy and Deception.
+    effects:
+      - {type: associate, associate_type: enemy, name: Office Rival}
+      - {type: skill, name: Deception}
+  10: A major project concludes. Gain one of Engineer, Admin, or Science.
+  11:
+    text: You are given a commendation and bonus. Gain an Ally.
+    effects:
+      - {type: associate, associate_type: ally, name: Colleague}
+  12: Rapid rise through the ranks. You are automatically promoted.
+
+mishaps:
+  1: Severe workplace injury. Roll twice on the Injury table, take lower.
+  2:
+    text: Your employer goes bankrupt. Lose one Benefit roll.
+  3:
+    text: You run afoul of a superior. Gain that character as an Enemy.
+    effects:
+      - {type: associate, associate_type: enemy, name: Superior}
+  4:
+    text: A scandal costs you your post. Lose 1 Social Standing.
+    effects:
+      - {type: characteristic, name: Social Standing, delta: -1}
+  5:
+    text: You are laid off. Gain Streetwise at level 0.
+    effects:
+      - {type: skill, name: Streetwise, level: 0}
+  6: Injured on the job. Roll on the Injury table.

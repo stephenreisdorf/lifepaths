@@ -44,6 +44,7 @@ class CareerRecord(BaseModel):
     rank: int = 0
     terms_served: int = 0
     ejected: bool = False
+    commissioned: bool = False
 
 
 class AssociateType(str, Enum):
