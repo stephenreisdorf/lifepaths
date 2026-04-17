@@ -60,6 +60,7 @@ function confirm() {
 
     <CharacterCanvas
       class="canvas-column"
+      :age="characterData?.age"
       :characteristics="characterData?.characteristics"
       :skills="characterData?.skills"
       :history="history"

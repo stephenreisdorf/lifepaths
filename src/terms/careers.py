@@ -1277,6 +1277,150 @@ class MusterOutTerm(Term):
         return None
 
 
+AGING_TABLE = [
+    {
+        "min_age": 34,
+        "max_age": 49,
+        "checks": [
+            {"characteristic": "Strength", "target": 8, "penalty": -1},
+            {"characteristic": "Dexterity", "target": 7, "penalty": -1},
+            {"characteristic": "Endurance", "target": 8, "penalty": -1},
+        ],
+    },
+    {
+        "min_age": 50,
+        "max_age": 65,
+        "checks": [
+            {"characteristic": "Strength", "target": 9, "penalty": -1},
+            {"characteristic": "Dexterity", "target": 8, "penalty": -1},
+            {"characteristic": "Endurance", "target": 9, "penalty": -1},
+        ],
+    },
+    {
+        "min_age": 66,
+        "max_age": 73,
+        "checks": [
+            {"characteristic": "Strength", "target": 9, "penalty": -2},
+            {"characteristic": "Dexterity", "target": 8, "penalty": -2},
+            {"characteristic": "Endurance", "target": 9, "penalty": -2},
+            {"characteristic": "Intelligence", "target": 9, "penalty": -1},
+        ],
+    },
+    {
+        "min_age": 74,
+        "max_age": 999,
+        "checks": [
+            {"characteristic": "Strength", "target": 9, "penalty": -2},
+            {"characteristic": "Dexterity", "target": 9, "penalty": -2},
+            {"characteristic": "Endurance", "target": 9, "penalty": -2},
+            {"characteristic": "Intelligence", "target": 9, "penalty": -2},
+        ],
+    },
+]
+
+
+def _aging_bracket(age: int) -> dict | None:
+    """Return the aging table bracket for the given age, or None if below 34."""
+    for bracket in AGING_TABLE:
+        if bracket["min_age"] <= age <= bracket["max_age"]:
+            return bracket
+    return None
+
+
+class AgingStep(Step):
+    """Roll aging checks at the end of a career term (age 34+).
+
+    For each characteristic in the bracket, roll 2d6. Meeting or beating
+    the target avoids damage; failing applies the penalty. If any
+    physical characteristic or Intelligence reaches 0, the character is
+    flagged as dead.
+    """
+
+    step_id = "aging_roll"
+    step_type = StepType.AUTOMATIC
+
+    def __init__(self, character: Character) -> None:
+        super().__init__(character)
+        self._bracket: dict | None = None
+        self._results: list[dict] = []
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        self._bracket = _aging_bracket(self.character.age)
+        if self._bracket is None:
+            return
+        for check in self._bracket["checks"]:
+            rolled = roll(2)
+            passed = rolled >= check["target"]
+            self._results.append({
+                "characteristic": check["characteristic"],
+                "target": check["target"],
+                "penalty": check["penalty"],
+                "rolled": rolled,
+                "passed": passed,
+            })
+
+    def apply(self) -> None:
+        if self._bracket is None:
+            self.outcome = StepOutcome(
+                status="NO_AGING",
+                description=f"Age {self.character.age} — no aging effects.",
+            )
+            return
+
+        applied: list[str] = []
+        for result in self._results:
+            if result["passed"]:
+                applied.append(
+                    f"{result['characteristic']}: rolled {result['rolled']} "
+                    f"vs {result['target']} — no effect"
+                )
+            else:
+                name = result["characteristic"]
+                penalty = result["penalty"]
+                stat = self.character.characteristics.get(name)
+                if stat is not None:
+                    new_value = max(0, stat.value + penalty)
+                    self.character.add_characteristic(name, new_value)
+                applied.append(
+                    f"{result['characteristic']}: rolled {result['rolled']} "
+                    f"vs {result['target']} — {result['penalty']:+d}"
+                )
+
+        death = any(
+            self.character.characteristics.get(name) is not None
+            and self.character.characteristics[name].value <= 0
+            for name in ("Strength", "Dexterity", "Endurance", "Intelligence")
+        )
+
+        desc_lines = [f"Aging (age {self.character.age}):"]
+        desc_lines.extend(f"  {line}" for line in applied)
+        if death:
+            desc_lines.append("  A characteristic has reached 0 — aging crisis!")
+
+        self.outcome = StepOutcome(
+            status="AGING_CRISIS" if death else "AGED",
+            description="\n".join(desc_lines),
+            data={
+                "age": self.character.age,
+                "results": self._results,
+                "death": death,
+            },
+        )
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description="Rolling for aging effects...",
+        )
+
+
 class TransitionTerm(Term):
     """A term containing a single decision step (career choice or muster out)."""
 
@@ -1437,6 +1581,7 @@ class CareerTerm(Term):
         self.is_first_term = is_first_term
         self.term_number = term_number
         self._selected_assignment: dict | None = None
+        self._pending_outcome: StepOutcome | None = None
 
         # Best-of-options: for OR-qualification (e.g. Entertainer DEX or
         # INT), pick the option that yields the highest modifier for this
@@ -1502,6 +1647,15 @@ class CareerTerm(Term):
             return True
         soc = self.character.characteristics.get("Social Standing")
         return soc is not None and soc.value >= 9
+
+    def _finalize_term(self, outcome: StepOutcome) -> None:
+        """Increment age and either append an AgingStep or finalize immediately."""
+        self.character.age += 4
+        if self.character.age >= 34:
+            self._pending_outcome = outcome
+            self.steps.append(AgingStep(self.character))
+        else:
+            self.outcome = outcome
 
     def advance(self) -> None:
         """Complete the current step and dynamically append the next steps based on outcomes."""
@@ -1594,12 +1748,12 @@ class CareerTerm(Term):
             # won't run. No commission or advancement rolls follow.
             if step.forced_exit:
                 self.character.record_career_term(self.career_name)
-                self.outcome = StepOutcome(
+                self._finalize_term(StepOutcome(
                     status="FORCED_EXIT",
                     description=(
                         "Event forced you out of the career — term complete."
                     ),
-                )
+                ))
                 return
             # Commission is attempted between events and advancement for
             # eligible careers. If ineligible, skip straight to advancement.
@@ -1632,10 +1786,10 @@ class CareerTerm(Term):
                 # Commission replaces advancement this term. terms_served
                 # was ticked in CommissionStep.apply(). No forced-exit check
                 # because there was no advancement roll.
-                self.outcome = StepOutcome(
+                self._finalize_term(StepOutcome(
                     status="COMPLETED",
                     description="Term completed (commissioned).",
-                )
+                ))
             else:
                 self.steps.append(
                     AdvancementRollStep(
@@ -1650,33 +1804,36 @@ class CareerTerm(Term):
         elif isinstance(step, MishapRollStep):
             self.character.mark_career_ejected(self.career_name)
             self.character.record_career_term(self.career_name)
-            self.outcome = StepOutcome(
+            self._finalize_term(StepOutcome(
                 status="MISHAP",
                 description="Career ended by mishap.",
-            )
+            ))
 
         elif isinstance(step, AdvancementRollStep):
             # End of a normal term. Natural 12 overrides everything else
             # (forced stay). Otherwise a modified roll ≤ terms served
             # forces the character out of the career.
             if step.forced_stay:
-                self.outcome = StepOutcome(
+                self._finalize_term(StepOutcome(
                     status="FORCED_STAY",
                     description="Natural 12 — forced to stay in the career.",
-                )
+                ))
             elif step.forced_exit:
-                self.outcome = StepOutcome(
+                self._finalize_term(StepOutcome(
                     status="FORCED_EXIT",
                     description=(
                         "Advancement roll did not exceed terms served — "
                         "forced to leave the career."
                     ),
-                )
+                ))
             else:
-                self.outcome = StepOutcome(
+                self._finalize_term(StepOutcome(
                     status="COMPLETED",
                     description="Term completed.",
-                )
+                ))
+
+        elif isinstance(step, AgingStep):
+            self.outcome = self._pending_outcome
 
     def next_term(self, session: "GameSession") -> "Term | None":
         from src.career_loader import (

@@ -72,6 +72,7 @@ class Character(BaseModel):
     """A player character with characteristics and skills."""
 
     name: str
+    age: int = 18
     characteristics: dict[str, Characteristic]
     skills: dict[str, Skill]
     careers: dict[str, CareerRecord] = {}

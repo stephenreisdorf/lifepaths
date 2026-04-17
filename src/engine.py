@@ -29,6 +29,7 @@ class GameSession:
     def _character_summary(self) -> dict:
         """Serialize current character state for API responses."""
         return {
+            "age": self.character.age,
             "characteristics": {
                 name: {"value": c.value, "modifier": c.modifier()}
                 for name, c in self.character.characteristics.items()

@@ -13,6 +13,7 @@ defineEmits(['restart'])
   <div class="sheet-layout">
     <h2>Character Sheet</h2>
     <CharacterCanvas
+      :age="characterData?.age"
       :characteristics="characterData?.characteristics"
       :skills="characterData?.skills"
       :history="history"

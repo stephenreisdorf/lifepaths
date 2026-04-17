@@ -4,6 +4,7 @@ import StatsTable from './StatsTable.vue'
 import StepHistoryLog from './StepHistoryLog.vue'
 
 const props = defineProps({
+  age: Number,
   characteristics: Object,
   skills: Object,
   history: Array,
@@ -33,7 +34,7 @@ const rawState = computed(() => ({
 <template>
   <aside class="canvas">
     <div class="canvas-header">
-      <h2>Character</h2>
+      <h2>Character<span v-if="age" class="age-badge"> — Age {{ age }}</span></h2>
       <button class="json-toggle" @click="showJson = !showJson">
         {{ showJson ? 'Formatted' : 'Raw JSON' }}
       </button>
@@ -95,6 +96,11 @@ const rawState = computed(() => ({
 .canvas-header h2 {
   margin: 0;
   font-size: 1.1rem;
+}
+.age-badge {
+  color: #808090;
+  font-weight: 400;
+  font-size: 0.9rem;
 }
 .json-toggle {
   font-size: 0.75rem;
