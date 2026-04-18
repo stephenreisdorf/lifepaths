@@ -177,6 +177,20 @@ class BasicTrainingStep(Step):
             data={"service_skills": list(self.service_skills)},
         )
 
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            description = self.outcome.description
+        else:
+            description = (
+                "Basic training: gain every Service Skill at level 0 "
+                f"({', '.join(self.service_skills)})."
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=description,
+        )
+
 
 class PickServiceSkillStep(Step):
     """Subsequent-career basic training: pick one Service Skill at level 0."""

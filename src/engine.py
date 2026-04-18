@@ -6,9 +6,11 @@ from src.terms.childhood import ChildhoodTerm
 class GameSession:
     """Owns a character and its current term, driving the step lifecycle.
 
-    The engine auto-advances through automatic steps so callers only
-    interact when player input is needed. Term-to-term transitions are
-    owned by each term via `Term.next_term(session)`.
+    Every step — automatic or choice — requires an explicit submit so the
+    frontend can display pre-resolve prompts and post-resolve outcomes.
+    Term-to-term transitions remain automatic: when a term is exhausted
+    the engine advances into the next term so the frontend never sees an
+    empty state between terms.
     """
 
     def __init__(self) -> None:
@@ -56,28 +58,15 @@ class GameSession:
             "possessions": list(self.character.possessions),
         }
 
-    def _auto_advance(self) -> tuple[list[StepPrompt], StepPrompt | None]:
-        """Resolve consecutive automatic steps, return their prompts and the next interactive prompt."""
-        resolved: list[StepPrompt] = []
+    def _advance_past_term_boundaries(self) -> StepPrompt | None:
+        """Cross exhausted term boundaries until a step is available, or the chain ends."""
         prompt = self._current_prompt_with_label()
-        while prompt and prompt.step_type == StepType.AUTOMATIC:
-            self.term.submit()  # resolve + apply + advance (no player input)
-            # Re-read the prompt after resolution so it includes result data
-            step = self.term.steps[self.term.current_step_index - 1]
-            step_prompt = step.prompt()
-            step_prompt.term_label = self.term.label()
-            resolved.append(step_prompt)
-            prompt = self._current_prompt_with_label()
-
-        # If current term is exhausted, try to transition to the next term
         if prompt is None:
             next_term = self.term.next_term(self)
             if next_term is not None:
                 self.term = next_term
-                more_resolved, prompt = self._auto_advance()
-                resolved.extend(more_resolved)
-
-        return resolved, prompt
+                return self._advance_past_term_boundaries()
+        return prompt
 
     def _current_prompt_with_label(self) -> StepPrompt | None:
         """Return the current term's next prompt with the term label attached."""
@@ -87,18 +76,37 @@ class GameSession:
         return prompt
 
     def start(self) -> SubmitResult:
-        """Begin the term: auto-resolve initial automatic steps and return the first interactive prompt."""
-        resolved, next_prompt = self._auto_advance()
+        """Begin the session: return the first step's prompt, crossing any empty term boundaries."""
+        next_prompt = self._advance_past_term_boundaries()
         return SubmitResult(
-            resolved_steps=resolved,
+            resolved_steps=[],
             next_prompt=next_prompt,
             character=self._character_summary(),
         )
 
     def submit(self, player_input: dict | None = None) -> SubmitResult:
-        """Submit player input for the current step, then auto-advance through any subsequent automatic steps."""
+        """Submit the current step, then return the next prompt.
+
+        For automatic steps, the just-resolved step's post-resolve prompt is
+        returned in `resolved_steps` so the frontend can show the outcome
+        before advancing. Choice steps leave `resolved_steps` empty — the
+        frontend already tracks the player's selection locally.
+        """
+        submitted_step = self.term.current_step
+        submitted_term_label = self.term.label()
         self.term.submit(player_input)
-        resolved, next_prompt = self._auto_advance()
+
+        resolved: list[StepPrompt] = []
+        if submitted_step is not None and submitted_step.step_type == StepType.AUTOMATIC:
+            step_prompt = submitted_step.prompt()
+            step_prompt.term_label = submitted_term_label
+            if submitted_step.outcome is not None:
+                enriched = dict(submitted_step.outcome.data)
+                enriched["status"] = submitted_step.outcome.status
+                step_prompt.data = enriched
+            resolved.append(step_prompt)
+
+        next_prompt = self._advance_past_term_boundaries()
         return SubmitResult(
             resolved_steps=resolved,
             next_prompt=next_prompt,

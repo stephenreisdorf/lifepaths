@@ -35,9 +35,10 @@ class RollCharacteristicsStep(Step):
             self.character.add_characteristic(
                 characteristic=characteristic, value=value
             )
+        rolled = ", ".join(f"{name} {value}" for name, value in self.characteristics.items())
         self.outcome = StepOutcome(
             status="ROLLED",
-            description="Roll 2d6 for each of the six core characteristics.",
+            description=f"Rolled characteristics: {rolled}.",
             data={"characteristics": dict(self.characteristics)},
         )
 

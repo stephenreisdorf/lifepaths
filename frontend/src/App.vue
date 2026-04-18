@@ -9,6 +9,7 @@ const sessionId = ref(null)
 const characterData = ref(null)
 const stepHistory = ref([])
 const currentPrompt = ref(null)
+const pendingReview = ref(null)
 const error = ref('')
 
 async function startCreation() {
@@ -20,13 +21,11 @@ async function startCreation() {
   characterData.value = data.character
   stepHistory.value = [...data.resolved_steps]
   currentPrompt.value = data.next_prompt
+  pendingReview.value = null
   currentScreen.value = data.next_prompt ? 'creation' : 'sheet'
 }
 
-async function submitInput(selections) {
-  error.value = ''
-
-  // Capture the interactive step + its selections as a synthetic history entry
+async function submitChoice(selections) {
   const choiceEntry = currentPrompt.value
     ? {
         step_id: currentPrompt.value.step_id,
@@ -36,13 +35,22 @@ async function submitInput(selections) {
         term_label: currentPrompt.value.term_label,
       }
     : null
+  await submit({ selections }, choiceEntry)
+}
+
+async function submitAutomatic() {
+  await submit(null, null)
+}
+
+async function submit(playerInput, choiceEntry) {
+  error.value = ''
 
   const res = await fetch('/api/submit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       session_id: sessionId.value,
-      player_input: { selections },
+      player_input: playerInput,
     }),
   })
 
@@ -57,8 +65,18 @@ async function submitInput(selections) {
   if (choiceEntry) stepHistory.value.push(choiceEntry)
   stepHistory.value.push(...data.resolved_steps)
   currentPrompt.value = data.next_prompt
+  pendingReview.value = data.resolved_steps.length
+    ? data.resolved_steps[data.resolved_steps.length - 1]
+    : null
 
-  if (!data.next_prompt) {
+  if (!data.next_prompt && !pendingReview.value) {
+    currentScreen.value = 'sheet'
+  }
+}
+
+function dismissReview() {
+  pendingReview.value = null
+  if (!currentPrompt.value) {
     currentScreen.value = 'sheet'
   }
 }
@@ -74,9 +92,12 @@ async function submitInput(selections) {
       v-else-if="currentScreen === 'creation'"
       :character-data="characterData"
       :prompt="currentPrompt"
+      :pending-review="pendingReview"
       :history="stepHistory"
       :error="error"
-      @confirm="submitInput"
+      @confirm="submitChoice"
+      @advance="submitAutomatic"
+      @continue="dismissReview"
     />
     <CharacterSheet
       v-else-if="currentScreen === 'sheet'"

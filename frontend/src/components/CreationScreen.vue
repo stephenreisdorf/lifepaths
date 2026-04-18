@@ -6,11 +6,12 @@ import CharacterCanvas from './CharacterCanvas.vue'
 const props = defineProps({
   characterData: Object,
   prompt: Object,
+  pendingReview: Object,
   history: Array,
   error: String,
 })
 
-const emit = defineEmits(['confirm'])
+const emit = defineEmits(['confirm', 'advance', 'continue'])
 
 const selected = reactive(new Set())
 
@@ -34,12 +35,33 @@ const canConfirm = computed(() => {
 function confirm() {
   emit('confirm', [...selected])
 }
+
+function advance() {
+  emit('advance')
+}
+
+function continueFromReview() {
+  emit('continue')
+}
+
+const reviewStatus = computed(() => props.pendingReview?.data?.status || '')
 </script>
 
 <template>
   <div class="creation-layout">
     <main class="prompt-column">
-      <div v-if="prompt">
+      <section v-if="pendingReview" class="review-card" :data-status="reviewStatus">
+        <p v-if="pendingReview.term_label" class="term-label">{{ pendingReview.term_label }}</p>
+        <h2 class="review-description">{{ pendingReview.description }}</h2>
+        <button @click="continueFromReview">Continue</button>
+      </section>
+      <div v-else-if="prompt && prompt.step_type === 'automatic'">
+        <p v-if="prompt.term_label" class="term-label">{{ prompt.term_label }}</p>
+        <h2>{{ prompt.description }}</h2>
+        <p v-if="error" class="error">{{ error }}</p>
+        <button @click="advance">Continue</button>
+      </div>
+      <div v-else-if="prompt">
         <h2>{{ prompt.description }}</h2>
         <p v-if="prompt.required_count" class="skill-counter">
           Select <span>{{ prompt.required_count }}</span>:
@@ -82,6 +104,38 @@ function confirm() {
   flex: 0 0 38%;
   position: sticky;
   top: 1rem;
+}
+.term-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+.review-card {
+  border-left: 4px solid #6aa9ff;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(106, 169, 255, 0.08);
+  border-radius: 4px;
+}
+.review-card[data-status="FAILED"],
+.review-card[data-status="NOT_PROMOTED"],
+.review-card[data-status="MISHAP"],
+.review-card[data-status="AGING_CRISIS"] {
+  border-left-color: #e06464;
+  background: rgba(224, 100, 100, 0.08);
+}
+.review-card[data-status="PASSED"],
+.review-card[data-status="QUALIFIED"],
+.review-card[data-status="SURVIVED"],
+.review-card[data-status="PROMOTED"] {
+  border-left-color: #5fbf7b;
+  background: rgba(95, 191, 123, 0.08);
+}
+.review-description {
+  margin-top: 0;
+  white-space: pre-line;
 }
 
 @media (max-width: 900px) {

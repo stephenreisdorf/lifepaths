@@ -8,7 +8,7 @@ _(none)_
 
 ## UX
 
-- [Automatic steps should show feedback](automatic-step-feedback.md) — auto-resolved steps skip past silently; user should confirm and see results.
+_(none)_
 
 ## Architecture
 
