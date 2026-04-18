@@ -8,7 +8,7 @@ _(none)_
 
 ## UX
 
-_(none)_
+- [Traveller visual design](traveller-visual-design.md) — restyle frontend after Traveller Core Rulebook 2022 (crimson/tan/orange palette, chamfered containers, condensed sans-serif).
 
 ## Architecture
 
