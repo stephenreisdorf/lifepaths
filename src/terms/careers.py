@@ -1582,6 +1582,7 @@ class CareerTerm(Term):
         self.term_number = term_number
         self._selected_assignment: dict | None = None
         self._pending_outcome: StepOutcome | None = None
+        self._pending_finalize_outcome: StepOutcome | None = None
 
         # Best-of-options: for OR-qualification (e.g. Entertainer DEX or
         # INT), pick the option that yields the highest modifier for this
@@ -1732,9 +1733,15 @@ class CareerTerm(Term):
             self.steps.append(RollForSkillStep(self.character, skill_options))
 
         elif isinstance(step, RollForSkillStep):
-            self.steps.append(
-                SurvivalCheckStep(self.character, self._selected_assignment)
-            )
+            if self._pending_finalize_outcome is not None:
+                # Bonus skill roll granted by promotion — term ends here.
+                terminal = self._pending_finalize_outcome
+                self._pending_finalize_outcome = None
+                self._finalize_term(terminal)
+            else:
+                self.steps.append(
+                    SurvivalCheckStep(self.character, self._selected_assignment)
+                )
 
         elif isinstance(step, SurvivalCheckStep):
             if status == "SURVIVED":
@@ -1814,23 +1821,38 @@ class CareerTerm(Term):
             # (forced stay). Otherwise a modified roll ≤ terms served
             # forces the character out of the career.
             if step.forced_stay:
-                self._finalize_term(StepOutcome(
+                terminal = StepOutcome(
                     status="FORCED_STAY",
                     description="Natural 12 — forced to stay in the career.",
-                ))
+                )
             elif step.forced_exit:
-                self._finalize_term(StepOutcome(
+                terminal = StepOutcome(
                     status="FORCED_EXIT",
                     description=(
                         "Advancement roll did not exceed terms served — "
                         "forced to leave the career."
                     ),
-                ))
+                )
             else:
-                self._finalize_term(StepOutcome(
+                terminal = StepOutcome(
                     status="COMPLETED",
                     description="Term completed.",
-                ))
+                )
+
+            if status == "PROMOTED":
+                # Promotion grants a bonus skill roll. Defer term
+                # finalization until that roll completes.
+                self._pending_finalize_outcome = terminal
+                self.steps.append(
+                    ChooseCareerSkillsTable(
+                        self.character,
+                        list(self.skill_tables.keys()),
+                        requirements=self.skill_table_requirements,
+                        career_name=self.career_name,
+                    )
+                )
+            else:
+                self._finalize_term(terminal)
 
         elif isinstance(step, AgingStep):
             self.outcome = self._pending_outcome

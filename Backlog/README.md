@@ -4,7 +4,6 @@ One file per open issue. Index below.
 
 ## Bugs
 
-- [Promotion should grant a bonus skill roll](promotion-skill-roll.md) — successful advancement doesn't trigger the extra skill table pick.
 - [Option to muster out on failed survival](muster-out-on-failed-survival.md) — failed survival forces new career selection with no muster-out choice.
 
 ## UX
