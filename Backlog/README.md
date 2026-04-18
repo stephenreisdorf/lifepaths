@@ -2,62 +2,23 @@
 
 One file per open issue. Index below.
 
-## Planning
+## Bugs
 
-- [Implementation sequencing](implementation-sequencing.md) — wave-by-wave execution plan to maximize concurrency across the items below.
+- [Promotion should grant a bonus skill roll](promotion-skill-roll.md) — successful advancement doesn't trigger the extra skill table pick.
+- [Option to muster out on failed survival](muster-out-on-failed-survival.md) — failed survival forces new career selection with no muster-out choice.
 
-## Missing mechanics — career term sequence
+## UX
 
-- [Muster-out benefit rolls](muster-out-benefits.md)
-- [Draft and Drifter fallback on failed qualification](draft-and-drifter-fallback.md)
-- [Cannot re-enter the same career next term](no-reentry-next-term.md)
-- [Commission step for military careers](commission-step.md)
-- [Officer skill table and rank track](officer-track.md)
-- [Advancement roll ≤ terms served forces exit](advancement-roll-forces-exit.md)
+- [Automatic steps should show feedback](automatic-step-feedback.md) — auto-resolved steps skip past silently; user should confirm and see results.
 
-## Missing mechanics — effects
+## Architecture
 
-- [Apply mechanical effects for mishaps](mishap-effects.md)
-- [Apply mechanical effects for events](events-effects.md)
+- [Career step sequencing machine](career-step-sequencing-machine.md) — extract `CareerTerm.advance()` from a 160-line if-elif into a testable, declarative form.
+- [Split careers.py mega-module](split-careers-module.md) — break the 2042-line file into focused sub-modules (steps, terms, muster-out, aging, parsers).
+- [Consolidate skill grant API](consolidate-skill-grant-api.md) — unify three overlapping skill-mutation methods and the parallel effects implementation.
+- [Typed career data model](typed-career-data-model.md) — replace raw-dict splatting with a validated Pydantic model between YAML loader and CareerTerm.
+- [Engine session state](engine-session-state.md) — replace mutable session flags with a typed career context object passed explicitly to terms.
 
-## Skills
+## Deferred
 
-- [Skill-level cap of 4](skill-level-cap-4.md)
-- [Total-skill-levels cap of 3 × (INT + EDU)](total-skill-levels-cap.md)
-- [Honor skill table notation (level 0 / bare / explicit level)](skill-notation-parsing.md)
-- [Basic training on subsequent careers](basic-training-subsequent-careers.md)
-- [Citizens and Drifters use Assignment Skills for basic training](citizens-drifters-basic-training.md)
-- [Gate Advanced Education table on EDU 8+](advanced-education-edu-gate.md)
-
-## Assignments and career changes
-
-- [Support changing assignments within a career](assignment-change-flow.md)
-- [Track "ejected from career" to bar assignment changes](track-career-ejection.md)
-
-## Associates and connections
-
-- [Contacts / Allies / Rivals / Enemies data model](associates-data-model.md)
-- [Connections Rule (multi-character)](connections-rule.md)
-
-## Bookkeeping
-
-- [terms_served is not incremented on mishap-ended terms](terms-served-on-mishap.md)
-- [Aging](aging.md)
-
-## Careers to add
-
-Only Navy is implemented so far. One issue per remaining core-rules career:
-
-- [Agent](career-agent.md)
-- [Army](career-army.md)
-- [Citizen](career-citizen.md)
-- [Drifter](career-drifter.md)
-- [Entertainer](career-entertainer.md)
-- [Marine](career-marine.md)
-- [Merchant](career-merchant.md)
-- [Noble](career-noble.md)
-- [Rogue](career-rogue.md)
-- [Scholar](career-scholar.md)
-- [Scout](career-scout.md)
-- [Prisoner](career-prisoner.md) (special — entry via events/mishaps only)
-
+- [Connections Rule (multi-character)](connections-rule.md) — shared events between two Travellers; requires multi-character session model. May be deferred indefinitely for single-player use.
