@@ -4,7 +4,7 @@ One file per open issue. Index below.
 
 ## Bugs
 
-- [Option to muster out on failed survival](muster-out-on-failed-survival.md) — failed survival forces new career selection with no muster-out choice.
+_(none)_
 
 ## UX
 

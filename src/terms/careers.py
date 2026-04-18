@@ -937,6 +937,64 @@ class ContinueOrMusterOutStep(Step):
         )
 
 
+class MusterOutOrNewCareerStep(Step):
+    """Offered after a mishap: muster out with benefits or choose a new career."""
+
+    step_id = "muster_out_or_new_career"
+    step_type = StepType.CHOICE
+
+    MUSTER_OUT = "Muster Out"
+    CHOOSE_CAREER = "Choose New Career"
+
+    def __init__(self, character: Character, career_name: str) -> None:
+        super().__init__(character)
+        self.career_name = career_name
+
+    def _options(self) -> list[str]:
+        return [self.MUSTER_OUT, self.CHOOSE_CAREER]
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=(
+                f"Your career in the {self.career_name} ended after a mishap. "
+                "Muster out with benefits for terms served, or choose a new career?"
+            ),
+            options=self._options(),
+            required_count=1,
+        )
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        if player_input is None:
+            raise ValueError("Decision is required.")
+        selections = player_input.get("selections", [])
+        if len(selections) != 1:
+            raise ValueError("Must choose one option.")
+        decision = selections[0]
+        if decision not in self._options():
+            raise ValueError(f"Unavailable option: {decision}")
+        self._decision_pending: str = decision
+
+    def apply(self) -> None:
+        decision = self._decision_pending
+        status = {
+            self.MUSTER_OUT: "MUSTER_OUT",
+            self.CHOOSE_CAREER: "CHOOSE_CAREER",
+        }[decision]
+        self.outcome = StepOutcome(
+            status=status,
+            description=f"Decision: {decision}.",
+            data={"decision": decision, "career_name": self.career_name},
+        )
+
+
 class ChooseDraftOrDrifterStep(Step):
     """Offered after a failed qualification: Draft (once per life) or Drifter.
 
@@ -1421,6 +1479,26 @@ class AgingStep(Step):
         )
 
 
+def _muster_out_term_for(
+    session: "GameSession", career_name: str
+) -> "MusterOutTerm":
+    """Build a MusterOutTerm for a career exit and clear session career state."""
+    career_data = session.current_career_data or {}
+    benefits = career_data.get("benefits") or {}
+    record = session.character.careers.get(career_name)
+    terms_served = record.terms_served if record else 0
+    rank = record.rank if record else 0
+    session.current_career_data = None
+    session.current_assignment = None
+    return MusterOutTerm(
+        session.character,
+        career_name=career_name,
+        benefits=benefits,
+        terms_served=terms_served,
+        rank=rank,
+    )
+
+
 class TransitionTerm(Term):
     """A term containing a single decision step (career choice or muster out)."""
 
@@ -1435,6 +1513,8 @@ class TransitionTerm(Term):
         if inner.step_id == ContinueOrMusterOutStep.step_id:
             # ContinueOrMusterOutStep carries career_name as an attribute.
             return f"{inner.career_name} — Term End"  # type: ignore[attr-defined]
+        if inner.step_id == MusterOutOrNewCareerStep.step_id:
+            return f"{inner.career_name} — Mishap Exit"  # type: ignore[attr-defined]
         if inner.step_id == ChooseDraftOrDrifterStep.step_id:
             return "Draft or Drifter"
         return "Transition"
@@ -1512,19 +1592,18 @@ class TransitionTerm(Term):
                     qualification_auto=auto,
                 )
             # MUSTER_OUT — run the benefit rolls before creation ends.
-            career_data = session.current_career_data or {}
-            benefits = career_data.get("benefits") or {}
-            record = session.character.careers.get(inner.career_name)  # type: ignore[attr-defined]
-            terms_served = record.terms_served if record else 0
-            rank = record.rank if record else 0
+            return _muster_out_term_for(session, inner.career_name)  # type: ignore[attr-defined]
+
+        if inner.step_id == MusterOutOrNewCareerStep.step_id:
+            if outcome.status == "MUSTER_OUT":
+                return _muster_out_term_for(session, inner.career_name)  # type: ignore[attr-defined]
+            # CHOOSE_CAREER — proceed to career selection, skipping benefits.
             session.current_career_data = None
-            session.current_assignment = None
-            return MusterOutTerm(
-                session.character,
-                career_name=inner.career_name,  # type: ignore[attr-defined]
-                benefits=benefits,
-                terms_served=terms_served,
-                rank=rank,
+            careers = _available_careers_for(
+                session.character, session.blocked_career
+            )
+            return TransitionTerm(
+                session.character, ChooseCareerStep(session.character, careers)
             )
 
         return None
@@ -1880,18 +1959,17 @@ class CareerTerm(Term):
             )
 
         if status == "MISHAP":
-            session.current_career_data = None
             session.career_term_count = 0
             session.blocked_career = self.career_name
             session.current_assignment = None
             forced = _forced_entry_career_term(session)
             if forced is not None:
                 return forced
-            careers = _available_careers_for(
-                session.character, session.blocked_career
-            )
+            # Keep session.current_career_data loaded — the muster-out
+            # branch needs it to read benefit tables.
             return TransitionTerm(
-                session.character, ChooseCareerStep(session.character, careers)
+                session.character,
+                MusterOutOrNewCareerStep(session.character, self.career_name),
             )
 
         if status == "COMPLETED":
