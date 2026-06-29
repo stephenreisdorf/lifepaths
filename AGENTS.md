@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -78,7 +78,7 @@ Three layers: **Domain** (`src/terms/`, `src/character.py`) → **Engine** (`src
 
 ## Agent guidance files
 
-`AGENTS.md` (for Codex) is a near-duplicate of this file. Keep the two in sync when editing architectural notes.
+`CLAUDE.md` (for Claude Code) is a near-duplicate of this file. Keep the two in sync when editing architectural notes.
 
 ## Known rough edges
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.career_data import CareerData
 from src.character import Character
 from src.terms.base import (
     PassFailRollStep,
@@ -34,7 +35,7 @@ def _forced_entry_career_term(session: "GameSession") -> "CareerTerm | None":
     Returns None if nothing is queued. Clears the flag and the re-entry
     block on the way through — the forced career overrides both.
     """
-    from src.career_loader import career_to_term_kwargs, load_career
+    from src.career_loader import load_career
 
     career_name = session.character.pending_career_entry
     if not career_name:
@@ -44,15 +45,13 @@ def _forced_entry_career_term(session: "GameSession") -> "CareerTerm | None":
     session.career_term_count = 0
     session.blocked_career = None
     session.current_assignment = None
-    kwargs = career_to_term_kwargs(
-        session.current_career_data, is_first_term=True
-    )
-    # Forced entry auto-qualifies regardless of YAML.
-    kwargs["qualification_auto"] = True
     return CareerTerm(
         session.character,
+        session.current_career_data,
         term_number=session.career_term_count + 1,
-        **kwargs,
+        is_first_term=True,
+        # Forced entry auto-qualifies regardless of YAML.
+        force_auto_qualify=True,
     )
 
 if TYPE_CHECKING:
@@ -1497,8 +1496,8 @@ def _muster_out_term_for(
     session: "GameSession", career_name: str
 ) -> "MusterOutTerm":
     """Build a MusterOutTerm for a career exit and clear session career state."""
-    career_data = session.current_career_data or {}
-    benefits = career_data.get("benefits") or {}
+    career_data = session.current_career_data
+    benefits = career_data.benefits_as_dict() if career_data else {}
     record = session.character.careers.get(career_name)
     terms_served = record.terms_served if record else 0
     rank = record.rank if record else 0
@@ -1535,11 +1534,7 @@ class TransitionTerm(Term):
 
     def next_term(self, session: "GameSession") -> "Term | None":
         # Local imports to avoid circular references.
-        from src.career_loader import (
-            career_to_term_kwargs,
-            get_available_careers,
-            load_career,
-        )
+        from src.career_loader import load_career
 
         inner = self.steps[0]
         outcome = inner.outcome
@@ -1553,13 +1548,11 @@ class TransitionTerm(Term):
             # Block only applies to the immediately-following selection;
             # once a new career is picked the block is lifted.
             session.blocked_career = None
-            kwargs = career_to_term_kwargs(
-                session.current_career_data, is_first_term=True
-            )
             return CareerTerm(
                 session.character,
+                session.current_career_data,
                 term_number=session.career_term_count + 1,
-                **kwargs,
+                is_first_term=True,
             )
 
         if inner.step_id == ChooseDraftOrDrifterStep.step_id:
@@ -1569,41 +1562,35 @@ class TransitionTerm(Term):
             session.current_career_data = load_career(career_name)
             session.career_term_count = 0
             session.blocked_career = None
-            kwargs = career_to_term_kwargs(
-                session.current_career_data, is_first_term=True
-            )
-            # Draft / Drifter fallback auto-qualifies regardless of YAML.
-            kwargs["qualification_auto"] = True
             return CareerTerm(
                 session.character,
+                session.current_career_data,
                 term_number=session.career_term_count + 1,
-                **kwargs,
+                is_first_term=True,
+                # Draft / Drifter fallback auto-qualifies regardless of YAML.
+                force_auto_qualify=True,
             )
 
         if inner.step_id == ContinueOrMusterOutStep.step_id:
             if outcome.status == "CONTINUE":
-                kwargs = career_to_term_kwargs(
-                    session.current_career_data, is_first_term=False
-                )
                 return CareerTerm(
                     session.character,
+                    session.current_career_data,
                     term_number=session.career_term_count + 1,
-                    **kwargs,
+                    is_first_term=False,
                 )
             if outcome.status == "CHANGE_ASSIGNMENT":
                 # Hand off to the assignment-change sub-term. It will
                 # roll qualification for the new assignment and, on
                 # success, start a new CareerTerm with rank reset to 0.
                 data = session.current_career_data
-                from src.career_loader import _normalize_qualification
-                options, auto = _normalize_qualification(data["qualification"])
                 return AssignmentChangeTerm(
                     session.character,
-                    career_name=data["name"],
-                    assignments=data["assignments"],
+                    career_name=data.name,
+                    assignments=data.assignments_as_dicts(),
                     current_assignment=session.current_assignment,
-                    qualification_options=options,
-                    qualification_auto=auto,
+                    qualification_options=data.qualification_options(),
+                    qualification_auto=data.qualification.auto,
                 )
             # MUSTER_OUT — run the benefit rolls before creation ends.
             return _muster_out_term_for(session, inner.career_name)  # type: ignore[attr-defined]
@@ -1636,41 +1623,31 @@ class CareerTerm(Term):
     def __init__(
         self,
         character: Character,
-        career_name: str,
-        qualification_options: list[dict],
-        qualification_auto: bool,
-        service_skills: list[str],
-        assignments: list[dict],
-        skill_tables: dict[str, list[str]],
-        skill_table_requirements: dict[str, dict] | None = None,
-        events: dict | None = None,
-        mishaps: dict | None = None,
-        ranks: list[dict] | None = None,
-        officer_ranks: list[dict] | None = None,
-        commission: dict | None = None,
-        assignment_change_group: str | None = None,
-        assignment_override: dict | None = None,
-        benefits: dict | None = None,
-        basic_training_from_assignment: bool = False,
+        career: CareerData,
+        *,
         is_first_term: bool = True,
         term_number: int = 1,
+        assignment_override: dict | None = None,
+        force_auto_qualify: bool = False,
     ) -> None:
         super().__init__(character)
-        self.career_name = career_name
+        self.career = career
+        self.career_name = career.name
+        qualification_options = career.qualification_options()
         self.qualification_options = qualification_options
-        self.qualification_auto = qualification_auto
-        self.service_skills = service_skills
-        self.assignments = assignments
-        self.skill_tables = skill_tables
-        self.skill_table_requirements = skill_table_requirements or {}
-        self.events = events or {}
-        self.mishaps = mishaps or {}
-        self.ranks = ranks or []
-        self.officer_ranks = officer_ranks or []
-        self.commission = commission
-        self.assignment_change_group = assignment_change_group
-        self.benefits = benefits or {}
-        self.basic_training_from_assignment = basic_training_from_assignment
+        self.qualification_auto = force_auto_qualify or career.qualification.auto
+        self.service_skills = career.service_skills
+        self.assignments = career.assignments_as_dicts()
+        self.skill_tables = career.normalized_skill_tables()
+        self.skill_table_requirements = career.skill_table_requirements()
+        self.events = career.events
+        self.mishaps = career.mishaps
+        self.ranks = career.ranks_as_dicts()
+        self.officer_ranks = career.officer_ranks_as_dicts()
+        self.commission = career.commission_as_dict()
+        self.assignment_change_group = career.assignment_change_group
+        self.benefits = career.benefits_as_dict()
+        self.basic_training_from_assignment = career.basic_training_from_assignment
         self.is_first_term = is_first_term
         self.term_number = term_number
         self._selected_assignment: dict | None = None
@@ -1690,7 +1667,7 @@ class CareerTerm(Term):
         self.qualification_target: int = best_option["target"]
 
         if is_first_term:
-            if qualification_auto:
+            if self.qualification_auto:
                 self.steps = [
                     AutoQualifyStep(
                         character,
@@ -1720,7 +1697,7 @@ class CareerTerm(Term):
                 )
             ]
         else:
-            self.steps = [ChooseAssignmentStep(character, assignments)]
+            self.steps = [ChooseAssignmentStep(character, self.assignments)]
 
     def label(self) -> str:
         return f"{self.career_name} — Term {self.term_number}"
@@ -1951,11 +1928,6 @@ class CareerTerm(Term):
             self.outcome = self._pending_outcome
 
     def next_term(self, session: "GameSession") -> "Term | None":
-        from src.career_loader import (
-            career_to_term_kwargs,
-            get_available_careers,
-        )
-
         status = self.outcome.status if self.outcome else None
 
         if status == "FAILED_QUAL":
@@ -2022,13 +1994,11 @@ class CareerTerm(Term):
             # Natural 12 on advancement — skip continue/muster and start
             # the next term in the same career immediately.
             session.career_term_count += 1
-            kwargs = career_to_term_kwargs(
-                session.current_career_data, is_first_term=False
-            )
             return CareerTerm(
                 session.character,
+                session.current_career_data,
                 term_number=session.career_term_count + 1,
-                **kwargs,
+                is_first_term=False,
             )
 
         return None
@@ -2119,11 +2089,6 @@ class AssignmentChangeTerm(Term):
                 )
 
     def next_term(self, session: "GameSession") -> "Term | None":
-        from src.career_loader import (
-            career_to_term_kwargs,
-            get_available_careers,
-        )
-
         status = self.outcome.status if self.outcome else None
 
         if status == "CHANGED":
@@ -2131,14 +2096,12 @@ class AssignmentChangeTerm(Term):
             record = self.character.ensure_career(self.career_name)
             record.rank = 0
             session.current_assignment = self._chosen_assignment
-            kwargs = career_to_term_kwargs(
-                session.current_career_data, is_first_term=False
-            )
             return CareerTerm(
                 session.character,
+                session.current_career_data,
                 term_number=session.career_term_count + 1,
+                is_first_term=False,
                 assignment_override=self._chosen_assignment,
-                **kwargs,
             )
 
         if status == "CHANGE_FAILED":

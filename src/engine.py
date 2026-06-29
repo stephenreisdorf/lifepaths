@@ -1,3 +1,4 @@
+from src.career_data import CareerData
 from src.character import Character
 from src.terms.base import StepPrompt, StepType, SubmitResult, Term
 from src.terms.childhood import ChildhoodTerm
@@ -16,7 +17,7 @@ class GameSession:
     def __init__(self) -> None:
         self.character = Character(name="Traveller", characteristics={}, skills={})
         self.term: Term = ChildhoodTerm(self.character)
-        self.current_career_data: dict | None = None
+        self.current_career_data: CareerData | None = None
         self.career_term_count: int = 0
         # Name of the career that was just left (mishap or forced exit);
         # blocks re-entry for exactly the immediately-following Career
