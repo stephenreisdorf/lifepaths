@@ -23,7 +23,7 @@ npm run dev           # dev server
 npm run build         # production build into frontend/dist
 ```
 
-No tests or linter are configured yet.
+Run the test suite with `uv run pytest`. No linter is configured yet.
 
 ### Process cleanup
 
@@ -50,7 +50,7 @@ Three layers: **Domain** (`src/terms/`, `src/character.py`) → **Engine** (`src
 - **`src/terms/childhood.py`** — `RollCharacteristicsStep` (2d6 per stat), `ChooseBackgroundSkillsStep` (pick N based on EDU DM); `ChildhoodTerm`.
 - **`src/terms/careers.py`** — The largest domain file (~2000 lines). Contains the full career flow: `RollQualificationStep` / `AutoQualifyStep`, `BasicTrainingStep`, `PickServiceSkillStep`, `ChooseAssignmentStep`, `ChooseCareerSkillsTable`, `RollForSkillStep`, `SurvivalCheckStep`, `EventsRollStep`, `MishapRollStep`, `AdvancementRollStep`, `CommissionStep`, plus the transition/branching steps `ChooseCareerStep`, `ContinueOrMusterOutStep`, `MusterOutOrNewCareerStep`, and `ChooseDraftOrDrifterStep` (failed-qualification fallback: Draft once-per-life or Drifter). `MusterOutStep` / `AgingStep` live in `MusterOutTerm`. `CareerTerm.advance()` dynamically appends the next steps based on prior outcomes and synthesizes a terminal status (`FAILED_QUAL` / `MISHAP` / `EVENT` / `FORCED_EXIT` / `COMPLETED`). `TransitionTerm` is a one-step term used for career selection and continue/muster choices; `AssignmentChangeTerm` handles mid-career assignment switches.
 - **`src/terms/effects.py`** — structured effects for events/mishaps. A YAML events/mishaps entry is either flavor text or `{text, effects}`. `parse_entry` splits it; `apply_effects(character, effects)` applies each typed effect (`skill`, `characteristic`, `associate`, `forced_exit`, `enter_career`, plus flavor-only `advancement_dm` / `benefit_dm`) and returns human-readable descriptions. `enter_career` sets `character.pending_career_entry`; `forced_exit` is surfaced so `CareerTerm` ends with `FORCED_EXIT`.
-- **`src/utilities.py`** — `roll(d)` rolls `d` six-sided dice and sums (uses global `random`).
+- **`src/utilities.py`** — `roll(d)` rolls `d` six-sided dice and sums, using a module-level `random.Random` instance (`rng`) that tests seed via `rng.seed(...)` for deterministic dice.
 
 ### Engine layer
 
@@ -79,10 +79,6 @@ Three layers: **Domain** (`src/terms/`, `src/character.py`) → **Engine** (`src
 ## Agent guidance files
 
 `AGENTS.md` (for Codex) is a near-duplicate of this file. Keep the two in sync when editing architectural notes.
-
-## Known rough edges
-
-- `utilities.roll()` uses the global `random` module directly, so step logic is untestable without monkeypatching or seeding.
 
 ## Backlog
 
