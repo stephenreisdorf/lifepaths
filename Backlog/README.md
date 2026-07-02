@@ -12,7 +12,7 @@ _(none)_
 
 ## Architecture
 
-- [Career step sequencing machine](career-step-sequencing-machine.md) — extract `CareerTerm.advance()` from a 160-line if-elif into a testable, declarative form.
+_(none)_
 
 ## Deferred
 

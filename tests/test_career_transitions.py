@@ -1,0 +1,198 @@
+"""Career step transitions are dispatched via declarative tables.
+
+`CareerTerm.advance()` and `TransitionTerm.next_term()` both route by a
+step-keyed table to small per-transition handlers. These tests exercise
+individual transitions in isolation — calling one handler with a stand-in
+step — rather than stepping through a whole career. That isolation is the
+point of the sequencing-machine refactor.
+"""
+
+from src.career_loader import load_career
+from src.character import Character
+from src.terms.base import StepOutcome
+from src.terms.careers import (
+    AdvancementRollStep,
+    AgingStep,
+    AutoQualifyStep,
+    BasicTrainingStep,
+    CareerTerm,
+    ChooseAssignmentStep,
+    ChooseCareerSkillsTable,
+    ChooseCareerStep,
+    ChooseDraftOrDrifterStep,
+    CommissionStep,
+    ContinueOrMusterOutStep,
+    EventsRollStep,
+    MishapRollStep,
+    MusterOutOrNewCareerStep,
+    RollForSkillStep,
+    RollQualificationStep,
+    SurvivalCheckStep,
+    TransitionTerm,
+)
+from src.terms.context import CareerContext
+
+
+class _FakeStep:
+    """Minimal stand-in for a resolved step: carries an outcome plus any
+    ad-hoc attributes a handler reads (e.g. `forced_exit`)."""
+
+    def __init__(self, status: str = "done", data: dict | None = None, **attrs):
+        self.outcome = StepOutcome(status=status, data=data or {})
+        for key, value in attrs.items():
+            setattr(self, key, value)
+
+
+def _character() -> Character:
+    char = Character(name="Test", characteristics={}, skills={})
+    for name in [
+        "Strength",
+        "Dexterity",
+        "Endurance",
+        "Intelligence",
+        "Education",
+        "Social Standing",
+    ]:
+        char.add_characteristic(characteristic=name, value=7)
+    char.age = 18  # keep age+4 under the aging threshold in these tests
+    return char
+
+
+def _scout_term(is_first_term: bool = True) -> CareerTerm:
+    return CareerTerm(_character(), load_career("scout"), is_first_term=is_first_term)
+
+
+# --- CareerTerm dispatch table --------------------------------------------
+
+
+def test_step_handler_table_covers_every_flow_step():
+    """The dispatch table is the single wiring point — lock its coverage so a
+    new step type can't silently fall through `advance()`."""
+    assert set(CareerTerm._STEP_HANDLERS) == {
+        RollQualificationStep,
+        AutoQualifyStep,
+        ChooseAssignmentStep,
+        ChooseCareerSkillsTable,
+        RollForSkillStep,
+        SurvivalCheckStep,
+        EventsRollStep,
+        CommissionStep,
+        MishapRollStep,
+        AdvancementRollStep,
+        AgingStep,
+    }
+
+
+# --- Individual CareerTerm transitions ------------------------------------
+
+
+def test_after_qualification_qualified_appends_training_then_assignment():
+    term = _scout_term()
+    term._after_qualification(_FakeStep(status="QUALIFIED"))
+
+    appended = [s.step_id for s in term.steps[1:]]
+    assert appended == [BasicTrainingStep.step_id, ChooseAssignmentStep.step_id]
+    assert term.outcome is None
+
+
+def test_after_qualification_failed_ends_term():
+    term = _scout_term()
+    term._after_qualification(_FakeStep(status="FAILED"))
+
+    assert term.outcome is not None
+    assert term.outcome.status == "FAILED_QUAL"
+    assert len(term.steps) == 1  # nothing appended
+
+
+def test_after_survival_branches_on_status():
+    survived = _scout_term()
+    survived._after_survival(_FakeStep(status="SURVIVED"))
+    assert survived.steps[-1].step_id == EventsRollStep.step_id
+
+    mishap = _scout_term()
+    mishap._after_survival(_FakeStep(status="INJURED"))
+    assert mishap.steps[-1].step_id == MishapRollStep.step_id
+
+
+def test_after_skill_table_appends_roll_for_the_chosen_table():
+    term = _scout_term()
+    table_name = next(iter(term.skill_tables))
+    term._after_skill_table(_FakeStep(data={"skill_table": table_name}))
+
+    assert isinstance(term.steps[-1], RollForSkillStep)
+
+
+def test_after_advancement_promoted_defers_finalize_and_grants_skill():
+    term = _scout_term()
+    term._after_advancement(
+        _FakeStep(status="PROMOTED", forced_stay=False, forced_exit=False)
+    )
+
+    assert term.outcome is None  # not finalized yet
+    assert term._pending_finalize_outcome is not None
+    assert term._pending_finalize_outcome.status == "COMPLETED"
+    assert isinstance(term.steps[-1], ChooseCareerSkillsTable)
+
+
+def test_after_advancement_no_promotion_finalizes_completed():
+    term = _scout_term()
+    term._after_advancement(
+        _FakeStep(status="ADVANCED", forced_stay=False, forced_exit=False)
+    )
+
+    assert term.outcome is not None
+    assert term.outcome.status == "COMPLETED"
+
+
+def test_after_mishap_records_ejection_and_ends_term():
+    term = _scout_term()
+    term._after_mishap(_FakeStep())
+
+    assert term.outcome is not None
+    assert term.outcome.status == "MISHAP"
+    record = term.character.careers[term.career_name]
+    assert record.ejected
+    assert record.terms_served == 1
+
+
+# --- TransitionTerm cross-term routing ------------------------------------
+
+
+def test_next_term_table_covers_every_decision_step():
+    assert set(TransitionTerm._NEXT_TERM_HANDLERS) == {
+        ChooseCareerStep.step_id,
+        ChooseDraftOrDrifterStep.step_id,
+        ContinueOrMusterOutStep.step_id,
+        MusterOutOrNewCareerStep.step_id,
+    }
+
+
+def test_transition_choose_career_starts_first_term_and_clears_block():
+    char = _character()
+    step = ChooseCareerStep(char, [])
+    step.outcome = StepOutcome(status="CHOSEN", data={"career": "scout"})
+    transition = TransitionTerm(char, step)
+    context = CareerContext(character=char, blocked_career="stale")
+
+    nxt = transition.next_term(context)
+
+    assert isinstance(nxt, CareerTerm)
+    assert nxt.is_first_term
+    assert context.blocked_career is None
+    assert context.current_career_data.name == load_career("scout").name
+
+
+def test_transition_choose_new_career_after_mishap_routes_to_selection():
+    char = _character()
+    step = MusterOutOrNewCareerStep(char, "Scout")
+    step.outcome = StepOutcome(status="CHOOSE_CAREER")
+    transition = TransitionTerm(char, step)
+    context = CareerContext(
+        character=char, current_career_data=load_career("scout")
+    )
+
+    nxt = transition.next_term(context)
+
+    assert isinstance(nxt, TransitionTerm)
+    assert nxt.steps[0].step_id == ChooseCareerStep.step_id
+    assert context.current_career_data is None
