@@ -617,47 +617,58 @@ class AssignmentChangeTerm(Term):
     def label(self) -> str:
         return f"{self.career_name} — Change Assignment"
 
+    def _after_assignment(self, step: Step) -> None:
+        self._chosen_assignment = step.outcome.data["assignment"]
+        if self.qualification_auto:
+            self.steps.append(
+                AutoQualifyStep(
+                    self.character,
+                    self.qualification_characteristic,
+                    self.qualification_target,
+                )
+            )
+        else:
+            self.steps.append(
+                RollQualificationStep(
+                    self.character,
+                    self.qualification_characteristic,
+                    self.qualification_target,
+                )
+            )
+
+    def _after_qualification(self, step: Step) -> None:
+        if step.outcome.status == "QUALIFIED":
+            self.outcome = StepOutcome(
+                status="CHANGED",
+                description=(
+                    f"Qualified for {self._chosen_assignment['name']} — "
+                    "career begins afresh at rank 0."
+                ),
+            )
+        else:
+            self.outcome = StepOutcome(
+                status="CHANGE_FAILED",
+                description=(
+                    "Failed to qualify for the new assignment — "
+                    "forced out of the career."
+                ),
+            )
+
+    # Declarative transition table: step type → handler (mirrors CareerTerm).
+    _STEP_HANDLERS = {
+        ChooseAssignmentStep: _after_assignment,
+        RollQualificationStep: _after_qualification,
+        AutoQualifyStep: _after_qualification,
+    }
+
     def advance(self) -> None:
         step = self.current_step
         super().advance()
         if step is None or step.outcome is None:
             return
-
-        if isinstance(step, ChooseAssignmentStep):
-            self._chosen_assignment = step.outcome.data["assignment"]
-            if self.qualification_auto:
-                self.steps.append(
-                    AutoQualifyStep(
-                        self.character,
-                        self.qualification_characteristic,
-                        self.qualification_target,
-                    )
-                )
-            else:
-                self.steps.append(
-                    RollQualificationStep(
-                        self.character,
-                        self.qualification_characteristic,
-                        self.qualification_target,
-                    )
-                )
-        elif isinstance(step, (RollQualificationStep, AutoQualifyStep)):
-            if step.outcome.status == "QUALIFIED":
-                self.outcome = StepOutcome(
-                    status="CHANGED",
-                    description=(
-                        f"Qualified for {self._chosen_assignment['name']} — "
-                        "career begins afresh at rank 0."
-                    ),
-                )
-            else:
-                self.outcome = StepOutcome(
-                    status="CHANGE_FAILED",
-                    description=(
-                        "Failed to qualify for the new assignment — "
-                        "forced out of the career."
-                    ),
-                )
+        handler = self._STEP_HANDLERS.get(type(step))
+        if handler is not None:
+            handler(self, step)
 
     def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None

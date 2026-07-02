@@ -13,6 +13,7 @@ from src.terms.base import StepOutcome
 from src.terms.careers import (
     AdvancementRollStep,
     AgingStep,
+    AssignmentChangeTerm,
     AutoQualifyStep,
     BasicTrainingStep,
     CareerTerm,
@@ -196,3 +197,58 @@ def test_transition_choose_new_career_after_mishap_routes_to_selection():
     assert isinstance(nxt, TransitionTerm)
     assert nxt.steps[0].step_id == ChooseCareerStep.step_id
     assert context.current_career_data is None
+
+
+# --- AssignmentChangeTerm transitions -------------------------------------
+
+
+def _assignment_change_term() -> AssignmentChangeTerm:
+    career = load_career("scout")
+    assignments = career.assignments_as_dicts()
+    return AssignmentChangeTerm(
+        _character(),
+        career_name=career.name,
+        assignments=assignments,
+        current_assignment=assignments[0],
+        qualification_options=career.qualification_options(),
+        qualification_auto=career.qualification.auto,
+    )
+
+
+def test_assignment_change_handler_table_covers_its_steps():
+    assert set(AssignmentChangeTerm._STEP_HANDLERS) == {
+        ChooseAssignmentStep,
+        RollQualificationStep,
+        AutoQualifyStep,
+    }
+
+
+def test_assignment_change_after_assignment_appends_qualification():
+    term = _assignment_change_term()
+    other = term.assignments[1]
+    term._after_assignment(_FakeStep(data={"assignment": other}))
+
+    assert term._chosen_assignment == other
+    appended = term.steps[-1]
+    assert appended.step_id in (
+        RollQualificationStep.step_id,
+        AutoQualifyStep.step_id,
+    )
+
+
+def test_assignment_change_qualified_sets_changed_outcome():
+    term = _assignment_change_term()
+    term._chosen_assignment = term.assignments[1]
+    term._after_qualification(_FakeStep(status="QUALIFIED"))
+
+    assert term.outcome is not None
+    assert term.outcome.status == "CHANGED"
+
+
+def test_assignment_change_failed_sets_change_failed_outcome():
+    term = _assignment_change_term()
+    term._chosen_assignment = term.assignments[1]
+    term._after_qualification(_FakeStep(status="FAILED"))
+
+    assert term.outcome is not None
+    assert term.outcome.status == "CHANGE_FAILED"
