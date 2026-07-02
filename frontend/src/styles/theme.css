@@ -1,0 +1,33 @@
+/* Traveller Core Rulebook 2022 — design tokens.
+   Palette and typography consumed by main.css and every component. */
+:root {
+  /* Palette */
+  --color-space-black: #050505;   /* page background (dark)        */
+  --color-imperial-red: #c41e3a;  /* primary CTA / active accent   */
+  --color-imperial-red-dark: #9e1730;
+  --color-parchment: #ffffff;     /* interior/content background   */
+  --color-tan: #f4e9d5;           /* container background          */
+  --color-tan-shade: #ece0c8;     /* nested/alt container surface  */
+  --color-orange: #d17b47;        /* borders / section accents     */
+  --color-orange-dim: rgba(209, 123, 71, 0.35);
+  --color-graphite: #222222;      /* body text                     */
+  --color-graphite-soft: #55504a; /* secondary text / metadata     */
+  --color-success: #3f7d4f;
+  --color-danger: #b5322c;
+
+  /* Typography */
+  --font-body: 'Inter', 'Helvetica Neue', 'Roboto', system-ui, sans-serif;
+  --font-condensed: 'Oswald', 'Roboto Condensed', 'Arial Narrow', var(--font-body);
+  --font-mono: 'DejaVu Sans Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Chamfered container geometry (cut top-right + bottom-left corners) */
+  --chamfer: 14px;
+  --chamfer-clip: polygon(
+    0 0,
+    calc(100% - var(--chamfer)) 0,
+    100% var(--chamfer),
+    100% 100%,
+    var(--chamfer) 100%,
+    0 calc(100% - var(--chamfer))
+  );
+}

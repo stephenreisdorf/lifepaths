@@ -1,28 +1,97 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #1a1a2e; color: #e0e0e0;
-  min-height: 100vh; display: flex; justify-content: center; align-items: center;
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse at top, #12121c 0%, var(--color-space-black) 60%),
+    var(--color-space-black);
+  color: var(--color-parchment);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 .container { max-width: 680px; width: 100%; padding: 2rem; }
-h1 { color: #c4a35a; margin-bottom: 0.5rem; font-size: 1.8rem; }
-h2 { color: #c4a35a; margin-bottom: 1rem; font-size: 1.3rem; }
+
+h1 {
+  font-family: var(--font-condensed);
+  color: var(--color-imperial-red);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+/* Section titles — all-caps condensed, burned orange, 1px tracking */
+h2 {
+  font-family: var(--font-condensed);
+  color: var(--color-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+/* Category headers — all-caps, semi-bold */
+h3 {
+  font-family: var(--font-condensed);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
 p { margin-bottom: 1rem; line-height: 1.5; }
 
-button {
-  background: #c4a35a; color: #1a1a2e; border: none;
-  padding: 0.6rem 1.4rem; font-size: 1rem; font-weight: 600;
-  border-radius: 4px; cursor: pointer; transition: opacity 0.2s;
+/* Chamfered container — the defining visual element.
+   Cut top-right and bottom-left corners with a 1px burned-orange frame. */
+.chamfer {
+  --surface: var(--color-tan);
+  position: relative;
+  clip-path: var(--chamfer-clip);
+  background: var(--color-orange);
+  padding: 20px;
+  color: var(--color-graphite);
 }
-button:hover { opacity: 0.85; }
-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.chamfer::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: var(--surface);
+  clip-path: var(--chamfer-clip);
+  z-index: 0;
+}
+.chamfer > * { position: relative; z-index: 1; }
+.chamfer h2 { color: var(--color-imperial-red); }
+
+button {
+  font-family: var(--font-condensed);
+  background: var(--color-imperial-red);
+  color: var(--color-parchment);
+  border: none;
+  padding: 0.55rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  transition: background 0.15s;
+}
+button:hover { background: var(--color-imperial-red-dark); }
+button:disabled { background: var(--color-graphite-soft); opacity: 0.5; cursor: not-allowed; }
 
 /* Characteristics table */
 table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
 th, td { padding: 0.5rem 0.75rem; text-align: left; }
-th { color: #c4a35a; border-bottom: 2px solid #333; font-size: 0.85rem; text-transform: uppercase; }
-td { border-bottom: 1px solid #2a2a3e; }
-.mono { font-family: monospace; font-size: 1.1rem; }
+th {
+  font-family: var(--font-condensed);
+  color: var(--color-orange);
+  border-bottom: 2px solid var(--color-orange);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+td { border-bottom: 1px solid var(--color-orange-dim); color: var(--color-graphite); }
+.mono { font-family: var(--font-mono); font-size: 1.1rem; }
 
 /* Skill picker */
 .skill-grid {
@@ -30,20 +99,37 @@ td { border-bottom: 1px solid #2a2a3e; }
   gap: 0.5rem; margin-bottom: 1rem;
 }
 .skill-btn {
-  background: #2a2a3e; color: #e0e0e0; border: 2px solid #3a3a5e;
-  padding: 0.5rem; font-size: 0.9rem; font-weight: 400;
-  border-radius: 4px; cursor: pointer; transition: all 0.15s;
+  font-family: var(--font-body);
+  background: var(--color-parchment);
+  color: var(--color-graphite);
+  border: 1px solid var(--color-orange);
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  clip-path: none;
+  transition: all 0.15s;
 }
-.skill-btn:hover { border-color: #c4a35a; }
-.skill-btn.selected { background: #c4a35a; color: #1a1a2e; border-color: #c4a35a; font-weight: 600; }
-.skill-counter { margin-bottom: 1rem; font-size: 0.95rem; }
-.skill-counter span { color: #c4a35a; font-weight: 600; }
+.skill-btn:hover { border-color: var(--color-imperial-red); color: var(--color-imperial-red); background: var(--color-parchment); }
+.skill-btn.selected {
+  background: var(--color-imperial-red);
+  color: var(--color-parchment);
+  border-color: var(--color-imperial-red);
+  font-weight: 600;
+}
+.skill-counter { margin-bottom: 1rem; font-size: 0.95rem; color: var(--color-graphite); }
+.skill-counter span { color: var(--color-imperial-red); font-weight: 700; }
 
-/* Character sheet */
+/* Character sheet inline tags */
 .skill-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
 .skill-tag {
-  background: #2a2a3e; border: 1px solid #3a3a5e;
-  padding: 0.3rem 0.7rem; border-radius: 3px; font-size: 0.9rem;
+  background: var(--color-tan-shade);
+  border: 1px solid var(--color-orange);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.9rem;
+  color: var(--color-graphite);
 }
 
-.error { color: #e74c3c; margin-bottom: 1rem; }
+.error { color: var(--color-danger); font-weight: 600; margin-bottom: 1rem; }

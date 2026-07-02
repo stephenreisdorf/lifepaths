@@ -76,11 +76,12 @@ function formatValue(v) {
 }
 .group-label {
   margin: 0 0 0.15rem;
-  font-size: 0.75rem;
+  font-family: var(--font-condensed);
+  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #c4a35a;
-  border-bottom: 1px solid #3a3a5e;
+  color: var(--color-orange);
+  border-bottom: 1px solid var(--color-orange-dim);
   padding-bottom: 0.2rem;
 }
 .group-entries {
@@ -89,9 +90,8 @@ function formatValue(v) {
   gap: 0.35rem;
 }
 .history-entry {
-  background: #2a2a3e;
-  border: 1px solid #3a3a5e;
-  border-radius: 3px;
+  background: var(--color-parchment);
+  border: 1px solid var(--color-orange-dim);
   padding: 0.35rem 0.55rem;
   font-size: 0.85rem;
 }
@@ -105,24 +105,24 @@ function formatValue(v) {
 .history-entry summary::-webkit-details-marker { display: none; }
 .history-entry summary::before {
   content: '▸';
-  color: #c4a35a;
+  color: var(--color-orange);
   font-size: 0.7rem;
   transition: transform 0.15s;
   display: inline-block;
 }
 .history-entry[open] summary::before { transform: rotate(90deg); }
 .entry-kind {
+  font-family: var(--font-condensed);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 0.1rem 0.35rem;
-  border-radius: 2px;
-  background: #3a3a5e;
-  color: #c4a35a;
+  padding: 0.1rem 0.4rem;
+  background: var(--color-tan-shade);
+  color: var(--color-orange);
   flex-shrink: 0;
 }
-.entry-kind.choice { background: #c4a35a; color: #1a1a2e; }
-.entry-desc { flex: 1; }
+.entry-kind.choice { background: var(--color-imperial-red); color: var(--color-parchment); }
+.entry-desc { flex: 1; color: var(--color-graphite); }
 .entry-data {
   margin-top: 0.4rem;
   display: grid;
@@ -132,16 +132,16 @@ function formatValue(v) {
   padding-left: 1rem;
 }
 .entry-data dt {
-  color: #c4a35a;
+  color: var(--color-orange);
   font-weight: 600;
 }
 .entry-data dd {
-  color: #e0e0e0;
-  font-family: monospace;
+  color: var(--color-graphite);
+  font-family: var(--font-mono);
   word-break: break-word;
 }
 .history-empty {
-  color: #808090;
+  color: var(--color-graphite-soft);
   font-style: italic;
   font-size: 0.9rem;
 }

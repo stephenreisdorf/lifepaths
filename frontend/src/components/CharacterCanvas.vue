@@ -32,7 +32,8 @@ const rawState = computed(() => ({
 </script>
 
 <template>
-  <aside class="canvas">
+  <aside class="canvas chamfer">
+    <div class="canvas-inner">
     <div class="canvas-header">
       <h2>Character<span v-if="age" class="age-badge"> — Age {{ age }}</span></h2>
       <button class="json-toggle" @click="showJson = !showJson">
@@ -73,19 +74,19 @@ const rawState = computed(() => ({
         <StepHistoryLog :history="history" />
       </section>
     </template>
+    </div>
   </aside>
 </template>
 
 <style scoped>
 .canvas {
-  background: #20203a;
-  border: 1px solid #3a3a5e;
-  border-radius: 6px;
-  padding: 1rem;
+  padding: 18px;
+}
+.canvas-inner {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: calc(100vh - 4rem);
+  max-height: calc(100vh - 8rem);
   overflow-y: auto;
 }
 .canvas-header {
@@ -98,21 +99,20 @@ const rawState = computed(() => ({
   font-size: 1.1rem;
 }
 .age-badge {
-  color: #808090;
+  color: var(--color-graphite-soft);
   font-weight: 400;
   font-size: 0.9rem;
 }
 .json-toggle {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   padding: 0.3rem 0.7rem;
 }
 .canvas-section h3 {
-  color: #c4a35a;
-  font-size: 0.8rem;
-  text-transform: uppercase;
+  color: var(--color-orange);
+  font-size: 0.85rem;
   letter-spacing: 0.08em;
   margin-bottom: 0.5rem;
-  border-bottom: 1px solid #3a3a5e;
+  border-bottom: 1px solid var(--color-orange-dim);
   padding-bottom: 0.25rem;
 }
 .canvas-section :deep(table) { margin-bottom: 0; }
@@ -130,17 +130,16 @@ const rawState = computed(() => ({
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  background: #2a2a3e;
-  border: 1px solid #3a3a5e;
-  border-radius: 3px;
+  background: var(--color-parchment);
+  border: 1px solid var(--color-orange-dim);
   padding: 0.3rem 0.6rem;
   font-size: 0.9rem;
 }
-.skill-name { color: #e0e0e0; }
+.skill-name { color: var(--color-graphite); }
 .skill-rank {
-  font-family: monospace;
-  color: #c4a35a;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--color-imperial-red);
+  font-weight: 700;
 }
 .specialty-list {
   list-style: none;
@@ -153,27 +152,26 @@ const rawState = computed(() => ({
 .specialty-list li {
   display: flex;
   justify-content: space-between;
-  background: #1e1e30;
-  border-left: 2px solid #c4a35a;
+  background: var(--color-tan-shade);
+  border-left: 2px solid var(--color-orange);
   padding: 0.2rem 0.5rem;
   font-size: 0.82rem;
 }
-.specialty-name { color: #b8b8c8; }
+.specialty-name { color: var(--color-graphite-soft); }
 
 .json-dump {
-  background: #12121e;
-  border: 1px solid #3a3a5e;
-  border-radius: 4px;
+  background: var(--color-space-black);
+  border: 1px solid var(--color-orange-dim);
   padding: 0.75rem;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: #b8b8c8;
+  color: var(--color-tan);
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
 }
 .empty {
-  color: #808090;
+  color: var(--color-graphite-soft);
   font-style: italic;
   font-size: 0.85rem;
   margin: 0;

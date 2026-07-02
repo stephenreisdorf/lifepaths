@@ -84,6 +84,14 @@ function dismissReview() {
 
 <template>
   <div class="container" :class="{ wide: currentScreen !== 'welcome' }">
+    <header class="app-header">
+      <span class="wordmark">LIFEPATHS</span>
+      <svg class="orbit" viewBox="0 0 60 34" aria-hidden="true">
+        <ellipse cx="30" cy="17" rx="28" ry="9" />
+        <circle cx="30" cy="17" r="4" />
+      </svg>
+      <span class="sub-brand">Character Creation</span>
+    </header>
     <WelcomeScreen
       v-if="currentScreen === 'welcome'"
       @start="startCreation"
@@ -110,4 +118,51 @@ function dismissReview() {
 
 <style>
 .container.wide { max-width: 1200px; }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-orange-dim);
+}
+.wordmark {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  font-size: 1.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-imperial-red);
+  background: linear-gradient(180deg, #e23a54 0%, var(--color-imperial-red) 55%, var(--color-imperial-red-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.orbit {
+  width: 60px;
+  height: 34px;
+  flex-shrink: 0;
+}
+.orbit ellipse {
+  fill: none;
+  stroke: #c9c9d2;
+  stroke-width: 1.5;
+}
+.orbit circle {
+  fill: var(--color-orange);
+}
+.sub-brand {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.8rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #c9c9d2;
+}
+@media (max-width: 560px) {
+  .sub-brand { display: none; }
+}
 </style>
