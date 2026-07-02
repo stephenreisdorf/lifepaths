@@ -118,38 +118,15 @@ class Character(BaseModel):
         """Return whether the character has the named skill."""
         return name in self.skills
 
-    def add_skill(self, name: str) -> None:
-        """Add a skill at base rank 0. No-op if the skill already exists."""
-        if self.has_skill(name):
-            return
-        new_skill = Skill(name=name, specialties={}, base_rank=0)
-        self.skills[name] = new_skill
+    def _ensure_skill(self, name: str) -> Skill:
+        """Return the named skill, creating it at base rank 0 if absent.
 
-    def increment_skill(self, name: str, specialty: str, increment: int = 1) -> None:
-        """Increment a skill specialty's rank, creating the skill/specialty if needed.
-
-        Silently clamps to the per-skill cap (SKILL_MAX_LEVEL) and refuses
-        further increments once the total-skill-levels cap (3 × (INT + EDU))
-        is reached. RAW treats over-cap grants as wasted.
+        Internal primitive used by `grant_skill`; callers grant skills via
+        `grant_skill`, the single public skill-mutation entry point.
         """
         if not self.has_skill(name):
-            self.add_skill(name)
-        skill = self.skills[name]
-        current = (
-            skill.specialties[specialty].rank
-            if skill.has_specialty(specialty)
-            else 0
-        )
-        target = min(current + increment, SKILL_MAX_LEVEL)
-        delta = target - current
-        if delta <= 0:
-            return
-        if not self._budget_allows_increment(delta):
-            return
-        if not skill.has_specialty(specialty):
-            skill.add_specialty(specialty, target)
-        else:
-            skill.specialties[specialty].rank = target
+            self.skills[name] = Skill(name=name, specialties={}, base_rank=0)
+        return self.skills[name]
 
     def grant_skill(
         self,
@@ -158,6 +135,10 @@ class Character(BaseModel):
         specialty: str | None = None,
     ) -> None:
         """Grant a skill (or specialty) per Traveller notation.
+
+        This is the single entry point for all skill mutation; every caller
+        (background/service skills, skill-table rolls, rank bonuses, event and
+        mishap effects) routes through here.
 
         - `level=0` : ensure the skill / specialty exists at rank 0 (no-op if
           already present).
@@ -173,9 +154,7 @@ class Character(BaseModel):
         levels cap (3 × (INT + EDU)) by silently clamping / refusing further
         increments — RAW treats over-cap grants as wasted.
         """
-        if not self.has_skill(name):
-            self.add_skill(name)
-        skill = self.skills[name]
+        skill = self._ensure_skill(name)
 
         if specialty is not None:
             current = (
@@ -183,26 +162,32 @@ class Character(BaseModel):
                 if skill.has_specialty(specialty)
                 else 0
             )
-            target = self._clamp_target(current, level)
-            delta = target - current
-            if delta <= 0 and skill.has_specialty(specialty):
-                return
-            if delta > 0 and not self._budget_allows_increment(delta):
-                return
-            if not skill.has_specialty(specialty):
-                skill.add_specialty(specialty, target)
-            else:
-                skill.specialties[specialty].rank = target
-            return
+        else:
+            current = skill.base_rank
 
-        current = skill.base_rank
         target = self._clamp_target(current, level)
         delta = target - current
+
+        # A zero/negative delta means no growth (e.g. `level=0`, or an
+        # explicit level at or below the current rank). Raise nothing, but
+        # still materialize a missing specialty at rank 0 so `level=0` can
+        # ensure a specialty exists — mirroring how `_ensure_skill` creates a
+        # missing base skill above.
         if delta <= 0:
+            if specialty is not None and not skill.has_specialty(specialty):
+                skill.add_specialty(specialty, target)
             return
+
         if not self._budget_allows_increment(delta):
             return
-        skill.base_rank = target
+
+        if specialty is not None:
+            if skill.has_specialty(specialty):
+                skill.specialties[specialty].rank = target
+            else:
+                skill.add_specialty(specialty, target)
+        else:
+            skill.base_rank = target
 
     @staticmethod
     def _clamp_target(current: int, level: int | None) -> int:

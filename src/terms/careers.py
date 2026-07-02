@@ -167,7 +167,7 @@ class BasicTrainingStep(Step):
 
     def apply(self) -> None:
         for skill in self.service_skills:
-            self.character.add_skill(skill)
+            self.character.grant_skill(skill, level=0)
         self.outcome = StepOutcome(
             status="TRAINED",
             description=(
@@ -232,7 +232,7 @@ class PickServiceSkillStep(Step):
 
     def apply(self) -> None:
         skill = self._selected_skill_pending
-        self.character.add_skill(skill)
+        self.character.grant_skill(skill, level=0)
         self.outcome = StepOutcome(
             status="TRAINED",
             description=f"Gained {skill} at level 0 (subsequent-career basic training).",
@@ -677,7 +677,7 @@ class AdvancementRollStep(PassFailRollStep):
     def _apply_bonus(self, bonus: str) -> None:
         """Apply a rank bonus. '<Name> +<N>' against a known characteristic bumps it; otherwise add as a skill."""
         if not try_apply_characteristic_bonus(self.character, bonus):
-            self.character.add_skill(bonus)
+            self.character.grant_skill(bonus, level=0)
 
 
 class CommissionStep(Step):
@@ -814,7 +814,7 @@ class CommissionStep(Step):
             return None
         bonus = entry.get("bonus_skill")
         if bonus and not try_apply_characteristic_bonus(self.character, bonus):
-            self.character.add_skill(bonus)
+            self.character.grant_skill(bonus, level=0)
         return entry.get("title")
 
 

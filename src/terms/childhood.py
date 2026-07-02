@@ -114,7 +114,7 @@ class ChooseBackgroundSkillsStep(Step):
 
     def apply(self) -> None:
         for skill in self._selections_pending:
-            self.character.add_skill(skill)
+            self.character.grant_skill(skill, level=0)
         self.outcome = StepOutcome(
             status="SELECTED",
             description=f"Background skills: {', '.join(self._selections_pending)}.",

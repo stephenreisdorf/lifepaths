@@ -56,3 +56,43 @@ def test_grant_skill_refuses_over_total_budget():
     char.grant_skill("Skill4", level=2)
     assert char.total_skill_levels() == 6
     assert char.skills["Skill4"].base_rank == 0
+
+
+def test_grant_skill_level_zero_ensures_skill_exists_at_rank_zero():
+    char = make_character(Intelligence=12, Education=12)
+    char.grant_skill("Athletics", level=0)
+    assert char.skills["Athletics"].base_rank == 0
+    # Re-granting at level 0 never reduces an already-raised skill.
+    char.grant_skill("Athletics")  # bare → rank 1
+    char.grant_skill("Athletics", level=0)
+    assert char.skills["Athletics"].base_rank == 1
+
+
+def test_grant_skill_specialty_bare_and_explicit():
+    char = make_character(Intelligence=12, Education=12)
+    char.grant_skill("Gun Combat", specialty="Slug")  # bare → rank 1
+    assert char.skills["Gun Combat"].specialties["Slug"].rank == 1
+    char.grant_skill("Gun Combat", specialty="Slug")  # +1 → rank 2
+    assert char.skills["Gun Combat"].specialties["Slug"].rank == 2
+    char.grant_skill("Gun Combat", level=1, specialty="Slug")  # no reduction
+    assert char.skills["Gun Combat"].specialties["Slug"].rank == 2
+    # Parent skill's base rank is untouched by specialty grants.
+    assert char.skills["Gun Combat"].base_rank == 0
+
+
+def test_grant_skill_level_zero_ensures_specialty_exists():
+    char = make_character(Intelligence=12, Education=12)
+    char.grant_skill("Pilot", level=0, specialty="Spacecraft")
+    assert char.skills["Pilot"].specialties["Spacecraft"].rank == 0
+
+
+def test_grant_skill_specialty_respects_total_budget():
+    # Cap = 3 * (1 + 1) = 6 total skill levels; specialty ranks count too.
+    char = make_character(Intelligence=1, Education=1)
+    for name in ("Gun Combat", "Melee", "Athletics"):
+        char.grant_skill(name, level=2, specialty="Spec")
+    assert char.total_skill_levels() == 6
+    # Budget exhausted — a further specialty grant is refused, not created.
+    char.grant_skill("Pilot", level=2, specialty="Spacecraft")
+    assert char.total_skill_levels() == 6
+    assert "Spacecraft" not in char.skills["Pilot"].specialties
