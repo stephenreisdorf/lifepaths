@@ -9,7 +9,7 @@ from src.character import Character
 from src.utilities import roll
 
 if TYPE_CHECKING:
-    from src.engine import GameSession
+    from src.terms.context import CareerContext
 
 
 class StepType(str, Enum):
@@ -175,7 +175,7 @@ class Term:
 
     A term holds a reference to a character and sequences one or more steps.
     Subclasses should populate self.steps in __init__ and override
-    `next_term(session)` to drive the transition to the next term.
+    `next_term(context)` to drive the transition to the next term.
     """
 
     def __init__(self, character: Character) -> None:
@@ -217,10 +217,11 @@ class Term:
         step.apply()
         self.advance()
 
-    def next_term(self, session: "GameSession") -> "Term | None":
+    def next_term(self, context: "CareerContext") -> "Term | None":
         """Return the term that should run after this one completes, or None if done.
 
-        The session is passed so terms can read/update session-level state
-        (current career data, running term count, …). Default is no next term.
+        The career context is passed so terms can read/update cross-term
+        creation state (current career data, running term count, …) via an
+        explicit, typed object rather than the engine. Default is no next term.
         """
         return None

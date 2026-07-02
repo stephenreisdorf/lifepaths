@@ -13,7 +13,6 @@ _(none)_
 ## Architecture
 
 - [Career step sequencing machine](career-step-sequencing-machine.md) — extract `CareerTerm.advance()` from a 160-line if-elif into a testable, declarative form.
-- [Engine session state](engine-session-state.md) — replace mutable session flags with a typed career context object passed explicitly to terms.
 
 ## Deferred
 

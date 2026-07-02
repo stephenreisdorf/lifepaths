@@ -7,7 +7,7 @@ from src.terms.base import Step, StepOutcome, StepPrompt, StepType, Term
 from src.utilities import roll
 
 if TYPE_CHECKING:
-    from src.engine import GameSession
+    from src.terms.context import CareerContext
 
 
 class RollCharacteristicsStep(Step):
@@ -135,14 +135,14 @@ class ChildhoodTerm(Term):
     def label(self) -> str:
         return "Childhood"
 
-    def next_term(self, session: "GameSession") -> "Term | None":
+    def next_term(self, context: "CareerContext") -> "Term | None":
         # Local imports to avoid circular references.
         from src.career_loader import filter_eligible_careers, get_available_careers
         from src.terms.careers import ChooseCareerStep, TransitionTerm
 
         careers = filter_eligible_careers(
-            session.character, get_available_careers()
+            context.character, get_available_careers()
         )
         return TransitionTerm(
-            session.character, ChooseCareerStep(session.character, careers)
+            context.character, ChooseCareerStep(context.character, careers)
         )

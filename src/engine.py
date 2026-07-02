@@ -1,7 +1,7 @@
-from src.career_data import CareerData
 from src.character import Character
 from src.terms.base import StepPrompt, StepType, SubmitResult, Term
 from src.terms.childhood import ChildhoodTerm
+from src.terms.context import CareerContext
 
 
 class GameSession:
@@ -17,17 +17,10 @@ class GameSession:
     def __init__(self) -> None:
         self.character = Character(name="Traveller", characteristics={}, skills={})
         self.term: Term = ChildhoodTerm(self.character)
-        self.current_career_data: CareerData | None = None
-        self.career_term_count: int = 0
-        # Name of the career that was just left (mishap or forced exit);
-        # blocks re-entry for exactly the immediately-following Career
-        # Selection prompt.
-        self.blocked_career: str | None = None
-        # Most-recently-selected assignment under the current career.
-        # Used by the assignment-change flow to preserve state.
-        self.current_assignment: dict | None = None
-        # Whether the Draft fallback has already been used (once-per-life).
-        self.draft_used: bool = False
+        # Cross-term creation state lives in a typed context object that is
+        # passed explicitly to each term's next_term(). The engine owns the
+        # context's lifecycle; terms read and mutate its fields.
+        self.context = CareerContext(character=self.character)
 
     def _character_summary(self) -> dict:
         """Serialize current character state for API responses."""
@@ -63,7 +56,7 @@ class GameSession:
         """Cross exhausted term boundaries until a step is available, or the chain ends."""
         prompt = self._current_prompt_with_label()
         if prompt is None:
-            next_term = self.term.next_term(self)
+            next_term = self.term.next_term(self.context)
             if next_term is not None:
                 self.term = next_term
                 return self._advance_past_term_boundaries()

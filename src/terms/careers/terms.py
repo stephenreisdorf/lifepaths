@@ -31,7 +31,7 @@ from src.terms.careers.steps import (
 )
 
 if TYPE_CHECKING:
-    from src.engine import GameSession
+    from src.terms.context import CareerContext
 
 
 def _available_careers_for(character: Character, blocked: str | None) -> list[dict]:
@@ -42,7 +42,7 @@ def _available_careers_for(character: Character, blocked: str | None) -> list[di
     return [c for c in careers if c["name"] != blocked]
 
 
-def _forced_entry_career_term(session: "GameSession") -> "CareerTerm | None":
+def _forced_entry_career_term(context: "CareerContext") -> "CareerTerm | None":
     """If an effect has queued a forced-career entry, consume it and
     return a first-term CareerTerm for that career (auto-qualified).
 
@@ -51,18 +51,18 @@ def _forced_entry_career_term(session: "GameSession") -> "CareerTerm | None":
     """
     from src.career_loader import load_career
 
-    career_name = session.character.pending_career_entry
+    career_name = context.character.pending_career_entry
     if not career_name:
         return None
-    session.character.pending_career_entry = None
-    session.current_career_data = load_career(career_name)
-    session.career_term_count = 0
-    session.blocked_career = None
-    session.current_assignment = None
+    context.character.pending_career_entry = None
+    context.current_career_data = load_career(career_name)
+    context.career_term_count = 0
+    context.blocked_career = None
+    context.current_assignment = None
     return CareerTerm(
-        session.character,
-        session.current_career_data,
-        term_number=session.career_term_count + 1,
+        context.character,
+        context.current_career_data,
+        term_number=context.career_term_count + 1,
         is_first_term=True,
         # Forced entry auto-qualifies regardless of YAML.
         force_auto_qualify=True,
@@ -89,7 +89,7 @@ class TransitionTerm(Term):
             return "Draft or Drifter"
         return "Transition"
 
-    def next_term(self, session: "GameSession") -> "Term | None":
+    def next_term(self, context: "CareerContext") -> "Term | None":
         # Local imports to avoid circular references.
         from src.career_loader import load_career
 
@@ -100,29 +100,29 @@ class TransitionTerm(Term):
 
         if inner.step_id == ChooseCareerStep.step_id:
             career_name = outcome.data["career"]
-            session.current_career_data = load_career(career_name)
-            session.career_term_count = 0
+            context.current_career_data = load_career(career_name)
+            context.career_term_count = 0
             # Block only applies to the immediately-following selection;
             # once a new career is picked the block is lifted.
-            session.blocked_career = None
+            context.blocked_career = None
             return CareerTerm(
-                session.character,
-                session.current_career_data,
-                term_number=session.career_term_count + 1,
+                context.character,
+                context.current_career_data,
+                term_number=context.career_term_count + 1,
                 is_first_term=True,
             )
 
         if inner.step_id == ChooseDraftOrDrifterStep.step_id:
             career_name = outcome.data["career"]
             if outcome.status == "DRAFTED":
-                session.draft_used = True
-            session.current_career_data = load_career(career_name)
-            session.career_term_count = 0
-            session.blocked_career = None
+                context.draft_used = True
+            context.current_career_data = load_career(career_name)
+            context.career_term_count = 0
+            context.blocked_career = None
             return CareerTerm(
-                session.character,
-                session.current_career_data,
-                term_number=session.career_term_count + 1,
+                context.character,
+                context.current_career_data,
+                term_number=context.career_term_count + 1,
                 is_first_term=True,
                 # Draft / Drifter fallback auto-qualifies regardless of YAML.
                 force_auto_qualify=True,
@@ -131,37 +131,37 @@ class TransitionTerm(Term):
         if inner.step_id == ContinueOrMusterOutStep.step_id:
             if outcome.status == "CONTINUE":
                 return CareerTerm(
-                    session.character,
-                    session.current_career_data,
-                    term_number=session.career_term_count + 1,
+                    context.character,
+                    context.current_career_data,
+                    term_number=context.career_term_count + 1,
                     is_first_term=False,
                 )
             if outcome.status == "CHANGE_ASSIGNMENT":
                 # Hand off to the assignment-change sub-term. It will
                 # roll qualification for the new assignment and, on
                 # success, start a new CareerTerm with rank reset to 0.
-                data = session.current_career_data
+                data = context.current_career_data
                 return AssignmentChangeTerm(
-                    session.character,
+                    context.character,
                     career_name=data.name,
                     assignments=data.assignments_as_dicts(),
-                    current_assignment=session.current_assignment,
+                    current_assignment=context.current_assignment,
                     qualification_options=data.qualification_options(),
                     qualification_auto=data.qualification.auto,
                 )
             # MUSTER_OUT — run the benefit rolls before creation ends.
-            return _muster_out_term_for(session, inner.career_name)  # type: ignore[attr-defined]
+            return _muster_out_term_for(context, inner.career_name)  # type: ignore[attr-defined]
 
         if inner.step_id == MusterOutOrNewCareerStep.step_id:
             if outcome.status == "MUSTER_OUT":
-                return _muster_out_term_for(session, inner.career_name)  # type: ignore[attr-defined]
+                return _muster_out_term_for(context, inner.career_name)  # type: ignore[attr-defined]
             # CHOOSE_CAREER — proceed to career selection, skipping benefits.
-            session.current_career_data = None
+            context.current_career_data = None
             careers = _available_careers_for(
-                session.character, session.blocked_career
+                context.character, context.blocked_career
             )
             return TransitionTerm(
-                session.character, ChooseCareerStep(session.character, careers)
+                context.character, ChooseCareerStep(context.character, careers)
             )
 
         return None
@@ -484,44 +484,44 @@ class CareerTerm(Term):
         elif isinstance(step, AgingStep):
             self.outcome = self._pending_outcome
 
-    def next_term(self, session: "GameSession") -> "Term | None":
+    def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None
 
         if status == "FAILED_QUAL":
-            forced = _forced_entry_career_term(session)
+            forced = _forced_entry_career_term(context)
             if forced is not None:
                 return forced
             # Per RAW, a failed qualification routes to the Draft (once
             # per life) or the Drifter career — never straight back to
             # career selection.
             return TransitionTerm(
-                session.character,
+                context.character,
                 ChooseDraftOrDrifterStep(
-                    session.character, draft_used=session.draft_used
+                    context.character, draft_used=context.draft_used
                 ),
             )
 
         if status == "MISHAP":
-            session.career_term_count = 0
-            session.blocked_career = self.career_name
-            session.current_assignment = None
-            forced = _forced_entry_career_term(session)
+            context.career_term_count = 0
+            context.blocked_career = self.career_name
+            context.current_assignment = None
+            forced = _forced_entry_career_term(context)
             if forced is not None:
                 return forced
-            # Keep session.current_career_data loaded — the muster-out
+            # Keep context.current_career_data loaded — the muster-out
             # branch needs it to read benefit tables.
             return TransitionTerm(
-                session.character,
-                MusterOutOrNewCareerStep(session.character, self.career_name),
+                context.character,
+                MusterOutOrNewCareerStep(context.character, self.career_name),
             )
 
         if status == "COMPLETED":
-            session.career_term_count += 1
-            session.current_assignment = self._selected_assignment
+            context.career_term_count += 1
+            context.current_assignment = self._selected_assignment
             return TransitionTerm(
-                session.character,
+                context.character,
                 ContinueOrMusterOutStep(
-                    session.character,
+                    context.character,
                     self.career_name,
                     assignment_change_group=self.assignment_change_group,
                     current_assignment=self._selected_assignment,
@@ -533,28 +533,28 @@ class CareerTerm(Term):
             # Forced out by advancement ≤ terms served. No Continue /
             # Muster choice — go straight to Career Selection. The
             # "cannot re-enter next term" rule applies to any leaving.
-            session.current_career_data = None
-            session.career_term_count = 0
-            session.blocked_career = self.career_name
-            session.current_assignment = None
-            forced = _forced_entry_career_term(session)
+            context.current_career_data = None
+            context.career_term_count = 0
+            context.blocked_career = self.career_name
+            context.current_assignment = None
+            forced = _forced_entry_career_term(context)
             if forced is not None:
                 return forced
             careers = _available_careers_for(
-                session.character, session.blocked_career
+                context.character, context.blocked_career
             )
             return TransitionTerm(
-                session.character, ChooseCareerStep(session.character, careers)
+                context.character, ChooseCareerStep(context.character, careers)
             )
 
         if status == "FORCED_STAY":
             # Natural 12 on advancement — skip continue/muster and start
             # the next term in the same career immediately.
-            session.career_term_count += 1
+            context.career_term_count += 1
             return CareerTerm(
-                session.character,
-                session.current_career_data,
-                term_number=session.career_term_count + 1,
+                context.character,
+                context.current_career_data,
+                term_number=context.career_term_count + 1,
                 is_first_term=False,
             )
 
@@ -645,32 +645,32 @@ class AssignmentChangeTerm(Term):
                     ),
                 )
 
-    def next_term(self, session: "GameSession") -> "Term | None":
+    def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None
 
         if status == "CHANGED":
             # RAW: rank resets to 0 when the assignment changes.
             record = self.character.ensure_career(self.career_name)
             record.rank = 0
-            session.current_assignment = self._chosen_assignment
+            context.current_assignment = self._chosen_assignment
             return CareerTerm(
-                session.character,
-                session.current_career_data,
-                term_number=session.career_term_count + 1,
+                context.character,
+                context.current_career_data,
+                term_number=context.career_term_count + 1,
                 is_first_term=False,
                 assignment_override=self._chosen_assignment,
             )
 
         if status == "CHANGE_FAILED":
-            session.current_career_data = None
-            session.career_term_count = 0
-            session.blocked_career = self.career_name
-            session.current_assignment = None
+            context.current_career_data = None
+            context.career_term_count = 0
+            context.blocked_career = self.career_name
+            context.current_assignment = None
             careers = _available_careers_for(
-                session.character, session.blocked_career
+                context.character, context.blocked_career
             )
             return TransitionTerm(
-                session.character, ChooseCareerStep(session.character, careers)
+                context.character, ChooseCareerStep(context.character, careers)
             )
 
         return None

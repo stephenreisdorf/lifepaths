@@ -14,7 +14,7 @@ from src.terms.careers.parsers import try_apply_characteristic_bonus
 from src.utilities import roll
 
 if TYPE_CHECKING:
-    from src.engine import GameSession
+    from src.terms.context import CareerContext
 
 
 class MusterOutStep(Step):
@@ -250,25 +250,25 @@ class MusterOutTerm(Term):
                 ),
             )
 
-    def next_term(self, session: "GameSession") -> "Term | None":
+    def next_term(self, context: "CareerContext") -> "Term | None":
         # Muster-out completes character creation in the current flow.
-        session.current_assignment = None
+        context.current_assignment = None
         return None
 
 
 def _muster_out_term_for(
-    session: "GameSession", career_name: str
+    context: "CareerContext", career_name: str
 ) -> "MusterOutTerm":
-    """Build a MusterOutTerm for a career exit and clear session career state."""
-    career_data = session.current_career_data
+    """Build a MusterOutTerm for a career exit and clear the career context."""
+    career_data = context.current_career_data
     benefits = career_data.benefits_as_dict() if career_data else {}
-    record = session.character.careers.get(career_name)
+    record = context.character.careers.get(career_name)
     terms_served = record.terms_served if record else 0
     rank = record.rank if record else 0
-    session.current_career_data = None
-    session.current_assignment = None
+    context.current_career_data = None
+    context.current_assignment = None
     return MusterOutTerm(
-        session.character,
+        context.character,
         career_name=career_name,
         benefits=benefits,
         terms_served=terms_served,
