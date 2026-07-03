@@ -12,7 +12,7 @@ _(none)_
 
 ## Architecture
 
-- [Hoist in-function career_loader imports](hoist-career-loader-imports.md) — seven deferred imports with no cycle to justify them.
+_(none)_
 
 ## Deferred
 

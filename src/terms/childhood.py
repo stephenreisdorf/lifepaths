@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.career_loader import filter_eligible_careers, get_available_careers
 from src.character import Character
 from src.terms.base import Step, StepOutcome, StepPrompt, StepStatus, StepType, Term
 from src.utilities import roll
@@ -137,7 +138,6 @@ class ChildhoodTerm(Term):
 
     def next_term(self, context: "CareerContext") -> "Term | None":
         # Local imports to avoid circular references.
-        from src.career_loader import filter_eligible_careers, get_available_careers
         from src.terms.careers import ChooseCareerStep, TransitionTerm
         from src.terms.education import PreCareerChoiceTerm, eligible_options
 

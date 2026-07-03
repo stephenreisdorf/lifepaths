@@ -3,6 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.career_data import Assignment, CareerData, CharacteristicCheck
+from src.career_loader import (
+    filter_eligible_careers,
+    get_available_careers,
+    load_career,
+)
 from src.character import Character
 from src.terms.base import (
     DispatchTerm,
@@ -39,8 +44,6 @@ if TYPE_CHECKING:
 
 def _available_careers_for(character: Character, blocked: str | None) -> list[dict]:
     """Career list for ChooseCareerStep — filtered by eligibility and block."""
-    from src.career_loader import filter_eligible_careers, get_available_careers
-
     careers = filter_eligible_careers(character, get_available_careers())
     return [c for c in careers if c["name"] != blocked]
 
@@ -52,8 +55,6 @@ def _forced_entry_career_term(context: "CareerContext") -> "CareerTerm | None":
     Returns None if nothing is queued. Clears the flag and the re-entry
     block on the way through — the forced career overrides both.
     """
-    from src.career_loader import load_career
-
     career_name = context.character.pending_career_entry
     if not career_name:
         return None
@@ -96,8 +97,6 @@ class TransitionTerm(Term):
     def _after_choose_career(
         self, inner: ChooseCareerStep, outcome: StepOutcome, context: "CareerContext"
     ) -> "Term | None":
-        from src.career_loader import load_career
-
         context.current_career_data = load_career(outcome.data["career"])
         context.career_term_count = 0
         # Block only applies to the immediately-following selection; once a
@@ -121,8 +120,6 @@ class TransitionTerm(Term):
         outcome: StepOutcome,
         context: "CareerContext",
     ) -> "Term | None":
-        from src.career_loader import load_career
-
         if outcome.status == StepStatus.DRAFTED:
             context.draft_used = True
         context.current_career_data = load_career(outcome.data["career"])
