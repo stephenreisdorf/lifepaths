@@ -28,6 +28,25 @@ def parse_skill_entry(entry: str) -> tuple[str, str | None, int | None]:
     return entry, specialty, level
 
 
+def best_qualification_option(
+    character: Character, options: list[dict]
+) -> tuple[str, int]:
+    """Pick the qualification option giving `character` the highest DM.
+
+    For OR-qualification (e.g. Entertainer's DEX or INT), a character makes a
+    single roll at their best modifier. Each option is a ``{characteristic,
+    target}`` dict; a characteristic the character lacks ranks last. Returns
+    the winning ``(characteristic, target)``.
+    """
+    best = max(
+        options,
+        key=lambda o: character.characteristics[o["characteristic"]].modifier()
+        if o["characteristic"] in character.characteristics
+        else -99,
+    )
+    return best["characteristic"], best["target"]
+
+
 def try_apply_characteristic_bonus(character: Character, entry: str) -> bool:
     """If `entry` is '<Characteristic> +<N>', bump that characteristic.
 

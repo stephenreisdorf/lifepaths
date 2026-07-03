@@ -13,6 +13,7 @@ surface so callers can continue to `from src.terms.careers import <name>`.
 from src.terms.careers.aging import AGING_TABLE, AgingStep
 from src.terms.careers.muster_out import MusterOutStep, MusterOutTerm
 from src.terms.careers.parsers import (
+    best_qualification_option,
     parse_skill_entry,
     try_apply_characteristic_bonus,
 )
@@ -64,6 +65,7 @@ __all__ = [
     "RollQualificationStep",
     "SurvivalCheckStep",
     "TransitionTerm",
+    "best_qualification_option",
     "parse_skill_entry",
     "try_apply_characteristic_bonus",
 ]

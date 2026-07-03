@@ -13,6 +13,7 @@ from src.terms.base import (
 )
 from src.terms.careers.aging import AgingStep
 from src.terms.careers.muster_out import MusterOutTerm, _muster_out_term_for
+from src.terms.careers.parsers import best_qualification_option
 from src.terms.careers.steps import (
     AdvancementRollStep,
     AutoQualifyStep,
@@ -241,17 +242,10 @@ class CareerTerm(DispatchTerm):
         self._pending_outcome: StepOutcome | None = None
         self._pending_finalize_outcome: StepOutcome | None = None
 
-        # Best-of-options: for OR-qualification (e.g. Entertainer DEX or
-        # INT), pick the option that yields the highest modifier for this
-        # character so they make a single roll at their best DM.
-        best_option = max(
-            qualification_options,
-            key=lambda o: character.characteristics[o["characteristic"]].modifier()
-            if o["characteristic"] in character.characteristics
-            else -99,
-        )
-        self.qualification_characteristic: str = best_option["characteristic"]
-        self.qualification_target: int = best_option["target"]
+        (
+            self.qualification_characteristic,
+            self.qualification_target,
+        ) = best_qualification_option(character, qualification_options)
 
         if is_first_term:
             if self.qualification_auto:
@@ -610,14 +604,10 @@ class AssignmentChangeTerm(DispatchTerm):
         self.qualification_options = qualification_options
         self.qualification_auto = qualification_auto
         # Best-of-options: match CareerTerm's qualification choice.
-        best = max(
-            qualification_options,
-            key=lambda o: character.characteristics[o["characteristic"]].modifier()
-            if o["characteristic"] in character.characteristics
-            else -99,
-        )
-        self.qualification_characteristic = best["characteristic"]
-        self.qualification_target = best["target"]
+        (
+            self.qualification_characteristic,
+            self.qualification_target,
+        ) = best_qualification_option(character, qualification_options)
         others = [
             a for a in assignments if a["name"] != current_assignment["name"]
         ]

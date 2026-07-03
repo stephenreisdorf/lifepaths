@@ -12,7 +12,6 @@ _(none)_
 
 ## Architecture
 
-- [Extract the best-of-options qualification helper](dedup-best-qualification-option.md) — duplicated max()-by-DM block in CareerTerm and AssignmentChangeTerm.
 - [Keep CareerData typed through the domain layer](typed-career-data-through-domain.md) — validated model flattened to loose dicts at the domain boundary.
 - [Hoist in-function career_loader imports](hoist-career-loader-imports.md) — seven deferred imports with no cycle to justify them.
 
