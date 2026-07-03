@@ -192,10 +192,12 @@ class UniversityGraduationStep(PassFailRollStep):
             return
 
         self.honours = self.total_roll >= self.honours_target
-        # Major +1 (to level 2), minor +1 (to level 1), and EDU gains.
+        # Major +1 (to level 2), minor +1 (to level 1), and EDU +1.
         self.character.grant_skill(self.major, level=None)
         self.character.grant_skill(self.minor, level=None)
-        edu_gain = 2 if self.honours else 1
+        # RAW: graduation grants EDU +1 regardless of honours. Honours instead
+        # grants a Commission roll (TODO: not yet modelled — see backlog).
+        edu_gain = 1
         edu = self.character.characteristics["Education"]
         self.character.add_characteristic("Education", edu.value + edu_gain)
         self.qualification_dm = self.graduate_qualification_dm
@@ -222,7 +224,7 @@ class AcademyGraduationStep(PassFailRollStep):
 
     Career entry (commission, auto-qualify) is handled by the owning term's
     ``next_term``; this step records whether the character graduated and, on
-    honours, grants a small EDU bump.
+    honours, grants EDU +1 and SOC +1.
     """
 
     step_id = "academy_graduation"
@@ -260,9 +262,12 @@ class AcademyGraduationStep(PassFailRollStep):
 
         self.honours = self.total_roll >= self.honours_target
         if self.honours:
+            # RAW: Academy honours grant EDU +1 and SOC +1.
             edu = self.character.characteristics["Education"]
             self.character.add_characteristic("Education", edu.value + 1)
-        honours_note = " with honours (EDU +1)" if self.honours else ""
+            soc = self.character.characteristics["Social Standing"]
+            self.character.add_characteristic("Social Standing", soc.value + 1)
+        honours_note = " with honours (EDU +1, SOC +1)" if self.honours else ""
         self.outcome = StepOutcome(
             status=self.status_pass,
             description=(

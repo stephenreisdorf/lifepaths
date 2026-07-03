@@ -11,6 +11,8 @@ from src.terms.base import PassFailRollStep, StepOutcome
 from src.terms.careers import CareerTerm, ChooseCareerStep, TransitionTerm
 from src.terms.context import CareerContext
 from src.terms.education import (
+    MILITARY_ACADEMIES,
+    UNIVERSITY,
     ChoosePreCareerStep,
     MilitaryAcademyTerm,
     PreCareerChoiceTerm,
@@ -146,11 +148,17 @@ def test_university_skills_appends_graduation():
     assert grad.major == "Science" and grad.minor == "Admin"
 
 
-def test_university_high_int_grants_qualification_dm():
-    term = UniversityTerm(_character(Intelligence=9))
-    qual = term.steps[0]
-    # EDU 7 DM (0) + INT 9+ bonus (1).
-    assert qual.extra_dm == 1
+def test_university_entry_target_and_soc_bonus():
+    # RAW: entry target 6, +1 DM if SOC >= 9 (not INT).
+    plain = UniversityTerm(_character())
+    assert plain.steps[0].target == 6
+    assert plain.steps[0].extra_dm == 0  # SOC 7 → no bonus
+
+    high_int = UniversityTerm(_character(Intelligence=9))
+    assert high_int.steps[0].extra_dm == 0  # INT no longer grants the bonus
+
+    high_soc = UniversityTerm(_character(**{"Social Standing": 9}))
+    assert high_soc.steps[0].extra_dm == 1  # SOC 9+ → +1 DM
 
 
 def test_university_next_term_sets_graduate_dm_on_context():
@@ -174,7 +182,7 @@ def _graduation_step(char: Character, total_roll: int) -> UniversityGraduationSt
         char,
         major="Science",
         minor="Admin",
-        characteristic="Education",
+        characteristic="Intelligence",
         target=6,
         honours_target=10,
         graduate_qualification_dm=2,
@@ -201,7 +209,7 @@ def test_university_graduation_bumps_skills_and_edu():
     assert grad.qualification_dm == 2
 
 
-def test_university_graduation_with_honours_gives_extra_edu():
+def test_university_graduation_with_honours_grants_edu_plus_one():
     char = _character()
     char.grant_skill("Science", level=1)
     char.grant_skill("Admin", level=0)
@@ -210,7 +218,9 @@ def test_university_graduation_with_honours_gives_extra_edu():
     grad.apply()
 
     assert grad.honours
-    assert char.characteristics["Education"].value == 9  # +2
+    # RAW: honours grants EDU +1 (same as a plain graduation); the honours
+    # distinction is a Commission roll, not extra EDU.
+    assert char.characteristics["Education"].value == 8  # +1
 
 
 def test_university_failed_graduation_keeps_entry_skills_only():
@@ -337,3 +347,62 @@ def test_academy_ages_character_on_graduation():
     grad.outcome = StepOutcome(status="GRADUATED", description="graduated")
     term._after_graduation(grad)
     assert term.character.age == start_age + 4
+
+
+# --- RAW config fidelity ---------------------------------------------------
+
+
+def test_university_config_matches_raw():
+    qual = UNIVERSITY["qualification"]
+    assert qual["target"] == 6
+    assert qual["soc_bonus_at"] == 9
+    assert "int_bonus_at" not in qual  # bonus is keyed on SOC, not INT
+    # Graduation is an Intelligence check.
+    assert UNIVERSITY["graduation"]["characteristic"] == "Intelligence"
+
+
+def test_academy_graduation_is_intelligence_seven_check():
+    # RAW: every military academy graduates on an Intelligence 7+ check.
+    for academy in MILITARY_ACADEMIES:
+        graduation = academy["graduation"]
+        assert graduation["characteristic"] == "Intelligence", academy["name"]
+        assert graduation["target"] == 7, academy["name"]
+
+
+# --- Academy graduation side effects ---------------------------------------
+
+
+def _academy_graduation_step(
+    char: Character, total_roll: int
+) -> AcademyGraduationStep:
+    grad = AcademyGraduationStep(
+        char,
+        academy_name="Military Academy (Army)",
+        characteristic="Intelligence",
+        target=7,
+        honours_target=11,
+    )
+    grad.raw_roll = total_roll
+    grad.total_roll = total_roll
+    return grad
+
+
+def test_academy_graduation_no_honours_leaves_edu_and_soc():
+    char = _character()  # EDU 7, SOC 7
+    grad = _academy_graduation_step(char, total_roll=9)  # graduate, no honours
+    grad.apply()
+
+    assert grad.outcome.status == "GRADUATED"
+    assert not grad.honours
+    assert char.characteristics["Education"].value == 7
+    assert char.characteristics["Social Standing"].value == 7
+
+
+def test_academy_graduation_with_honours_grants_edu_and_soc():
+    char = _character()  # EDU 7, SOC 7
+    grad = _academy_graduation_step(char, total_roll=11)  # honours
+    grad.apply()
+
+    assert grad.honours
+    assert char.characteristics["Education"].value == 8  # EDU +1
+    assert char.characteristics["Social Standing"].value == 8  # SOC +1

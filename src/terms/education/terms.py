@@ -73,12 +73,12 @@ class UniversityTerm(Term):
         super().__init__(character)
         self.config = UNIVERSITY
         qualification = self.config["qualification"]
-        # RAW: an additional +1 DM if Intelligence is high.
-        intelligence = character.characteristics.get("Intelligence")
+        # RAW: an additional +1 DM if Social Standing is high.
+        social = character.characteristics.get("Social Standing")
         extra_dm = (
             1
-            if intelligence is not None
-            and intelligence.value >= qualification["int_bonus_at"]
+            if social is not None
+            and social.value >= qualification["soc_bonus_at"]
             else 0
         )
         self.steps = [

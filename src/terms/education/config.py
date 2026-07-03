@@ -1,10 +1,20 @@
 """Pre-Career Education data (University / Military Academy).
 
-Numbers here are a faithful interpretation of the Traveller pre-career
+Numbers here follow the Mongoose Traveller 2022 Core Rulebook pre-career
 education rules, centralised so they can be tuned without touching the step
 machine. Each institution is a plain dict consumed by the education steps
 and terms. Military academies map onto an existing service career: graduating
 enters that career already commissioned and auto-qualified.
+
+Modelled RAW: University entry EDU 6+ (+1 DM if SOC >= 9); University and
+Academy graduation are Intelligence checks; University honours grants EDU +1;
+Academy honours grants EDU +1 and SOC +1.
+
+Deferred RAW (not yet modelled — tracked in the backlog):
+- Term-based entry penalties (University -1/-2 in terms 2/3; Academy -2/-4).
+- Academy graduation DMs (+1 if END >= 8, +1 if SOC >= 8).
+- University honours' Commission roll.
+- Restricting the graduate qualification DM to specific careers.
 """
 
 from __future__ import annotations
@@ -31,16 +41,16 @@ UNIVERSITY: dict = {
     "name": "University",
     # Eligibility to apply.
     "eligibility": {"characteristic": "Education", "minimum": 6},
-    # Entry roll: 2D + EDU DM (+1 more if INT >= int_bonus_at) vs target.
+    # Entry roll: 2D + EDU DM (+1 more if SOC >= soc_bonus_at) vs target.
     "qualification": {
         "characteristic": "Education",
-        "target": 7,
-        "int_bonus_at": 9,
+        "target": 6,
+        "soc_bonus_at": 9,
     },
     "skills": UNIVERSITY_SKILLS,
-    # Graduation roll: 2D + EDU DM vs target; honours at honours_target.
+    # Graduation roll: 2D + INT DM vs target; honours at honours_target.
     "graduation": {
-        "characteristic": "Education",
+        "characteristic": "Intelligence",
         "target": 6,
         "honours_target": 10,
     },
@@ -59,7 +69,7 @@ MILITARY_ACADEMIES: list[dict] = [
         "eligibility": {"characteristic": "Intelligence", "minimum": 6},
         "qualification": {"characteristic": "Intelligence", "target": 8},
         "graduation": {
-            "characteristic": "Education",
+            "characteristic": "Intelligence",
             "target": 7,
             "honours_target": 11,
         },
@@ -70,7 +80,7 @@ MILITARY_ACADEMIES: list[dict] = [
         "eligibility": {"characteristic": "Endurance", "minimum": 6},
         "qualification": {"characteristic": "Endurance", "target": 7},
         "graduation": {
-            "characteristic": "Education",
+            "characteristic": "Intelligence",
             "target": 7,
             "honours_target": 11,
         },
@@ -81,7 +91,7 @@ MILITARY_ACADEMIES: list[dict] = [
         "eligibility": {"characteristic": "Endurance", "minimum": 6},
         "qualification": {"characteristic": "Endurance", "target": 8},
         "graduation": {
-            "characteristic": "Education",
+            "characteristic": "Intelligence",
             "target": 7,
             "honours_target": 11,
         },
