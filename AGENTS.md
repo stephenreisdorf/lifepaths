@@ -6,6 +6,10 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 Lifepaths is a TTRPG life path character creation system (inspired by Traveller-style character generation). Characters progress through "terms" composed of "steps" that resolve via dice rolls or player choices and apply effects to a character sheet.
 
+## Rules source of truth
+
+The rules being implemented are **Mongoose Traveller 2022 Core Rulebook**. The repo does not check in the PDF (copyright). The rulebook is available in the **"Bowman Arm" NotebookLM notebook** — query it to transcribe exact tables/mechanics when working a fidelity item. Backlog fidelity items that cite "Core Rulebook.pdf" or a "NotebookLM audit" refer to this source.
+
 ## Development Commands
 
 ```bash
