@@ -54,6 +54,17 @@ UNIVERSITY: dict = {
 # career data must be able to represent.
 MILITARY_ACADEMIES: list[dict] = [
     {
+        "name": "Naval Academy",
+        "career": "navy",
+        "eligibility": {"characteristic": "Intelligence", "minimum": 6},
+        "qualification": {"characteristic": "Intelligence", "target": 8},
+        "graduation": {
+            "characteristic": "Education",
+            "target": 7,
+            "honours_target": 11,
+        },
+    },
+    {
         "name": "Military Academy (Army)",
         "career": "army",
         "eligibility": {"characteristic": "Endurance", "minimum": 6},

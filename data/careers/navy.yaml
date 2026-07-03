@@ -8,6 +8,10 @@ qualification:
   characteristic: Intelligence
   target: 6
 
+commission:
+  characteristic: Social Standing
+  target: 9
+
 # Skills gained at rank 0 during basic training (first term only)
 service_skills:
   - Athletics
@@ -137,6 +141,25 @@ ranks:
     title: Chief Petty Officer
   - rank: 6
     title: Master Chief
+
+officer_ranks:
+  - rank: 1
+    title: Ensign
+    bonus_skill: Leadership
+  - rank: 2
+    title: Sublieutenant
+  - rank: 3
+    title: Lieutenant
+    bonus_skill: Melee (Blade)
+  - rank: 4
+    title: Commander
+    bonus_skill: Leadership
+  - rank: 5
+    title: Captain
+    bonus_skill: Social Standing +1
+  - rank: 6
+    title: Admiral
+    bonus_skill: Social Standing +1
 
 # Mustering-out benefits when leaving the career
 benefits:

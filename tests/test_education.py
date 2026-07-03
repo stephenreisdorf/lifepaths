@@ -55,16 +55,32 @@ def _character(**overrides: int) -> Character:
 
 
 def test_eligible_options_gated_by_characteristics():
-    # EDU 7, END 7 → University + both academies.
+    # EDU 7, INT 7, END 7 → University + all three academies.
     keys = {o["key"] for o in eligible_options(_character())}
-    assert keys == {"university", "academy:army", "academy:marine"}
+    assert keys == {"university", "academy:navy", "academy:army", "academy:marine"}
 
-    # EDU 5, END 5 → nothing qualifies.
-    assert eligible_options(_character(Education=5, Endurance=5)) == []
+    # Everything below the floor → nothing qualifies.
+    assert eligible_options(
+        _character(Education=5, Endurance=5, Intelligence=5)
+    ) == []
 
-    # EDU 6, END 5 → University only.
-    keys = {o["key"] for o in eligible_options(_character(Education=6, Endurance=5))}
+    # EDU 6 only (INT/END below floor) → University only.
+    keys = {
+        o["key"]
+        for o in eligible_options(
+            _character(Education=6, Endurance=5, Intelligence=5)
+        )
+    }
     assert keys == {"university"}
+
+    # INT 6 (EDU/END below floor) → Naval Academy only.
+    keys = {
+        o["key"]
+        for o in eligible_options(
+            _character(Education=5, Endurance=5, Intelligence=6)
+        )
+    }
+    assert keys == {"academy:navy"}
 
 
 def test_choose_pre_career_step_offers_institutions_plus_skip():
@@ -269,6 +285,22 @@ def test_academy_graduate_enters_career_commissioned():
     assert record.commissioned
     assert record.rank == 1
     # Officer rank-1 bonus (Leadership) applied.
+    assert term.character.has_skill("Leadership")
+
+
+def test_naval_academy_graduate_enters_navy_commissioned():
+    term = MilitaryAcademyTerm(_character(), "navy")
+    term.outcome = StepOutcome(status="GRADUATED", description="graduated")
+    term._graduated = True
+    context = CareerContext(character=term.character)
+
+    nxt = term.next_term(context)
+
+    assert isinstance(nxt, CareerTerm)
+    assert context.current_career_data.name == load_career("navy").name
+    record = term.character.careers["navy"]
+    assert record.commissioned and record.rank == 1
+    # Navy officer rank-1 bonus (Ensign → Leadership) applied.
     assert term.character.has_skill("Leadership")
 
 
