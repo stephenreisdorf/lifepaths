@@ -182,7 +182,10 @@ events:
     effects:
       - {type: associate, associate_type: contact, name: Commanding Officer}
   6: You lead a daring raid. Gain one of Stealth, Gun Combat, or Tactics (Military).
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: Participate in a planetary assault. Gain one of Heavy Weapons, Recon, or Tactics (Military).
   9:
     text: A sergeant takes you under their wing. Gain an Ally and Gun Combat.
@@ -194,7 +197,10 @@ events:
   12: Heroic action in battle. You are automatically promoted.
 
 mishaps:
-  1: Severely injured. Roll twice on the Injury table, take the lower.
+  1:
+    text: Severely injured. Roll twice on the Injury table, take the lower.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: Captured during action. Lose one Benefit roll.
   3:
     text: You clash with a superior. Gain that officer as an Enemy.
@@ -208,4 +214,7 @@ mishaps:
     text: Stranded behind enemy lines. Gain Survival or Stealth at level 0.
     effects:
       - {type: skill, name: Survival, level: 0}
-  6: Injured. Roll on the Injury table.
+  6:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}

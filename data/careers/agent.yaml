@@ -168,7 +168,10 @@ events:
     You are given advanced training in a specialist field. Roll
     Education 8+ to increase any one skill you already have by
     one level.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     You go undercover to investigate an enemy. Roll Deception 8+.
     Success: roll immediately on the Rogue or Citizen Events
@@ -191,9 +194,10 @@ events:
 
 # Mishap table — roll d6 when survival fails
 mishaps:
-  1: >
-    Severely injured. Roll twice on the Injury table and take
-    the lower result.
+  1:
+    text: Severely injured. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: >
     A criminal under investigation offers you a deal. Accept to
     leave the career without further penalty (losing this term's
@@ -212,4 +216,7 @@ mishaps:
     Your work ends up coming home with you and someone gets
     hurt. Choose one Contact, Ally or family member and roll
     twice on the Injury table for them, taking the lower result.
-  6: Injured. Roll on the Injury table.
+  6:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}

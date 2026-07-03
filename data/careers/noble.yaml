@@ -153,7 +153,10 @@ events:
     text: You gain a political Contact at the highest levels.
     effects:
       - {type: associate, associate_type: contact, name: Court Contact}
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: You broker a trade agreement. Gain one of Admin, Broker, or Diplomat.
   9:
     text: You are presented at court. Gain a Contact and +1 Social Standing.
@@ -165,7 +168,10 @@ events:
   12: Elevated by imperial favor. You are automatically promoted.
 
 mishaps:
-  1: Political injury or assassination attempt. Roll twice on the Injury table, take lower.
+  1:
+    text: Political injury or assassination attempt. Roll twice on the Injury table, take lower.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2:
     text: Your fortune is ruined by a bad investment. Lose one Benefit roll.
   3:
@@ -180,4 +186,7 @@ mishaps:
     text: Exiled by your house. Gain Streetwise or Stealth.
     effects:
       - {type: skill, name: Streetwise}
-  6: Injured in a duel or accident. Roll on the Injury table.
+  6:
+    text: Injured in a duel or accident. Roll on the Injury table.
+    effects:
+      - {type: injury}

@@ -31,6 +31,19 @@ Each effect dict declares a `type` and type-specific fields. Supported:
     automatic qualification (used by Prisoner and similar entry-only
     careers).
 
+- `life_event` — roll 2D on the shared Life Events table and apply the
+    rolled result. `{type: life_event}` (no parameters). The rolled row's
+    own effects (skill / characteristic / associate / injury / betrayal)
+    are applied recursively. See `src.terms.life_events`.
+
+- `injury` — roll on the shared Injury table and apply the physical
+    characteristic reductions. `{type: injury}` for a single roll, or
+    `{type: injury, rolls: 2, take: lower}` for the "roll twice and take
+    the lower (more severe) result" mishaps. See `src.terms.life_events`.
+
+- `betrayal` — Life Event 8: convert an existing Contact / Ally into a
+    Rival, or gain a new Rival if none exist. `{type: betrayal}`.
+
 - `advancement_dm` / `benefit_dm` — flavor-only for now; recorded in
     the effect description so the player sees it, but no mechanical
     DM stacking is tracked yet.
@@ -39,6 +52,7 @@ Each effect dict declares a `type` and type-specific fields. Supported:
 from __future__ import annotations
 
 from src.character import AssociateType, Character
+from src.terms.life_events import resolve_injury, resolve_life_event
 
 
 def parse_entry(entry: object) -> tuple[str, list[dict]]:
@@ -86,6 +100,12 @@ def apply_effects(character: Character, effects: list[dict]) -> list[str]:
             if name:
                 character.pending_career_entry = name
                 descriptions.append(f"Forced into the {name} career next term.")
+        elif etype == "life_event":
+            descriptions.extend(_apply_life_event(character))
+        elif etype == "injury":
+            descriptions.extend(_apply_injury(character, effect))
+        elif etype == "betrayal":
+            descriptions.append(_apply_betrayal(character))
         elif etype == "advancement_dm":
             descriptions.append(
                 f"Advancement DM {_signed(effect.get('value', 0))} this term."
@@ -118,8 +138,38 @@ def _apply_characteristic(character: Character, effect: dict) -> str | None:
     stat = character.characteristics.get(name)
     if stat is None:
         return None
-    character.add_characteristic(name, stat.value + delta)
-    return f"{name} {_signed(delta)}"
+    new_value = max(0, stat.value + delta)
+    character.add_characteristic(name, new_value)
+    desc = f"{name} {_signed(delta)}"
+    if delta < 0 and new_value == 0:
+        desc += " (reduced to 0!)"
+    return desc
+
+
+def _apply_life_event(character: Character) -> list[str]:
+    result, summary, effects = resolve_life_event()
+    lines = [f"Life Event (2D={result}): {summary}"]
+    lines.extend(apply_effects(character, effects))
+    return lines
+
+
+def _apply_injury(character: Character, effect: dict) -> list[str]:
+    rolls = int(effect.get("rolls", 1))
+    take = str(effect.get("take", "single"))
+    result, label, effects = resolve_injury(rolls=rolls, take=take)
+    applied = apply_effects(character, effects)
+    detail = " — " + ", ".join(applied) if applied else ""
+    return [f"Injury (1D={result}): {label}{detail}"]
+
+
+def _apply_betrayal(character: Character) -> str:
+    for associate in character.associates:
+        if associate.type in (AssociateType.CONTACT, AssociateType.ALLY):
+            former = associate.type.value
+            associate.type = AssociateType.RIVAL
+            return f"Betrayed by a friend: {associate.name} ({former} → rival)"
+    character.add_associate(name="Betrayer", type=AssociateType.RIVAL)
+    return "Betrayed by a friend: gained Rival (Betrayer)"
 
 
 def _apply_associate(character: Character, effect: dict) -> str:

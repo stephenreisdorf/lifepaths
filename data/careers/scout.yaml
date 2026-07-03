@@ -171,7 +171,10 @@ events:
     You spend several years jumping from world to world in your
     scout ship. Gain one of Astrogation, Electronics, Navigation,
     Pilot (small craft) or Mechanic.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     When dealing with an alien species, you have an opportunity
     to gather extra intelligence about them. Roll Electronics
@@ -199,9 +202,10 @@ events:
 
 # Mishap table — roll d6 when survival fails
 mishaps:
-  1: >
-    Severely injured. Roll twice on the Injury table and take
-    the lower result.
+  1:
+    text: Severely injured. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: >
     Psychologically damaged by your time in the scouts. Reduce
     your Intelligence or Social Standing by 1.
@@ -215,4 +219,7 @@ mishaps:
   5: >
     You have no idea what happened to you — they found your
     ship drifting on the fringes of friendly space.
-  6: Injured. Roll on the Injury table.
+  6:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}

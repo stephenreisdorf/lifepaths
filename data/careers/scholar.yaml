@@ -172,7 +172,10 @@ events:
   6: >
     You are given advanced training in a specialist field. Roll
     Education 8+ to gain any one skill of your choice at level 1.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     You have the opportunity to cheat in some fashion. If you
     refuse, you gain nothing. If you accept, roll Deception 8+
@@ -195,13 +198,19 @@ events:
 
 # Mishap table — roll d6 when survival fails
 mishaps:
-  1: >
-    Severely injured. Roll twice on the Injury table and take
-    the lower result.
-  2: >
-    A disaster leaves several injured and others blame you,
-    forcing you to leave your career. Roll on the Injury table
-    twice, taking the higher result, and gain a Rival.
+  1:
+    text: Severely injured. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
+  2:
+    text: >
+      A disaster leaves several injured and others blame you,
+      forcing you to leave your career. Roll on the Injury table
+      twice, taking the higher result, and gain a Rival.
+    effects:
+      - {type: forced_exit}
+      - {type: injury, rolls: 2, take: higher}
+      - {type: associate, associate_type: rival, name: Blaming colleague}
   3: >
     The planetary government interferes with your research for
     political or religious reasons. If you continue openly,

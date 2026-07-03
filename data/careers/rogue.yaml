@@ -166,7 +166,10 @@ events:
     You have the opportunity to backstab a fellow rogue for
     personal gain. If you do so, gain DM+4 to your next
     advancement roll. If you refuse, gain them as an Ally.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     You spend months in the dangerous criminal underworld. Gain
     one of Streetwise, Stealth, Melee or Gun Combat.
@@ -188,9 +191,10 @@ events:
 
 # Mishap table — roll d6 when survival fails
 mishaps:
-  1: >
-    Severely injured. Roll twice on the Injury table and take
-    the lower result.
+  1:
+    text: Severely injured. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: >
     Arrested. You must take the Prisoner career in your next term.
   3: >
@@ -206,4 +210,7 @@ mishaps:
   5: >
     A police detective or rival criminal forces you to flee and
     vows to hunt you down. Gain an Enemy.
-  6: Injured. Roll on the Injury table.
+  6:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}

@@ -155,7 +155,10 @@ events:
     text: You gain a devoted fan who becomes an Ally.
     effects:
       - {type: associate, associate_type: ally, name: Devoted Fan}
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: You investigate a lead for a story. Gain Investigate or Streetwise.
   9: Your work receives critical acclaim. Gain DM+2 to your next Advancement roll.
   10:
@@ -167,7 +170,10 @@ events:
   12: A defining performance. You are automatically promoted.
 
 mishaps:
-  1: Severely injured or ill. Roll twice on the Injury table, take lower.
+  1:
+    text: Severely injured or ill. Roll twice on the Injury table, take lower.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: Scandal! Your reputation is in ruins. Lose one Social Standing.
   3:
     text: A jealous rival crosses you. Gain that character as a Rival.
@@ -179,4 +185,7 @@ mishaps:
       - {type: associate, associate_type: enemy, name: Former Patron}
       - {type: characteristic, name: Social Standing, delta: -1}
   5: You burn out and need to take time away. Gain Carouse or Drug (any).
-  6: Injured in a performance gone wrong. Roll on the Injury table.
+  6:
+    text: Injured in a performance gone wrong. Roll on the Injury table.
+    effects:
+      - {type: injury}

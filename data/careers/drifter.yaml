@@ -150,7 +150,10 @@ events:
   6: >
     You encounter something unusual. Go to the Life Events table
     and have an Unusual Event.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     You are attacked by enemies. Gain an Enemy if you do not have
     one already. Roll Melee 8+, Gun Combat 8+ or Stealth 8+ to
@@ -168,10 +171,14 @@ events:
     You thrive on adversity. You are automatically promoted.
 
 mishaps:
-  1: >
-    Severely injured. Roll twice on the Injury table and take the
-    lower result.
-  2: Injured. Roll on the Injury table.
+  1:
+    text: Severely injured. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
+  2:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}
   3: >
     You run afoul of a criminal gang, corrupt bureaucrat or other
     foe. Gain an Enemy.

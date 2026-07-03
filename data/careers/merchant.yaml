@@ -171,7 +171,10 @@ events:
   6: >
     You make an unexpected connection outside your normal
     circles. Gain a Contact.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     You are embroiled in legal trouble. Gain one of Advocate,
     Admin, Diplomat or Investigate. Then roll 2d6; on a 2, take
@@ -193,9 +196,10 @@ events:
 
 # Mishap table — roll d6 when survival fails
 mishaps:
-  1: >
-    Severely injured. Roll twice on the Injury table and take
-    the lower result.
+  1:
+    text: Severely injured. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: >
     You are bankrupted by a rival. Lose all Benefits from this
     career and gain the other trader as a Rival.

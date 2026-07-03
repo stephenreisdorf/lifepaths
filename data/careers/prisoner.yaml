@@ -154,7 +154,10 @@ events:
   6: >
     You take part in running contraband. Gain one of Streetwise,
     Deception, or Broker.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     A riot sweeps the block. Roll Melee 8+ or Stealth 8+ to avoid
     a roll on the Injury table; success also grants DM+1 to the
@@ -174,10 +177,14 @@ events:
     automatically promoted.
 
 mishaps:
-  1: >
-    Severely injured in prison violence. Roll twice on the
-    Injury table and take the lower result.
-  2: Injured. Roll on the Injury table.
+  1:
+    text: Severely injured in prison violence. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
+  2:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}
   3:
     text: >
       A gang marks you as a target. Gain an Enemy.

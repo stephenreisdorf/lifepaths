@@ -187,7 +187,10 @@ events:
     text: Your unit sees heavy combat. Gain an Ally among your comrades.
     effects:
       - {type: associate, associate_type: ally, name: Squadmate}
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: Diplomatic mission. Gain one of Diplomat, Investigate, or Recon.
   9:
     text: A rival officer takes a dislike to you. Gain a Rival.
@@ -204,6 +207,8 @@ events:
 mishaps:
   1:
     text: Severely injured. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: A loss in battle forces you to flee. Lose one personal possession.
   3:
     text: Quarrel with a fellow soldier. Gain that character as a Rival.
@@ -217,4 +222,7 @@ mishaps:
     text: Left for dead after a mission. Gain Survival or Stealth.
     effects:
       - {type: skill, name: Survival, level: 0}
-  6: Injured. Roll on the Injury table.
+  6:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}

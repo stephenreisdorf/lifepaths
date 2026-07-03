@@ -199,7 +199,10 @@ events:
   6: >
     Your vessel participates in a notable engagement. Gain one
     of Electronics, Engineer, Gunner, or Pilot.
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: >
     Your vessel participates in a diplomatic mission. Gain one
     of Diplomat, Investigate, or Recon.
@@ -218,9 +221,10 @@ events:
 
 # Mishap table — roll d6 when survival fails
 mishaps:
-  1: >
-    Severely injured in action. Roll twice on the Injury table
-    and take the lower result.
+  1:
+    text: Severely injured in action. Roll twice on the Injury table and take the lower result.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2: >
     A loss in battle forces you to evacuate. Lose one personal
     possession (one Benefit roll).
@@ -233,4 +237,7 @@ mishaps:
   5: >
     You are isolated and stranded during a mission. Gain Survival
     or Mechanic.
-  6: Injured. Roll on the Injury table.
+  6:
+    text: Injured. Roll on the Injury table.
+    effects:
+      - {type: injury}

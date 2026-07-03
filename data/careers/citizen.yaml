@@ -154,7 +154,10 @@ events:
     text: You meet a professional Contact.
     effects:
       - {type: associate, associate_type: contact, name: Professional Contact}
-  7: Life Event. Roll on the Life Events table.
+  7:
+    text: Life Event. Roll on the Life Events table.
+    effects:
+      - {type: life_event}
   8: You are rewarded for exceptional work. Gain DM+2 to your next Advancement roll.
   9:
     text: Company politics. Gain an Enemy and Deception.
@@ -169,7 +172,10 @@ events:
   12: Rapid rise through the ranks. You are automatically promoted.
 
 mishaps:
-  1: Severe workplace injury. Roll twice on the Injury table, take lower.
+  1:
+    text: Severe workplace injury. Roll twice on the Injury table, take lower.
+    effects:
+      - {type: injury, rolls: 2, take: lower}
   2:
     text: Your employer goes bankrupt. Lose one Benefit roll.
   3:
@@ -184,4 +190,7 @@ mishaps:
     text: You are laid off. Gain Streetwise at level 0.
     effects:
       - {type: skill, name: Streetwise, level: 0}
-  6: Injured on the job. Roll on the Injury table.
+  6:
+    text: Injured on the job. Roll on the Injury table.
+    effects:
+      - {type: injury}

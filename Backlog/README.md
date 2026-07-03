@@ -4,7 +4,7 @@ One file per open issue. Index below.
 
 ## Bugs
 
-- [Life Events and Injury tables are flavor-only](life-events-injury-tables.md) — "roll on the Life Events / Injury table" entries carry no mechanics.
+_(none)_
 
 ## UX
 
