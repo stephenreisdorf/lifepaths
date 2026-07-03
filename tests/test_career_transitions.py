@@ -118,7 +118,7 @@ def test_first_career_first_term_skips_skill_roll():
     term goes straight from assignment to the survival check, no skill roll."""
     term = _scout_term()  # character has no prior careers
     assignment = term.assignments[0]
-    term._after_assignment(_FakeStep(data={"assignment": assignment}))
+    term._after_assignment(_FakeStep(selected_assignment=assignment))
 
     assert isinstance(term.steps[-1], SurvivalCheckStep)
     assert not any(isinstance(s, ChooseCareerSkillsTable) for s in term.steps)
@@ -129,7 +129,7 @@ def test_subsequent_career_first_term_takes_skill_roll():
     (in addition to the one level-0 basic-training skill), before survival."""
     term = _scout_term_subsequent_career()
     assignment = term.assignments[0]
-    term._after_assignment(_FakeStep(data={"assignment": assignment}))
+    term._after_assignment(_FakeStep(selected_assignment=assignment))
 
     assert isinstance(term.steps[-1], ChooseCareerSkillsTable)
 
@@ -233,13 +233,13 @@ def test_transition_choose_new_career_after_mishap_routes_to_selection():
 
 def _assignment_change_term() -> AssignmentChangeTerm:
     career = load_career("scout")
-    assignments = career.assignments_as_dicts()
+    assignments = career.assignments
     return AssignmentChangeTerm(
         _character(),
         career_name=career.name,
         assignments=assignments,
         current_assignment=assignments[0],
-        qualification_options=career.qualification_options(),
+        qualification_options=career.qualification.options,
         qualification_auto=career.qualification.auto,
     )
 
@@ -255,7 +255,7 @@ def test_assignment_change_handler_table_covers_its_steps():
 def test_assignment_change_after_assignment_appends_qualification():
     term = _assignment_change_term()
     other = term.assignments[1]
-    term._after_assignment(_FakeStep(data={"assignment": other}))
+    term._after_assignment(_FakeStep(selected_assignment=other))
 
     assert term._chosen_assignment == other
     appended = term.steps[-1]

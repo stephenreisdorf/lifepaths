@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.career_data import Assignment
 from src.character import Character
 from src.terms.base import (
     PassFailRollStep,
@@ -166,9 +167,13 @@ class ChooseAssignmentStep(Step):
     step_id = "choose_assignment"
     step_type = StepType.CHOICE
 
-    def __init__(self, character: Character, assignments: list[dict]):
+    def __init__(self, character: Character, assignments: list[Assignment]):
         super().__init__(character=character)
         self.assignments = assignments
+        # Set in apply(): the chosen typed Assignment, read by the owning
+        # term's transition handler. The dict form lives in outcome.data
+        # only for the API/frontend.
+        self.selected_assignment: Assignment | None = None
 
     def prompt(self) -> StepPrompt:
         if self.outcome is not None:
@@ -181,7 +186,7 @@ class ChooseAssignmentStep(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description="Choose your assignment.",
-            options=[a["name"] for a in self.assignments],
+            options=[a.name for a in self.assignments],
             required_count=1,
         )
 
@@ -192,17 +197,18 @@ class ChooseAssignmentStep(Step):
         if len(selections) != 1:
             raise ValueError("Must choose a single assignment")
         selected_name = selections[0]
-        matching = [a for a in self.assignments if a["name"] == selected_name]
+        matching = [a for a in self.assignments if a.name == selected_name]
         if not matching:
             raise ValueError(f"Unknown assignment: {selected_name}")
-        self._selected_assignment_pending: dict = matching[0]
+        self._selected_assignment_pending: Assignment = matching[0]
 
     def apply(self) -> None:
         assignment = self._selected_assignment_pending
+        self.selected_assignment = assignment
         self.outcome = StepOutcome(
             status=StepStatus.SELECTED,
-            description=f"Assignment: {assignment['name']}.",
-            data={"assignment": assignment, "name": assignment["name"]},
+            description=f"Assignment: {assignment.name}.",
+            data={"assignment": assignment.model_dump(), "name": assignment.name},
         )
 
 
@@ -341,12 +347,12 @@ class SurvivalCheckStep(PassFailRollStep):
     status_pass = StepStatus.SURVIVED
     status_fail = StepStatus.FAILED
 
-    def __init__(self, character: Character, assignment: dict) -> None:
-        survival = assignment["survival"]
+    def __init__(self, character: Character, assignment: Assignment) -> None:
+        survival = assignment.survival
         super().__init__(
             character=character,
-            check_characteristic=survival["characteristic"],
-            target=survival["target"],
+            check_characteristic=survival.characteristic,
+            target=survival.target,
         )
         self.assignment = assignment
 
@@ -492,15 +498,15 @@ class AdvancementRollStep(PassFailRollStep):
         self,
         character: Character,
         career_name: str,
-        assignment: dict,
+        assignment: Assignment,
         ranks: list[dict],
         officer_ranks: list[dict] | None = None,
     ) -> None:
-        advancement = assignment["advancement"]
+        advancement = assignment.advancement
         super().__init__(
             character=character,
-            check_characteristic=advancement["characteristic"],
-            target=advancement["target"],
+            check_characteristic=advancement.characteristic,
+            target=advancement.target,
         )
         self.career_name = career_name
         self.assignment = assignment
@@ -796,8 +802,8 @@ class ContinueOrMusterOutStep(Step):
         character: Character,
         career_name: str,
         assignment_change_group: str | None = None,
-        current_assignment: dict | None = None,
-        assignments: list[dict] | None = None,
+        current_assignment: Assignment | None = None,
+        assignments: list[Assignment] | None = None,
     ) -> None:
         super().__init__(character)
         self.career_name = career_name
@@ -817,7 +823,7 @@ class ContinueOrMusterOutStep(Step):
         # Need at least one other assignment to switch to.
         others = [
             a for a in self.assignments
-            if a["name"] != self.current_assignment["name"]
+            if a.name != self.current_assignment.name
         ]
         return len(others) > 0
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.career_data import CareerData
+from src.career_data import Assignment, CareerData, CharacteristicCheck
 from src.character import Character
 from src.terms.base import (
     DispatchTerm,
@@ -81,19 +81,20 @@ class TransitionTerm(Term):
 
     def label(self) -> str:
         inner = self.steps[0]
-        if inner.step_id == ChooseCareerStep.step_id:
+        # isinstance (not step_id comparison) so the type checker narrows
+        # `inner` to the concrete step that declares `career_name`.
+        if isinstance(inner, ChooseCareerStep):
             return "Career Selection"
-        if inner.step_id == ContinueOrMusterOutStep.step_id:
-            # ContinueOrMusterOutStep carries career_name as an attribute.
-            return f"{inner.career_name} — Term End"  # type: ignore[attr-defined]
-        if inner.step_id == MusterOutOrNewCareerStep.step_id:
-            return f"{inner.career_name} — Mishap Exit"  # type: ignore[attr-defined]
-        if inner.step_id == ChooseDraftOrDrifterStep.step_id:
+        if isinstance(inner, ContinueOrMusterOutStep):
+            return f"{inner.career_name} — Term End"
+        if isinstance(inner, MusterOutOrNewCareerStep):
+            return f"{inner.career_name} — Mishap Exit"
+        if isinstance(inner, ChooseDraftOrDrifterStep):
             return "Draft or Drifter"
         return "Transition"
 
     def _after_choose_career(
-        self, inner: Step, outcome: StepOutcome, context: "CareerContext"
+        self, inner: ChooseCareerStep, outcome: StepOutcome, context: "CareerContext"
     ) -> "Term | None":
         from src.career_loader import load_career
 
@@ -115,7 +116,10 @@ class TransitionTerm(Term):
         )
 
     def _after_draft_or_drifter(
-        self, inner: Step, outcome: StepOutcome, context: "CareerContext"
+        self,
+        inner: ChooseDraftOrDrifterStep,
+        outcome: StepOutcome,
+        context: "CareerContext",
     ) -> "Term | None":
         from src.career_loader import load_career
 
@@ -134,7 +138,10 @@ class TransitionTerm(Term):
         )
 
     def _after_continue_or_muster(
-        self, inner: Step, outcome: StepOutcome, context: "CareerContext"
+        self,
+        inner: ContinueOrMusterOutStep,
+        outcome: StepOutcome,
+        context: "CareerContext",
     ) -> "Term | None":
         if outcome.status == StepStatus.CONTINUE:
             return CareerTerm(
@@ -148,22 +155,26 @@ class TransitionTerm(Term):
             # qualification for the new assignment and, on success, start a
             # new CareerTerm with rank reset to 0.
             data = context.current_career_data
+            assert context.current_assignment is not None
             return AssignmentChangeTerm(
                 context.character,
                 career_name=data.name,
-                assignments=data.assignments_as_dicts(),
+                assignments=data.assignments,
                 current_assignment=context.current_assignment,
-                qualification_options=data.qualification_options(),
+                qualification_options=data.qualification.options,
                 qualification_auto=data.qualification.auto,
             )
         # MUSTER_OUT — run the benefit rolls before creation ends.
-        return _muster_out_term_for(context, inner.career_name)  # type: ignore[attr-defined]
+        return _muster_out_term_for(context, inner.career_name)
 
     def _after_muster_or_new_career(
-        self, inner: Step, outcome: StepOutcome, context: "CareerContext"
+        self,
+        inner: MusterOutOrNewCareerStep,
+        outcome: StepOutcome,
+        context: "CareerContext",
     ) -> "Term | None":
         if outcome.status == StepStatus.MUSTER_OUT:
-            return _muster_out_term_for(context, inner.career_name)  # type: ignore[attr-defined]
+            return _muster_out_term_for(context, inner.career_name)
         # CHOOSE_CAREER — proceed to career selection, skipping benefits.
         context.current_career_data = None
         careers = _available_careers_for(context.character, context.blocked_career)
@@ -211,7 +222,7 @@ class CareerTerm(DispatchTerm):
         *,
         is_first_term: bool = True,
         term_number: int = 1,
-        assignment_override: dict | None = None,
+        assignment_override: Assignment | None = None,
         force_auto_qualify: bool = False,
         qualification_dm: int = 0,
     ) -> None:
@@ -221,11 +232,11 @@ class CareerTerm(DispatchTerm):
         # One-shot situational DM (e.g. a university graduate's entry bonus)
         # applied to the qualification roll for this first term only.
         self.qualification_dm = qualification_dm
-        qualification_options = career.qualification_options()
+        qualification_options = career.qualification.options
         self.qualification_options = qualification_options
         self.qualification_auto = force_auto_qualify or career.qualification.auto
         self.service_skills = career.service_skills
-        self.assignments = career.assignments_as_dicts()
+        self.assignments = career.assignments
         self.skill_tables = career.normalized_skill_tables()
         self.skill_table_requirements = career.skill_table_requirements()
         self.events = career.events
@@ -238,7 +249,7 @@ class CareerTerm(DispatchTerm):
         self.basic_training_from_assignment = career.basic_training_from_assignment
         self.is_first_term = is_first_term
         self.term_number = term_number
-        self._selected_assignment: dict | None = None
+        self._selected_assignment: Assignment | None = None
         self._pending_outcome: StepOutcome | None = None
         self._pending_finalize_outcome: StepOutcome | None = None
 
@@ -353,15 +364,15 @@ class CareerTerm(DispatchTerm):
             self.steps.append(PickServiceSkillStep(self.character, self.service_skills))
         self.steps.append(ChooseAssignmentStep(self.character, self.assignments))
 
-    def _after_assignment(self, step: Step) -> None:
-        self._selected_assignment = step.outcome.data["assignment"]
+    def _after_assignment(self, step: ChooseAssignmentStep) -> None:
+        self._selected_assignment = step.selected_assignment
         if not self.is_first_term:
             self.steps.append(self._skill_table_step())
             return
         # Citizens/Drifters: insert basic training drawn from the
         # assignment's skill table.
         if self.basic_training_from_assignment:
-            asn_skills = self.skill_tables.get(self._selected_assignment["name"], [])
+            asn_skills = self.skill_tables.get(self._selected_assignment.name, [])
             if not self.character.careers:
                 self.steps.append(BasicTrainingStep(self.character, asn_skills))
             else:
@@ -592,9 +603,9 @@ class AssignmentChangeTerm(DispatchTerm):
         self,
         character: Character,
         career_name: str,
-        assignments: list[dict],
-        current_assignment: dict,
-        qualification_options: list[dict],
+        assignments: list[Assignment],
+        current_assignment: Assignment,
+        qualification_options: list[CharacteristicCheck],
         qualification_auto: bool,
     ) -> None:
         super().__init__(character)
@@ -609,16 +620,16 @@ class AssignmentChangeTerm(DispatchTerm):
             self.qualification_target,
         ) = best_qualification_option(character, qualification_options)
         others = [
-            a for a in assignments if a["name"] != current_assignment["name"]
+            a for a in assignments if a.name != current_assignment.name
         ]
         self.steps = [ChooseAssignmentStep(character, others)]
-        self._chosen_assignment: dict | None = None
+        self._chosen_assignment: Assignment | None = None
 
     def label(self) -> str:
         return f"{self.career_name} — Change Assignment"
 
-    def _after_assignment(self, step: Step) -> None:
-        self._chosen_assignment = step.outcome.data["assignment"]
+    def _after_assignment(self, step: ChooseAssignmentStep) -> None:
+        self._chosen_assignment = step.selected_assignment
         if self.qualification_auto:
             self.steps.append(
                 AutoQualifyStep(
@@ -638,10 +649,11 @@ class AssignmentChangeTerm(DispatchTerm):
 
     def _after_qualification(self, step: Step) -> None:
         if step.outcome.status == StepStatus.QUALIFIED:
+            assert self._chosen_assignment is not None
             self.outcome = StepOutcome(
                 status=StepStatus.CHANGED,
                 description=(
-                    f"Qualified for {self._chosen_assignment['name']} — "
+                    f"Qualified for {self._chosen_assignment.name} — "
                     "career begins afresh at rank 0."
                 ),
             )

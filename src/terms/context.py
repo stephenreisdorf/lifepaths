@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.career_data import CareerData
+from src.career_data import Assignment, CareerData
 from src.character import Character
 
 
@@ -35,6 +35,6 @@ class CareerContext:
     current_career_data: CareerData | None = None
     career_term_count: int = 0
     blocked_career: str | None = None
-    current_assignment: dict | None = None
+    current_assignment: Assignment | None = None
     draft_used: bool = False
     pre_career_qualification_dm: int = 0

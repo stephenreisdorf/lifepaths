@@ -149,9 +149,6 @@ class CareerData(BaseModel):
         """Qualification options as plain `{characteristic, target}` dicts."""
         return [o.model_dump() for o in self.qualification.options]
 
-    def assignments_as_dicts(self) -> list[dict]:
-        return [a.model_dump() for a in self.assignments]
-
     def ranks_as_dicts(self) -> list[dict]:
         return [r.model_dump() for r in self.ranks]
 

@@ -1,5 +1,6 @@
 """Unit tests for the career-entry text/selection parsers."""
 
+from src.career_data import CharacteristicCheck
 from src.character import Character
 from src.terms.careers.parsers import best_qualification_option
 
@@ -15,8 +16,8 @@ def test_best_qualification_option_picks_highest_dm():
     # Dexterity 12 (DM +2) beats Intelligence 6 (DM +0).
     char = _character(Dexterity=12, Intelligence=6)
     options = [
-        {"characteristic": "Dexterity", "target": 6},
-        {"characteristic": "Intelligence", "target": 5},
+        CharacteristicCheck(characteristic="Dexterity", target=6),
+        CharacteristicCheck(characteristic="Intelligence", target=5),
     ]
 
     characteristic, target = best_qualification_option(char, options)
@@ -30,8 +31,8 @@ def test_best_qualification_option_ranks_missing_characteristic_last():
     # though the Strength option is listed first.
     char = _character(Endurance=6)
     options = [
-        {"characteristic": "Strength", "target": 8},
-        {"characteristic": "Endurance", "target": 7},
+        CharacteristicCheck(characteristic="Strength", target=8),
+        CharacteristicCheck(characteristic="Endurance", target=7),
     ]
 
     characteristic, target = best_qualification_option(char, options)

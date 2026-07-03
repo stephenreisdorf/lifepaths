@@ -69,7 +69,7 @@ def test_career_term_completed_mutates_context():
 
     # Simulate a completed term: set the terminal outcome and the
     # assignment the character served, as the step machine would.
-    assignment = career.assignments_as_dicts()[0]
+    assignment = career.assignments[0]
     term._selected_assignment = assignment
     term.outcome = StepOutcome(status="COMPLETED", description="Term completed.")
 
