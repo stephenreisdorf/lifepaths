@@ -200,6 +200,9 @@ class MusterOutTerm(Term):
     Roll count: one per term served in the career, plus a rank bonus of
     `(rank + 1) // 2` for any promotion beyond rank 0 (rank 1–2 = +1,
     rank 3–4 = +2, rank 5–6 = +3).
+
+    Benefit DM: reaching rank 5 or 6 grants +1 DM on every Benefit roll
+    (applied to both the Cash and Material columns), per the Core Rulebook.
     """
 
     def __init__(
@@ -216,6 +219,7 @@ class MusterOutTerm(Term):
         self.terms_served = terms_served
         self.rank = rank
         self.total_rolls = self._compute_total_rolls(terms_served, rank)
+        self.benefit_dm = self._compute_benefit_dm(rank)
         cash = list(self.benefits.get("cash", []) or [])
         material = list(self.benefits.get("material", []) or [])
         for i in range(self.total_rolls):
@@ -227,6 +231,7 @@ class MusterOutTerm(Term):
                     material_table=material,
                     roll_index=i + 1,
                     total_rolls=self.total_rolls,
+                    dm=self.benefit_dm,
                 )
             )
 
@@ -236,6 +241,11 @@ class MusterOutTerm(Term):
         base = max(0, terms_served)
         rank_bonus = 0 if rank <= 0 else (rank + 1) // 2
         return base + rank_bonus
+
+    @staticmethod
+    def _compute_benefit_dm(rank: int) -> int:
+        """+1 DM on every Benefit roll for senior veterans (rank 5 or 6)."""
+        return 1 if rank >= 5 else 0
 
     def label(self) -> str:
         return f"{self.career_name} — Muster Out"
