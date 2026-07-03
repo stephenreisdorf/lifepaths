@@ -119,13 +119,18 @@ class PassFailRollStep(Step):
         character: Character,
         check_characteristic: str,
         target: int,
+        extra_dm: int = 0,
     ) -> None:
         super().__init__(character)
         self.check_characteristic = check_characteristic
         self.target = target
-        self.modifier: int = character.characteristics[
-            check_characteristic
-        ].modifier()
+        # `extra_dm` folds in situational bonuses (e.g. a university
+        # graduate's DM to their first career qualification) on top of the
+        # characteristic modifier.
+        self.extra_dm = extra_dm
+        self.modifier: int = (
+            character.characteristics[check_characteristic].modifier() + extra_dm
+        )
 
     def resolve(self, player_input: dict | None = None) -> None:
         self.raw_roll: int = roll(2)

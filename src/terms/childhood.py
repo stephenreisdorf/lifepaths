@@ -139,6 +139,14 @@ class ChildhoodTerm(Term):
         # Local imports to avoid circular references.
         from src.career_loader import filter_eligible_careers, get_available_careers
         from src.terms.careers import ChooseCareerStep, TransitionTerm
+        from src.terms.education import PreCareerChoiceTerm, eligible_options
+
+        # Offer pre-career education (University / Military Academy) when the
+        # character is eligible for at least one institution; otherwise go
+        # straight to career selection.
+        options = eligible_options(context.character)
+        if options:
+            return PreCareerChoiceTerm(context.character, options)
 
         careers = filter_eligible_careers(
             context.character, get_available_careers()

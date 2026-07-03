@@ -17,9 +17,10 @@ from src.terms.careers import (
 )
 from src.terms.childhood import ChildhoodTerm
 from src.terms.context import CareerContext
+from src.terms.education import ChoosePreCareerStep, PreCareerChoiceTerm
 
 
-def _character() -> Character:
+def _character(education: int = 7) -> Character:
     char = Character(name="Test", characteristics={}, skills={})
     for name in [
         "Strength",
@@ -30,12 +31,27 @@ def _character() -> Character:
         "Social Standing",
     ]:
         char.add_characteristic(characteristic=name, value=7)
+    char.add_characteristic(characteristic="Education", value=education)
     return char
 
 
-def test_childhood_next_term_takes_a_context():
-    """ChildhoodTerm routes to career selection given only a context."""
+def test_childhood_next_term_routes_to_pre_career_education():
+    """An education-eligible character is offered pre-career education first."""
     char = _character()
+    context = CareerContext(character=char)
+
+    nxt = ChildhoodTerm(char).next_term(context)
+
+    assert isinstance(nxt, PreCareerChoiceTerm)
+    assert nxt.steps[0].step_id == ChoosePreCareerStep.step_id
+
+
+def test_childhood_next_term_skips_education_when_ineligible():
+    """With no eligible institution, childhood routes straight to careers."""
+    # EDU 4 and low physicals — below every institution's eligibility floor.
+    char = _character(education=4)
+    for name in ["Endurance", "Intelligence"]:
+        char.add_characteristic(characteristic=name, value=4)
     context = CareerContext(character=char)
 
     nxt = ChildhoodTerm(char).next_term(context)

@@ -99,11 +99,16 @@ class TransitionTerm(Term):
         # Block only applies to the immediately-following selection; once a
         # new career is picked the block is lifted.
         context.blocked_career = None
+        # A university graduate's entry DM applies to their first career
+        # qualification only — consume it here.
+        qualification_dm = context.pre_career_qualification_dm
+        context.pre_career_qualification_dm = 0
         return CareerTerm(
             context.character,
             context.current_career_data,
             term_number=context.career_term_count + 1,
             is_first_term=True,
+            qualification_dm=qualification_dm,
         )
 
     def _after_draft_or_drifter(
@@ -202,10 +207,14 @@ class CareerTerm(Term):
         term_number: int = 1,
         assignment_override: dict | None = None,
         force_auto_qualify: bool = False,
+        qualification_dm: int = 0,
     ) -> None:
         super().__init__(character)
         self.career = career
         self.career_name = career.name
+        # One-shot situational DM (e.g. a university graduate's entry bonus)
+        # applied to the qualification roll for this first term only.
+        self.qualification_dm = qualification_dm
         qualification_options = career.qualification_options()
         self.qualification_options = qualification_options
         self.qualification_auto = force_auto_qualify or career.qualification.auto
@@ -254,6 +263,7 @@ class CareerTerm(Term):
                         character,
                         self.qualification_characteristic,
                         self.qualification_target,
+                        extra_dm=self.qualification_dm,
                     )
                 ]
         elif assignment_override is not None:

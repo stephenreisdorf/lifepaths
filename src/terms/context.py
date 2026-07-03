@@ -26,6 +26,9 @@ class CareerContext:
     - ``current_assignment`` — most-recently-selected assignment under the
       current career (used by the assignment-change flow).
     - ``draft_used`` — whether the once-per-life Draft fallback has been used.
+    - ``pre_career_qualification_dm`` — one-shot DM a university graduate
+      carries into their first career qualification roll; consumed (and reset)
+      when that first Career Selection starts the career.
     """
 
     character: Character
@@ -34,3 +37,4 @@ class CareerContext:
     blocked_career: str | None = None
     current_assignment: dict | None = None
     draft_used: bool = False
+    pre_career_qualification_dm: int = 0
