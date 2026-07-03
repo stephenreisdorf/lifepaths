@@ -53,6 +53,22 @@ class CareerRecord(BaseModel):
     commissioned: bool = False
 
 
+class AnagathicsCourse(BaseModel):
+    """An active course of anti-aging drugs (Core Rulebook, Ageing).
+
+    A character of sufficient Social Standing may take anagathics to hold off
+    ageing. While the course is `active`, `terms_used` (the number of terms it
+    has been maintained) is added as a *positive* DM to the Ageing roll,
+    offsetting the -(terms served) penalty so the Traveller "effectively does
+    not age". Each term costs 1D×Cr25000 (accumulated in `total_cost`); the
+    charge is deducted from cash, which may go into debt.
+    """
+
+    terms_used: int = 1
+    total_cost: int = 0
+    active: bool = True
+
+
 class AssociateType(str, Enum):
     """Kinds of associates a character can accumulate."""
 
@@ -92,6 +108,9 @@ class Character(BaseModel):
     # forces entry into this career on the next term transition and clears
     # the flag. Does not bypass normal career selection when None.
     pending_career_entry: str | None = None
+    # An active (or discontinued) course of anti-aging drugs; None until the
+    # character starts one. See AnagathicsCourse and src/terms/anagathics.py.
+    anagathics: AnagathicsCourse | None = None
 
     def total_skill_levels(self) -> int:
         """Return the sum of every skill's base_rank plus all specialty ranks."""
@@ -246,3 +265,41 @@ class Character(BaseModel):
         )
         self.associates.append(associate)
         return associate
+
+    def start_anagathics_course(self, cost: int) -> AnagathicsCourse:
+        """Begin an anti-aging course (Core Rulebook, Ageing).
+
+        Records the course active with one term of use — a +1 DM to the next
+        Ageing roll — and charges this term's cost against cash (which may go
+        negative, i.e. start the game in debt). Replaces any prior course.
+        """
+        self.anagathics = AnagathicsCourse(terms_used=1, total_cost=cost)
+        self.cash -= cost
+        return self.anagathics
+
+    def maintain_anagathics_course(self, cost: int) -> None:
+        """Extend the active course by one term, raising the Ageing DM.
+
+        No-op when there is no active course. Charges this term's cost against
+        cash (which may go into debt).
+        """
+        if self.anagathics is None or not self.anagathics.active:
+            return
+        self.anagathics.terms_used += 1
+        self.anagathics.total_cost += cost
+        self.cash -= cost
+
+    def stop_anagathics_course(self) -> None:
+        """Discontinue the course (RAW: triggers an immediate Ageing roll).
+
+        The record is kept but marked inactive, so it no longer contributes a
+        DM to Ageing. No-op when there is no course.
+        """
+        if self.anagathics is not None:
+            self.anagathics.active = False
+
+    def anagathics_aging_dm(self) -> int:
+        """Return the positive Ageing DM from an active anagathics course."""
+        if self.anagathics is not None and self.anagathics.active:
+            return self.anagathics.terms_used
+        return 0

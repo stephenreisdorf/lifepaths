@@ -81,6 +81,7 @@ class AgingStep(Step):
         super().__init__(character)
         self._triggered = False
         self._terms_served = 0
+        self._anagathics_dm = 0
         self._rolled = 0
         self._effective_total = 0
         self._targets: list[tuple[str, int]] = []
@@ -93,8 +94,11 @@ class AgingStep(Step):
         self._terms_served = sum(
             record.terms_served for record in self.character.careers.values()
         )
+        # An active anagathics course adds a positive DM equal to the terms it
+        # has run, offsetting the -(terms served) penalty (Core Rulebook).
+        self._anagathics_dm = self.character.anagathics_aging_dm()
         self._rolled = roll(2)
-        self._effective_total = self._rolled - self._terms_served
+        self._effective_total = self._rolled - self._terms_served + self._anagathics_dm
         self._targets = _assign_targets(_aging_reductions(self._effective_total))
 
     def apply(self) -> None:
@@ -122,6 +126,11 @@ class AgingStep(Step):
             f"Rolled {self._rolled} - {self._terms_served} terms served "
             f"= {self._effective_total}"
         )
+        if self._anagathics_dm:
+            roll_line = (
+                f"Rolled {self._rolled} - {self._terms_served} terms served "
+                f"+ {self._anagathics_dm} anagathics = {self._effective_total}"
+            )
         desc_lines = [f"Aging (age {self.character.age}): {roll_line}"]
         if applied:
             desc_lines.append("  " + ", ".join(applied))
@@ -136,6 +145,7 @@ class AgingStep(Step):
             data={
                 "age": self.character.age,
                 "terms_served": self._terms_served,
+                "anagathics_dm": self._anagathics_dm,
                 "rolled": self._rolled,
                 "effective_total": self._effective_total,
                 "reductions": [

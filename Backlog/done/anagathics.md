@@ -34,4 +34,25 @@ Best sequenced **after** the official [Ageing table](aging-official-table.md) la
 since anagathics modify that system — building it against the current homebrew
 aging would be throwaway work. Niche/optional; deferred until the core aging
 fidelity work is done.
-</content>
+
+## Resolution
+
+Implemented at the domain layer against the transcribed MgT 2022 rule (queried
+from the "Bowman Arm" NotebookLM notebook):
+
+- `AnagathicsCourse` on `Character` (`terms_used`, `total_cost`, `active`) plus
+  `start_anagathics_course` / `maintain_anagathics_course` /
+  `stop_anagathics_course` / `anagathics_aging_dm`.
+- `src/terms/anagathics.py::attempt_start_anagathics` — the RAW **SOC 10+**
+  entry roll (2D + SOC DM; natural 2 → Prisoner) and the **1D×Cr25000/term**
+  cost deducted from `cash` (may go into debt). Done-when item 1's "SOC ≥ 10"
+  is the source's actual "rolling SOC 10+" characteristic check.
+- `AgingStep` adds `anagathics_aging_dm()` as a positive DM (offsetting
+  −(terms served)) and reports it in the outcome description/data.
+- Tests: `tests/test_anagathics.py` (9 tests) cover the SOC gate, the natural-2
+  Prisoner outcome, the recurring cost/debt, and the Ageing interaction.
+
+**Left as follow-up (beyond this item's domain-model scope):** wiring an
+interactive start-of-term choice into `CareerTerm`, the RAW doubled Survival
+checks while on a course, and routing a natural 2 into a Prisoner career.
+
