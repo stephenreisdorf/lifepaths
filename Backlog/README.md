@@ -7,7 +7,6 @@ One file per open issue. Index below.
 - [Characteristic DM wrong for a score of 0](characteristic-dm-zero.md) — `value // 3 - 2` yields −2 at 0; RAW is −3.
 - [Pre-career education rules fidelity](pre-career-education-rules-fidelity.md) — University/Academy targets, bonus stats, and graduation checks diverge from RAW.
 - [Aging uses a homebrew system](aging-official-table.md) — per-characteristic bracket checks instead of the official single-2D Ageing table with terms-served DM.
-- [Muster-out omits the Rank 5–6 benefit DM](muster-out-rank-benefit-dm.md) — senior veterans miss the +1 DM to all Benefit rolls.
 - [Subsequent-career first term skips its skill roll](subsequent-career-first-term-skill-roll.md) — the skill-roll substitution should apply to the first career only.
 - [Life Events and Injury tables are flavor-only](life-events-injury-tables.md) — "roll on the Life Events / Injury table" entries carry no mechanics.
 
