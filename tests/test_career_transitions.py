@@ -63,6 +63,14 @@ def _scout_term(is_first_term: bool = True) -> CareerTerm:
     return CareerTerm(_character(), load_career("scout"), is_first_term=is_first_term)
 
 
+def _scout_term_subsequent_career() -> CareerTerm:
+    """First-term Scout CareerTerm for a character who already has a prior
+    career on record (so this is *not* their first career ever)."""
+    char = _character()
+    char.ensure_career("Navy")
+    return CareerTerm(char, load_career("scout"), is_first_term=True)
+
+
 # --- CareerTerm dispatch table --------------------------------------------
 
 
@@ -103,6 +111,27 @@ def test_after_qualification_failed_ends_term():
     assert term.outcome is not None
     assert term.outcome.status == "FAILED_QUAL"
     assert len(term.steps) == 1  # nothing appended
+
+
+def test_first_career_first_term_skips_skill_roll():
+    """First career ever: basic training is the only skill grant — the first
+    term goes straight from assignment to the survival check, no skill roll."""
+    term = _scout_term()  # character has no prior careers
+    assignment = term.assignments[0]
+    term._after_assignment(_FakeStep(data={"assignment": assignment}))
+
+    assert isinstance(term.steps[-1], SurvivalCheckStep)
+    assert not any(isinstance(s, ChooseCareerSkillsTable) for s in term.steps)
+
+
+def test_subsequent_career_first_term_takes_skill_roll():
+    """A later career's first term still takes the normal per-term skill roll
+    (in addition to the one level-0 basic-training skill), before survival."""
+    term = _scout_term_subsequent_career()
+    assignment = term.assignments[0]
+    term._after_assignment(_FakeStep(data={"assignment": assignment}))
+
+    assert isinstance(term.steps[-1], ChooseCareerSkillsTable)
 
 
 def test_after_survival_branches_on_status():

@@ -193,9 +193,12 @@ class CareerTerm(Term):
     """Live through a full career term.
 
     The progression is dynamic based on results and choices:
-    1. First term: Qualify → Basic Training → Choose Assignment
-       (If qualification fails, the term ends immediately. No skill roll on
-       the first term — basic training is the only skill grant.)
+    1. First term: Qualify → Basic Training → Choose Assignment. For the
+       character's *first career ever* basic training is the only skill grant
+       — all Service Skills at level 0, no skill roll. For a *subsequent*
+       career's first term basic training grants one Service Skill at level 0
+       and the character still takes the normal per-term skill roll.
+       (If qualification fails, the term ends immediately.)
     2. Subsequent terms: Choose Assignment → Choose Skill Table → Roll for Skill
     """
 
@@ -361,16 +364,27 @@ class CareerTerm(Term):
             self.steps.append(self._skill_table_step())
             return
         # Citizens/Drifters: insert basic training drawn from the
-        # assignment's skill table before the survival check.
+        # assignment's skill table.
         if self.basic_training_from_assignment:
             asn_skills = self.skill_tables.get(self._selected_assignment["name"], [])
             if not self.character.careers:
                 self.steps.append(BasicTrainingStep(self.character, asn_skills))
             else:
                 self.steps.append(PickServiceSkillStep(self.character, asn_skills))
-        self.steps.append(
-            SurvivalCheckStep(self.character, self._selected_assignment)
-        )
+        # The "all Service Skills at level 0 instead of a skill roll"
+        # substitution applies to the *first career ever* only. A subsequent
+        # career's first term still takes the normal per-term skill roll (on
+        # top of the one level-0 basic-training skill granted here / in
+        # _after_qualification), before the survival check — mirroring the
+        # subsequent-term ordering. `character.careers` is empty only on the
+        # very first career, since the current career is not recorded until
+        # advancement/commission/mishap.
+        if self.character.careers:
+            self.steps.append(self._skill_table_step())
+        else:
+            self.steps.append(
+                SurvivalCheckStep(self.character, self._selected_assignment)
+            )
 
     def _after_skill_table(self, step: Step) -> None:
         skill_options = self.skill_tables[step.outcome.data["skill_table"]]

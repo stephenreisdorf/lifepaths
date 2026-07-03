@@ -5,7 +5,6 @@ One file per open issue. Index below.
 ## Bugs
 
 - [Aging uses a homebrew system](aging-official-table.md) — per-characteristic bracket checks instead of the official single-2D Ageing table with terms-served DM.
-- [Subsequent-career first term skips its skill roll](subsequent-career-first-term-skill-roll.md) — the skill-roll substitution should apply to the first career only.
 - [Life Events and Injury tables are flavor-only](life-events-injury-tables.md) — "roll on the Life Events / Injury table" entries carry no mechanics.
 
 ## UX
