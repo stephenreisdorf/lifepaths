@@ -4,7 +4,6 @@ One file per open issue. Index below.
 
 ## Bugs
 
-- [Aging uses a homebrew system](aging-official-table.md) — per-characteristic bracket checks instead of the official single-2D Ageing table with terms-served DM.
 - [Life Events and Injury tables are flavor-only](life-events-injury-tables.md) — "roll on the Life Events / Injury table" entries carry no mechanics.
 
 ## UX
