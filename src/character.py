@@ -10,7 +10,13 @@ class Characteristic(BaseModel):
     value: int
 
     def modifier(self) -> int:
-        """Calculate the Traveller-style dice modifier (value // 3 - 2)."""
+        """Calculate the Traveller-style dice modifier.
+
+        The formula ``value // 3 - 2`` reproduces the Core Rulebook DM table for
+        all scores except 0, which the table assigns -3 (the formula yields -2).
+        """
+        if self.value == 0:
+            return -3
         return self.value // 3 - 2
 
 

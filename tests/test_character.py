@@ -17,7 +17,25 @@ def make_character(**characteristic_values: int) -> Character:
 
 @pytest.mark.parametrize(
     "value, expected",
-    [(0, -2), (2, -2), (3, -1), (6, 0), (9, 1), (12, 2), (15, 3)],
+    [
+        # Full Core Rulebook DM table; 0 is the special-cased bottom rung (-3).
+        (0, -3),
+        (1, -2),
+        (2, -2),
+        (3, -1),
+        (4, -1),
+        (5, -1),
+        (6, 0),
+        (7, 0),
+        (8, 0),
+        (9, 1),
+        (10, 1),
+        (11, 1),
+        (12, 2),
+        (13, 2),
+        (14, 2),
+        (15, 3),
+    ],
 )
 def test_modifier_arithmetic(value, expected):
     assert Characteristic(name="X", value=value).modifier() == expected
