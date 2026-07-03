@@ -85,3 +85,21 @@ def attempt_start_anagathics(character: Character) -> AnagathicsStartResult:
         to_prisoner=False,
         cost=0,
     )
+
+
+def roll_anagathics_cost() -> int:
+    """Roll this term's anagathics cost (1D×Cr25000)."""
+    return roll(ANAGATHICS_COST_DICE) * ANAGATHICS_COST_MULTIPLIER
+
+
+def maintain_anagathics(character: Character) -> int:
+    """Charge one more term of an already-active course and return the cost.
+
+    Rolls the 1D×Cr25000 term cost and extends the course via
+    ``Character.maintain_anagathics_course`` (a no-op with no active course,
+    in which case this returns the rolled cost but charges nothing). Keeps the
+    dice here rather than on the pure ``Character``.
+    """
+    cost = roll_anagathics_cost()
+    character.maintain_anagathics_course(cost)
+    return cost

@@ -29,6 +29,9 @@ class CareerContext:
     - ``pre_career_qualification_dm`` — one-shot DM a university graduate
       carries into their first career qualification roll; consumed (and reset)
       when that first Career Selection starts the career.
+    - ``anagathics_enabled`` — whether the optional anagathics (anti-aging)
+      rule is in play; when set, each career term starts with an anagathics
+      offer / upkeep. Off by default so the baseline flow is unchanged.
     """
 
     character: Character
@@ -38,3 +41,4 @@ class CareerContext:
     current_assignment: Assignment | None = None
     draft_used: bool = False
     pre_career_qualification_dm: int = 0
+    anagathics_enabled: bool = False

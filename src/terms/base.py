@@ -84,6 +84,13 @@ class StepStatus(str, Enum):
     AGED = "AGED"
     AGING_CRISIS = "AGING_CRISIS"
 
+    # Anagathics (optional anti-aging rule; start-of-term)
+    ANAGATHICS_STARTED = "ANAGATHICS_STARTED"
+    ANAGATHICS_DECLINED = "ANAGATHICS_DECLINED"
+    ANAGATHICS_MISSED = "ANAGATHICS_MISSED"
+    ANAGATHICS_MAINTAINED = "ANAGATHICS_MAINTAINED"
+    ANAGATHICS_PRISONER = "ANAGATHICS_PRISONER"
+
 
 class StepPrompt(BaseModel):
     """Describes what a step needs from the player and what to display."""

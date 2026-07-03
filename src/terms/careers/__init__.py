@@ -19,8 +19,10 @@ from src.terms.careers.parsers import (
 )
 from src.terms.careers.steps import (
     AdvancementRollStep,
+    AnagathicsUpkeepStep,
     AutoQualifyStep,
     BasicTrainingStep,
+    ChooseAnagathicsStep,
     ChooseAssignmentStep,
     ChooseCareerSkillsTable,
     ChooseCareerStep,
@@ -45,10 +47,12 @@ __all__ = [
     "AGING_TABLE",
     "AdvancementRollStep",
     "AgingStep",
+    "AnagathicsUpkeepStep",
     "AssignmentChangeTerm",
     "AutoQualifyStep",
     "BasicTrainingStep",
     "CareerTerm",
+    "ChooseAnagathicsStep",
     "ChooseAssignmentStep",
     "ChooseCareerSkillsTable",
     "ChooseCareerStep",

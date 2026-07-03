@@ -19,11 +19,18 @@ app.add_middleware(
 sessions: dict[str, GameSession] = {}
 
 
+class StartRequest(BaseModel):
+    # Optional MgT 2022 rules toggles. Anagathics (anti-aging drugs) is off by
+    # default; enabling it adds the start-of-term anagathics offer/upkeep.
+    anagathics_enabled: bool = False
+
+
 @app.post("/api/start")
-def start() -> dict:
+def start(req: StartRequest | None = None) -> dict:
     """Create a new game session, resolve initial automatic steps, and return the first interactive prompt."""
     session_id = str(uuid4())
-    game = GameSession()
+    req = req or StartRequest()
+    game = GameSession(anagathics_enabled=req.anagathics_enabled)
     result = game.start()
     sessions[session_id] = game
     return {"session_id": session_id, **result.model_dump()}

@@ -14,13 +14,15 @@ class GameSession:
     empty state between terms.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, anagathics_enabled: bool = False) -> None:
         self.character = Character(name="Traveller", characteristics={}, skills={})
         self.term: Term = ChildhoodTerm(self.character)
         # Cross-term creation state lives in a typed context object that is
         # passed explicitly to each term's next_term(). The engine owns the
         # context's lifecycle; terms read and mutate its fields.
-        self.context = CareerContext(character=self.character)
+        self.context = CareerContext(
+            character=self.character, anagathics_enabled=anagathics_enabled
+        )
 
     def _character_summary(self) -> dict:
         """Serialize current character state for API responses."""

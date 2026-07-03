@@ -16,13 +16,16 @@ from src.terms.base import (
     StepStatus,
     Term,
 )
+from src.terms.anagathics import PRISONER_CAREER
 from src.terms.careers.aging import AgingStep
 from src.terms.careers.muster_out import MusterOutTerm, _muster_out_term_for
 from src.terms.careers.parsers import best_qualification_option
 from src.terms.careers.steps import (
     AdvancementRollStep,
+    AnagathicsUpkeepStep,
     AutoQualifyStep,
     BasicTrainingStep,
+    ChooseAnagathicsStep,
     ChooseAssignmentStep,
     ChooseCareerSkillsTable,
     ChooseCareerStep,
@@ -70,6 +73,7 @@ def _forced_entry_career_term(context: "CareerContext") -> "CareerTerm | None":
         is_first_term=True,
         # Forced entry auto-qualifies regardless of YAML.
         force_auto_qualify=True,
+        anagathics_enabled=context.anagathics_enabled,
     )
 
 
@@ -112,6 +116,7 @@ class TransitionTerm(Term):
             term_number=context.career_term_count + 1,
             is_first_term=True,
             qualification_dm=qualification_dm,
+            anagathics_enabled=context.anagathics_enabled,
         )
 
     def _after_draft_or_drifter(
@@ -132,6 +137,7 @@ class TransitionTerm(Term):
             is_first_term=True,
             # Draft / Drifter fallback auto-qualifies regardless of YAML.
             force_auto_qualify=True,
+            anagathics_enabled=context.anagathics_enabled,
         )
 
     def _after_continue_or_muster(
@@ -146,6 +152,7 @@ class TransitionTerm(Term):
                 context.current_career_data,
                 term_number=context.career_term_count + 1,
                 is_first_term=False,
+                anagathics_enabled=context.anagathics_enabled,
             )
         if outcome.status == StepStatus.CHANGE_ASSIGNMENT:
             # Hand off to the assignment-change sub-term. It will roll
@@ -222,10 +229,13 @@ class CareerTerm(DispatchTerm):
         assignment_override: Assignment | None = None,
         force_auto_qualify: bool = False,
         qualification_dm: int = 0,
+        anagathics_enabled: bool = False,
     ) -> None:
         super().__init__(character)
         self.career = career
         self.career_name = career.name
+        # Whether the optional anagathics rule is in play this creation.
+        self.anagathics_enabled = anagathics_enabled
         # One-shot situational DM (e.g. a university graduate's entry bonus)
         # applied to the qualification roll for this first term only.
         self.qualification_dm = qualification_dm
@@ -246,41 +256,28 @@ class CareerTerm(DispatchTerm):
         self.basic_training_from_assignment = career.basic_training_from_assignment
         self.is_first_term = is_first_term
         self.term_number = term_number
-        self._selected_assignment: Assignment | None = None
+        # `assignment_override` (used by the assignment-change flow) carries a
+        # chosen assignment forward, so the term skips the assignment prompt.
+        self._selected_assignment: Assignment | None = assignment_override
         self._pending_outcome: StepOutcome | None = None
         self._pending_finalize_outcome: StepOutcome | None = None
+        # Set when an active anagathics course forces a second Survival check.
+        self._second_survival_pending: bool = False
 
         (
             self.qualification_characteristic,
             self.qualification_target,
         ) = best_qualification_option(character, qualification_options)
 
-        if is_first_term:
-            if self.qualification_auto:
-                self.steps = [
-                    AutoQualifyStep(
-                        character,
-                        self.qualification_characteristic,
-                        self.qualification_target,
-                    )
-                ]
-            else:
-                self.steps = [
-                    RollQualificationStep(
-                        character,
-                        self.qualification_characteristic,
-                        self.qualification_target,
-                        extra_dm=self.qualification_dm,
-                    )
-                ]
-        elif assignment_override is not None:
-            # Continuing within the same career without re-prompting for
-            # assignment (used by the assignment-change flow to carry
-            # forward the chosen / retained assignment).
-            self._selected_assignment = assignment_override
-            self.steps = [self._skill_table_step()]
+        # A career term may open with an anagathics offer (no active course) or
+        # an upkeep charge (active course); its handler then appends the real
+        # opening step(s). When anagathics is off / not applicable the term
+        # opens directly on those step(s).
+        anagathics_step = self._anagathics_start_step()
+        if anagathics_step is not None:
+            self.steps = [anagathics_step]
         else:
-            self.steps = [ChooseAssignmentStep(character, self.assignments)]
+            self.steps = self._build_initial_steps()
 
     def label(self) -> str:
         return f"{self.career_name} — Term {self.term_number}"
@@ -310,6 +307,63 @@ class CareerTerm(DispatchTerm):
             self.steps.append(AgingStep(self.character))
         else:
             self.outcome = outcome
+
+    def _build_initial_steps(self) -> list[Step]:
+        """The step(s) a career term opens on, independent of any anagathics offer.
+
+        First term → qualification (auto or roll). Subsequent term → the
+        carried-forward assignment's skill table (assignment override) or an
+        assignment prompt.
+        """
+        if self.is_first_term:
+            if self.qualification_auto:
+                return [
+                    AutoQualifyStep(
+                        self.character,
+                        self.qualification_characteristic,
+                        self.qualification_target,
+                    )
+                ]
+            return [
+                RollQualificationStep(
+                    self.character,
+                    self.qualification_characteristic,
+                    self.qualification_target,
+                    extra_dm=self.qualification_dm,
+                )
+            ]
+        if self._selected_assignment is not None:
+            return [self._skill_table_step()]
+        return [ChooseAssignmentStep(self.character, self.assignments)]
+
+    def _anagathics_start_step(self) -> Step | None:
+        """The optional anagathics step a term opens on, or None.
+
+        Upkeep step when a course is already active, a choice step when the
+        rule is on and no course is active, or None when the rule is off or the
+        character is in the Prisoner career ("Travellers may not use Anagathics
+        in prison").
+        """
+        if not self.anagathics_enabled:
+            return None
+        if self.career_name == PRISONER_CAREER:
+            return None
+        course = self.character.anagathics
+        if course is not None and course.active:
+            return AnagathicsUpkeepStep(self.character)
+        return ChooseAnagathicsStep(self.character)
+
+    def _append_survival_check(self) -> None:
+        """Append the Survival check, doubling it while an anagathics course is active.
+
+        RAW: on a course the Traveller makes two Survival checks each term; the
+        second is queued by ``_after_survival`` when the first passes.
+        """
+        course = self.character.anagathics
+        self._second_survival_pending = course is not None and course.active
+        self.steps.append(
+            SurvivalCheckStep(self.character, self._selected_assignment)
+        )
 
     def _skill_table_step(self) -> ChooseCareerSkillsTable:
         """Build the career skill-table choice step (used in several transitions)."""
@@ -385,9 +439,7 @@ class CareerTerm(DispatchTerm):
         if self.character.careers:
             self.steps.append(self._skill_table_step())
         else:
-            self.steps.append(
-                SurvivalCheckStep(self.character, self._selected_assignment)
-            )
+            self._append_survival_check()
 
     def _after_skill_table(self, step: Step) -> None:
         skill_options = self.skill_tables[step.outcome.data["skill_table"]]
@@ -400,15 +452,22 @@ class CareerTerm(DispatchTerm):
             self._pending_finalize_outcome = None
             self._finalize_term(terminal)
         else:
+            self._append_survival_check()
+
+    def _after_survival(self, step: Step) -> None:
+        if step.outcome.status != StepStatus.SURVIVED:
+            # Failing either of a doubled check ends the doubling and mishaps.
+            self._second_survival_pending = False
+            self.steps.append(MishapRollStep(self.character, self.mishaps))
+            return
+        if self._second_survival_pending:
+            # RAW: on anagathics, a second Survival check follows the first.
+            self._second_survival_pending = False
             self.steps.append(
                 SurvivalCheckStep(self.character, self._selected_assignment)
             )
-
-    def _after_survival(self, step: Step) -> None:
-        if step.outcome.status == StepStatus.SURVIVED:
-            self.steps.append(EventsRollStep(self.character, self.events))
-        else:
-            self.steps.append(MishapRollStep(self.character, self.mishaps))
+            return
+        self.steps.append(EventsRollStep(self.character, self.events))
 
     def _after_events(self, step: Step) -> None:
         # An event may force the character out of the career. Terms served
@@ -493,10 +552,28 @@ class CareerTerm(DispatchTerm):
     def _after_aging(self, step: Step) -> None:
         self.outcome = self._pending_outcome
 
+    def _after_choose_anagathics(self, step: Step) -> None:
+        if step.outcome.status == StepStatus.ANAGATHICS_PRISONER:
+            # A natural 2 sends the Traveller straight to Prisoner this term.
+            # Queue the forced entry and end the term; next_term routes it.
+            self.character.pending_career_entry = PRISONER_CAREER
+            self.outcome = StepOutcome(
+                status=StepStatus.ANAGATHICS_PRISONER,
+                description=step.outcome.description,
+            )
+            return
+        # Declined / started / missed all continue into the normal term.
+        self.steps.extend(self._build_initial_steps())
+
+    def _after_anagathics_upkeep(self, step: Step) -> None:
+        self.steps.extend(self._build_initial_steps())
+
     # Declarative transition table: step type → handler. Grouping two step
     # classes (roll vs auto qualification) onto one handler is a table entry,
     # not a branch. Extend the flow by adding a handler above and a row here.
     _STEP_HANDLERS = {
+        ChooseAnagathicsStep: _after_choose_anagathics,
+        AnagathicsUpkeepStep: _after_anagathics_upkeep,
         RollQualificationStep: _after_qualification,
         AutoQualifyStep: _after_qualification,
         ChooseAssignmentStep: _after_assignment,
@@ -512,6 +589,13 @@ class CareerTerm(DispatchTerm):
 
     def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None
+
+        if status == StepStatus.ANAGATHICS_PRISONER:
+            # Natural 2 on the anagathics roll — abandon this term's career and
+            # go straight to Prisoner (queued as pending_career_entry).
+            context.career_term_count = 0
+            context.current_assignment = None
+            return _forced_entry_career_term(context)
 
         if status == StepStatus.FAILED_QUAL:
             forced = _forced_entry_career_term(context)
@@ -582,6 +666,7 @@ class CareerTerm(DispatchTerm):
                 context.current_career_data,
                 term_number=context.career_term_count + 1,
                 is_first_term=False,
+                anagathics_enabled=context.anagathics_enabled,
             )
 
         return None
@@ -684,6 +769,7 @@ class AssignmentChangeTerm(DispatchTerm):
                 term_number=context.career_term_count + 1,
                 is_first_term=False,
                 assignment_override=self._chosen_assignment,
+                anagathics_enabled=context.anagathics_enabled,
             )
 
         if status == StepStatus.CHANGE_FAILED:

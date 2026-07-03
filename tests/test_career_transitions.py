@@ -13,10 +13,12 @@ from src.terms.base import StepOutcome
 from src.terms.careers import (
     AdvancementRollStep,
     AgingStep,
+    AnagathicsUpkeepStep,
     AssignmentChangeTerm,
     AutoQualifyStep,
     BasicTrainingStep,
     CareerTerm,
+    ChooseAnagathicsStep,
     ChooseAssignmentStep,
     ChooseCareerSkillsTable,
     ChooseCareerStep,
@@ -78,6 +80,8 @@ def test_step_handler_table_covers_every_flow_step():
     """The dispatch table is the single wiring point — lock its coverage so a
     new step type can't silently fall through `advance()`."""
     assert set(CareerTerm._STEP_HANDLERS) == {
+        ChooseAnagathicsStep,
+        AnagathicsUpkeepStep,
         RollQualificationStep,
         AutoQualifyStep,
         ChooseAssignmentStep,

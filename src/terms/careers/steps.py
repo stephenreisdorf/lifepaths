@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from src.career_data import Assignment
 from src.character import Character
+from src.terms.anagathics import (
+    ANAGATHICS_SOC_TARGET,
+    attempt_start_anagathics,
+    maintain_anagathics,
+)
 from src.terms.base import (
     PassFailRollStep,
     Step,
@@ -1032,4 +1037,150 @@ class ChooseDraftOrDrifterStep(Step):
                 "career": self.assigned_career,
                 "roll": self.draft_roll,
             },
+        )
+
+
+class ChooseAnagathicsStep(Step):
+    """Offer the optional anagathics rule at the start of a career term.
+
+    Only shown when the anagathics rule is enabled and no course is active
+    yet. The player may attempt to start a course (roll SOC 10+) or decline.
+    A natural 2 on the acquisition roll routes the Traveller straight to the
+    Prisoner career this term (surfaced as ``ANAGATHICS_PRISONER`` for the
+    term to branch on); a success starts the course and charges its first
+    term's 1D×Cr25000 cost.
+    """
+
+    step_id = "choose_anagathics"
+    step_type = StepType.CHOICE
+
+    START = "Start anagathics"
+    DECLINE = "Do not take anagathics"
+
+    def __init__(self, character: Character) -> None:
+        super().__init__(character)
+        self._decision_pending: str | None = None
+
+    def _options(self) -> list[str]:
+        return [self.START, self.DECLINE]
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description=(
+                "Start a course of anagathics (anti-aging drugs)? Requires a "
+                f"Social Standing {ANAGATHICS_SOC_TARGET}+ roll, costs "
+                "1D×Cr25000 per term (may go into debt), and forces two "
+                "Survival checks each term. A natural 2 sends you straight to "
+                "the Prisoner career."
+            ),
+            options=self._options(),
+            required_count=1,
+        )
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        if player_input is None:
+            raise ValueError("Anagathics decision is required.")
+        selections = player_input.get("selections", [])
+        if len(selections) != 1:
+            raise ValueError("Must choose one option.")
+        decision = selections[0]
+        if decision not in self._options():
+            raise ValueError(f"Unavailable option: {decision}")
+        self._decision_pending = decision
+
+    def apply(self) -> None:
+        if self._decision_pending == self.DECLINE:
+            self.outcome = StepOutcome(
+                status=StepStatus.ANAGATHICS_DECLINED,
+                description="Declined anagathics this term.",
+            )
+            return
+        result = attempt_start_anagathics(self.character)
+        if result.to_prisoner:
+            self.outcome = StepOutcome(
+                status=StepStatus.ANAGATHICS_PRISONER,
+                description=(
+                    "A botched anagathics dose (natural 2) — sent straight to "
+                    "the Prisoner career this term."
+                ),
+                data={"rolled": result.rolled, "total": result.total},
+            )
+        elif result.started:
+            self.outcome = StepOutcome(
+                status=StepStatus.ANAGATHICS_STARTED,
+                description=(
+                    f"Started anagathics — rolled {result.total} vs "
+                    f"{ANAGATHICS_SOC_TARGET}. This term's course costs "
+                    f"Cr{result.cost}."
+                ),
+                data={
+                    "rolled": result.rolled,
+                    "soc_dm": result.soc_dm,
+                    "total": result.total,
+                    "cost": result.cost,
+                },
+            )
+        else:
+            self.outcome = StepOutcome(
+                status=StepStatus.ANAGATHICS_MISSED,
+                description=(
+                    f"Failed to obtain anagathics — rolled {result.total} vs "
+                    f"{ANAGATHICS_SOC_TARGET}."
+                ),
+                data={
+                    "rolled": result.rolled,
+                    "soc_dm": result.soc_dm,
+                    "total": result.total,
+                },
+            )
+
+
+class AnagathicsUpkeepStep(Step):
+    """Charge the per-term maintenance for an already-active course.
+
+    Automatic step run at the start of a career term when a course is active:
+    rolls this term's 1D×Cr25000 cost, extends the course (raising its Ageing
+    DM), and reports the charge. Survival is doubled elsewhere in the term.
+    """
+
+    step_id = "anagathics_upkeep"
+    step_type = StepType.AUTOMATIC
+
+    def __init__(self, character: Character) -> None:
+        super().__init__(character)
+        self._cost: int = 0
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        self._cost = maintain_anagathics(self.character)
+
+    def apply(self) -> None:
+        course = self.character.anagathics
+        terms_used = course.terms_used if course is not None else 0
+        self.outcome = StepOutcome(
+            status=StepStatus.ANAGATHICS_MAINTAINED,
+            description=(
+                f"Maintained anagathics (term {terms_used}) — cost Cr{self._cost}."
+            ),
+            data={"cost": self._cost, "terms_used": terms_used},
+        )
+
+    def prompt(self) -> StepPrompt:
+        if self.outcome is not None:
+            return StepPrompt(
+                step_id=self.step_id,
+                step_type=self.step_type,
+                description=self.outcome.description,
+            )
+        return StepPrompt(
+            step_id=self.step_id,
+            step_type=self.step_type,
+            description="Paying this term's anagathics upkeep (1D×Cr25000).",
         )
