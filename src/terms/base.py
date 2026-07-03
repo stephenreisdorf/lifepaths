@@ -19,6 +19,72 @@ class StepType(str, Enum):
     CHOICE = "choice"  # Player picks N items from a list
 
 
+class StepStatus(str, Enum):
+    """Machine-readable outcome tag produced by a step and branched on by terms.
+
+    A `str, Enum` so members serialize to their string value unchanged (the API
+    ships `outcome.status` straight through in `src/engine.py`) while giving
+    producers and consumers a single shared definition. An unknown status now
+    fails loudly at `StepOutcome` construction instead of silently falling
+    through `next_term()` to `return None`.
+    """
+
+    # Generic / default
+    DONE = "done"
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    ROLLED = "ROLLED"
+    SELECTED = "SELECTED"
+    CHOSEN = "CHOSEN"
+    SKIP = "SKIP"
+    SKIPPED = "SKIPPED"
+
+    # Pre-career education
+    QUALIFIED = "QUALIFIED"
+    NOT_ADMITTED = "NOT_ADMITTED"
+    EDUCATED = "EDUCATED"
+    GRADUATED = "GRADUATED"
+    NOT_GRADUATED = "NOT_GRADUATED"
+    ATTENDED = "ATTENDED"
+
+    # Career term
+    TRAINED = "TRAINED"
+    SURVIVED = "SURVIVED"
+    MISHAP = "MISHAP"
+    EVENT = "EVENT"
+    PROMOTED = "PROMOTED"
+    NOT_PROMOTED = "NOT_PROMOTED"
+    AT_MAX_RANK = "AT_MAX_RANK"
+    COMMISSIONED = "COMMISSIONED"
+    FAILED_COMMISSION = "FAILED_COMMISSION"
+
+    # Career-term terminal outcomes (branched on by CareerTerm.next_term)
+    FAILED_QUAL = "FAILED_QUAL"
+    FORCED_EXIT = "FORCED_EXIT"
+    FORCED_STAY = "FORCED_STAY"
+    COMPLETED = "COMPLETED"
+
+    # Transition / assignment-change choices
+    CONTINUE = "CONTINUE"
+    MUSTER_OUT = "MUSTER_OUT"
+    CHANGE_ASSIGNMENT = "CHANGE_ASSIGNMENT"
+    CHOOSE_CAREER = "CHOOSE_CAREER"
+    DRAFTED = "DRAFTED"
+    DRIFTER = "DRIFTER"
+    CHANGED = "CHANGED"
+    CHANGE_FAILED = "CHANGE_FAILED"
+
+    # Muster-out
+    CASH = "CASH"
+    BENEFITS = "BENEFITS"
+    MUSTERED_OUT = "MUSTERED_OUT"
+
+    # Aging
+    NO_AGING = "NO_AGING"
+    AGED = "AGED"
+    AGING_CRISIS = "AGING_CRISIS"
+
+
 class StepPrompt(BaseModel):
     """Describes what a step needs from the player and what to display."""
 
@@ -42,13 +108,13 @@ class SubmitResult(BaseModel):
 class StepOutcome(BaseModel):
     """Uniform record of what a step produced.
 
-    `status` is a short machine-readable tag (e.g. "QUALIFIED", "FAILED",
-    "SURVIVED", "MISHAP", "CONTINUE", "MUSTER_OUT"). `description` is the
-    human-readable sentence rendered into the post-resolve prompt. `data`
-    carries structured details (roll totals, selections, career name, …).
+    `status` is a `StepStatus` member (e.g. QUALIFIED, FAILED, SURVIVED,
+    MISHAP, CONTINUE, MUSTER_OUT) — a machine-readable tag terms branch on.
+    `description` is the human-readable sentence rendered into the post-resolve
+    prompt. `data` carries structured details (roll totals, selections, …).
     """
 
-    status: str = "done"
+    status: StepStatus = StepStatus.DONE
     description: str = ""
     data: dict = Field(default_factory=dict)
 
@@ -111,8 +177,8 @@ class PassFailRollStep(Step):
 
     step_type = StepType.AUTOMATIC
     check_label: str = "Check"
-    status_pass: str = "PASSED"
-    status_fail: str = "FAILED"
+    status_pass: StepStatus = StepStatus.PASSED
+    status_fail: StepStatus = StepStatus.FAILED
 
     def __init__(
         self,
@@ -157,7 +223,7 @@ class PassFailRollStep(Step):
     def _post_description(self, status: str) -> str:
         return (
             f"{self.check_label} check on {self.check_characteristic}: "
-            f"rolled {self.total_roll} vs target {self.target} — {status}."
+            f"rolled {self.total_roll} vs target {self.target} — {status.value}."
         )
 
     def prompt(self) -> StepPrompt:

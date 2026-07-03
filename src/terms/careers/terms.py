@@ -7,6 +7,7 @@ from src.character import Character
 from src.terms.base import (
     Step,
     StepOutcome,
+    StepStatus,
     Term,
 )
 from src.terms.careers.aging import AgingStep
@@ -116,7 +117,7 @@ class TransitionTerm(Term):
     ) -> "Term | None":
         from src.career_loader import load_career
 
-        if outcome.status == "DRAFTED":
+        if outcome.status == StepStatus.DRAFTED:
             context.draft_used = True
         context.current_career_data = load_career(outcome.data["career"])
         context.career_term_count = 0
@@ -133,14 +134,14 @@ class TransitionTerm(Term):
     def _after_continue_or_muster(
         self, inner: Step, outcome: StepOutcome, context: "CareerContext"
     ) -> "Term | None":
-        if outcome.status == "CONTINUE":
+        if outcome.status == StepStatus.CONTINUE:
             return CareerTerm(
                 context.character,
                 context.current_career_data,
                 term_number=context.career_term_count + 1,
                 is_first_term=False,
             )
-        if outcome.status == "CHANGE_ASSIGNMENT":
+        if outcome.status == StepStatus.CHANGE_ASSIGNMENT:
             # Hand off to the assignment-change sub-term. It will roll
             # qualification for the new assignment and, on success, start a
             # new CareerTerm with rank reset to 0.
@@ -159,7 +160,7 @@ class TransitionTerm(Term):
     def _after_muster_or_new_career(
         self, inner: Step, outcome: StepOutcome, context: "CareerContext"
     ) -> "Term | None":
-        if outcome.status == "MUSTER_OUT":
+        if outcome.status == StepStatus.MUSTER_OUT:
             return _muster_out_term_for(context, inner.career_name)  # type: ignore[attr-defined]
         # CHOOSE_CAREER — proceed to career selection, skipping benefits.
         context.current_career_data = None
@@ -333,10 +334,10 @@ class CareerTerm(Term):
     # method that can be exercised in isolation in tests.
 
     def _after_qualification(self, step: Step) -> None:
-        if step.outcome.status != "QUALIFIED":
+        if step.outcome.status != StepStatus.QUALIFIED:
             # Failed qualification ends the term immediately.
             self.outcome = StepOutcome(
-                status="FAILED_QUAL",
+                status=StepStatus.FAILED_QUAL,
                 description="Qualification failed — returning to career selection.",
             )
             return
@@ -387,7 +388,7 @@ class CareerTerm(Term):
             )
 
     def _after_survival(self, step: Step) -> None:
-        if step.outcome.status == "SURVIVED":
+        if step.outcome.status == StepStatus.SURVIVED:
             self.steps.append(EventsRollStep(self.character, self.events))
         else:
             self.steps.append(MishapRollStep(self.character, self.mishaps))
@@ -399,7 +400,7 @@ class CareerTerm(Term):
         if step.forced_exit:
             self.character.record_career_term(self.career_name)
             self._finalize_term(StepOutcome(
-                status="FORCED_EXIT",
+                status=StepStatus.FORCED_EXIT,
                 description="Event forced you out of the career — term complete.",
             ))
             return
@@ -422,12 +423,12 @@ class CareerTerm(Term):
             self.steps.append(self._advancement_step())
 
     def _after_commission(self, step: Step) -> None:
-        if step.outcome.status == "COMMISSIONED":
+        if step.outcome.status == StepStatus.COMMISSIONED:
             # Commission replaces advancement this term. terms_served was
             # ticked in CommissionStep.apply(). No forced-exit check because
             # there was no advancement roll.
             self._finalize_term(StepOutcome(
-                status="COMPLETED",
+                status=StepStatus.COMPLETED,
                 description="Term completed (commissioned).",
             ))
         else:
@@ -437,7 +438,7 @@ class CareerTerm(Term):
         self.character.mark_career_ejected(self.career_name)
         self.character.record_career_term(self.career_name)
         self._finalize_term(StepOutcome(
-            status="MISHAP",
+            status=StepStatus.MISHAP,
             description="Career ended by mishap.",
         ))
 
@@ -447,12 +448,12 @@ class CareerTerm(Term):
         # the character out of the career.
         if step.forced_stay:
             terminal = StepOutcome(
-                status="FORCED_STAY",
+                status=StepStatus.FORCED_STAY,
                 description="Natural 12 — forced to stay in the career.",
             )
         elif step.forced_exit:
             terminal = StepOutcome(
-                status="FORCED_EXIT",
+                status=StepStatus.FORCED_EXIT,
                 description=(
                     "Advancement roll did not exceed terms served — "
                     "forced to leave the career."
@@ -460,11 +461,11 @@ class CareerTerm(Term):
             )
         else:
             terminal = StepOutcome(
-                status="COMPLETED",
+                status=StepStatus.COMPLETED,
                 description="Term completed.",
             )
 
-        if step.outcome.status == "PROMOTED":
+        if step.outcome.status == StepStatus.PROMOTED:
             # Promotion grants a bonus skill roll. Defer term finalization
             # until that roll completes.
             self._pending_finalize_outcome = terminal
@@ -511,7 +512,7 @@ class CareerTerm(Term):
     def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None
 
-        if status == "FAILED_QUAL":
+        if status == StepStatus.FAILED_QUAL:
             forced = _forced_entry_career_term(context)
             if forced is not None:
                 return forced
@@ -525,7 +526,7 @@ class CareerTerm(Term):
                 ),
             )
 
-        if status == "MISHAP":
+        if status == StepStatus.MISHAP:
             context.career_term_count = 0
             context.blocked_career = self.career_name
             context.current_assignment = None
@@ -539,7 +540,7 @@ class CareerTerm(Term):
                 MusterOutOrNewCareerStep(context.character, self.career_name),
             )
 
-        if status == "COMPLETED":
+        if status == StepStatus.COMPLETED:
             context.career_term_count += 1
             context.current_assignment = self._selected_assignment
             return TransitionTerm(
@@ -553,7 +554,7 @@ class CareerTerm(Term):
                 ),
             )
 
-        if status == "FORCED_EXIT":
+        if status == StepStatus.FORCED_EXIT:
             # Forced out by advancement ≤ terms served. No Continue /
             # Muster choice — go straight to Career Selection. The
             # "cannot re-enter next term" rule applies to any leaving.
@@ -571,7 +572,7 @@ class CareerTerm(Term):
                 context.character, ChooseCareerStep(context.character, careers)
             )
 
-        if status == "FORCED_STAY":
+        if status == StepStatus.FORCED_STAY:
             # Natural 12 on advancement — skip continue/muster and start
             # the next term in the same career immediately.
             context.career_term_count += 1
@@ -647,9 +648,9 @@ class AssignmentChangeTerm(Term):
             )
 
     def _after_qualification(self, step: Step) -> None:
-        if step.outcome.status == "QUALIFIED":
+        if step.outcome.status == StepStatus.QUALIFIED:
             self.outcome = StepOutcome(
-                status="CHANGED",
+                status=StepStatus.CHANGED,
                 description=(
                     f"Qualified for {self._chosen_assignment['name']} — "
                     "career begins afresh at rank 0."
@@ -657,7 +658,7 @@ class AssignmentChangeTerm(Term):
             )
         else:
             self.outcome = StepOutcome(
-                status="CHANGE_FAILED",
+                status=StepStatus.CHANGE_FAILED,
                 description=(
                     "Failed to qualify for the new assignment — "
                     "forced out of the career."
@@ -683,7 +684,7 @@ class AssignmentChangeTerm(Term):
     def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None
 
-        if status == "CHANGED":
+        if status == StepStatus.CHANGED:
             # RAW: rank resets to 0 when the assignment changes.
             record = self.character.ensure_career(self.career_name)
             record.rank = 0
@@ -696,7 +697,7 @@ class AssignmentChangeTerm(Term):
                 assignment_override=self._chosen_assignment,
             )
 
-        if status == "CHANGE_FAILED":
+        if status == StepStatus.CHANGE_FAILED:
             context.current_career_data = None
             context.career_term_count = 0
             context.blocked_career = self.career_name

@@ -6,6 +6,7 @@ from src.terms.base import (
     Step,
     StepOutcome,
     StepPrompt,
+    StepStatus,
     StepType,
 )
 from src.terms.careers.parsers import (
@@ -25,8 +26,8 @@ class RollQualificationStep(PassFailRollStep):
 
     step_id = "roll_qualification"
     check_label = "Qualification"
-    status_pass = "QUALIFIED"
-    status_fail = "FAILED"
+    status_pass = StepStatus.QUALIFIED
+    status_fail = StepStatus.FAILED
 
 
 class AutoQualifyStep(Step):
@@ -53,7 +54,7 @@ class AutoQualifyStep(Step):
 
     def apply(self) -> None:
         self.outcome = StepOutcome(
-            status="QUALIFIED",
+            status=StepStatus.QUALIFIED,
             description=(
                 f"Automatically qualified ({self.characteristic} "
                 f">= {self.target})."
@@ -88,7 +89,7 @@ class BasicTrainingStep(Step):
         for skill in self.service_skills:
             self.character.grant_skill(skill, level=0)
         self.outcome = StepOutcome(
-            status="TRAINED",
+            status=StepStatus.TRAINED,
             description=(
                 f"Gained basic training skills: {', '.join(self.service_skills)}."
             ),
@@ -153,7 +154,7 @@ class PickServiceSkillStep(Step):
         skill = self._selected_skill_pending
         self.character.grant_skill(skill, level=0)
         self.outcome = StepOutcome(
-            status="TRAINED",
+            status=StepStatus.TRAINED,
             description=f"Gained {skill} at level 0 (subsequent-career basic training).",
             data={"service_skill": skill},
         )
@@ -199,7 +200,7 @@ class ChooseAssignmentStep(Step):
     def apply(self) -> None:
         assignment = self._selected_assignment_pending
         self.outcome = StepOutcome(
-            status="SELECTED",
+            status=StepStatus.SELECTED,
             description=f"Assignment: {assignment['name']}.",
             data={"assignment": assignment, "name": assignment["name"]},
         )
@@ -283,7 +284,7 @@ class ChooseCareerSkillsTable(Step):
     def apply(self) -> None:
         table = self._selected_skill_table_pending
         self.outcome = StepOutcome(
-            status="SELECTED",
+            status=StepStatus.SELECTED,
             description=f"Skill table: {table}.",
             data={"skill_table": table},
         )
@@ -308,7 +309,7 @@ class RollForSkillStep(Step):
             name, specialty, level = parse_skill_entry(self.skill)
             self.character.grant_skill(name, level=level, specialty=specialty)
         self.outcome = StepOutcome(
-            status="ROLLED",
+            status=StepStatus.ROLLED,
             description=(
                 f"Rolled a {self.skill_roll} on the skill table — "
                 f"gained {self.skill}."
@@ -337,8 +338,8 @@ class SurvivalCheckStep(PassFailRollStep):
 
     step_id = "survival_check"
     check_label = "Survival"
-    status_pass = "SURVIVED"
-    status_fail = "FAILED"
+    status_pass = StepStatus.SURVIVED
+    status_fail = StepStatus.FAILED
 
     def __init__(self, character: Character, assignment: dict) -> None:
         survival = assignment["survival"]
@@ -401,7 +402,7 @@ class MishapRollStep(Step):
         if applied:
             detail = " Effects: " + "; ".join(applied) + "."
         self.outcome = StepOutcome(
-            status="MISHAP",
+            status=StepStatus.MISHAP,
             description=(
                 f"Mishap! Rolled {self.mishap_roll}: {self.mishap_text} "
                 f"Your career ends.{detail}"
@@ -454,7 +455,7 @@ class EventsRollStep(Step):
         if applied:
             detail = " Effects: " + "; ".join(applied) + "."
         self.outcome = StepOutcome(
-            status="EVENT",
+            status=StepStatus.EVENT,
             description=(
                 f"Event (2d6 = {self.event_roll}): {self.event_text}{detail}"
             ),
@@ -483,9 +484,9 @@ class AdvancementRollStep(PassFailRollStep):
 
     step_id = "advancement_roll"
     check_label = "Advancement"
-    status_pass = "PROMOTED"
-    status_fail = "NOT_PROMOTED"
-    status_at_max_rank = "AT_MAX_RANK"
+    status_pass = StepStatus.PROMOTED
+    status_fail = StepStatus.NOT_PROMOTED
+    status_at_max_rank = StepStatus.AT_MAX_RANK
 
     def __init__(
         self,
@@ -570,7 +571,7 @@ class AdvancementRollStep(PassFailRollStep):
         elif status == self.status_at_max_rank:
             outcome_str = "already at top rank — no promotion"
         else:
-            outcome_str = status
+            outcome_str = status.value
         if self.raw_roll == 12:
             suffix = " (natural 12 — forced to stay)"
         elif getattr(self, "forced_exit", False):
@@ -681,7 +682,7 @@ class CommissionStep(Step):
     def apply(self) -> None:
         if self._decision_pending == self.SKIP:
             self.outcome = StepOutcome(
-                status="SKIPPED",
+                status=StepStatus.SKIPPED,
                 description="Declined to attempt a commission this term.",
                 data={"decision": "skip"},
             )
@@ -697,7 +698,7 @@ class CommissionStep(Step):
             # here so the count is correct when the term ends.
             self.character.record_career_term(self.career_name)
             self.outcome = StepOutcome(
-                status="COMMISSIONED",
+                status=StepStatus.COMMISSIONED,
                 description=(
                     f"Commission check on {self.characteristic}: rolled "
                     f"{self.total_roll} vs target {self.target} — COMMISSIONED"
@@ -712,7 +713,7 @@ class CommissionStep(Step):
             )
         else:
             self.outcome = StepOutcome(
-                status="FAILED_COMMISSION",
+                status=StepStatus.FAILED_COMMISSION,
                 description=(
                     f"Commission check on {self.characteristic}: rolled "
                     f"{self.total_roll} vs target {self.target} — FAILED."
@@ -774,7 +775,7 @@ class ChooseCareerStep(Step):
     def apply(self) -> None:
         career = self._selected_career_pending
         self.outcome = StepOutcome(
-            status="SELECTED",
+            status=StepStatus.SELECTED,
             description=f"Pursuing career: {career}.",
             data={"career": career},
         )
@@ -858,9 +859,9 @@ class ContinueOrMusterOutStep(Step):
     def apply(self) -> None:
         decision = self._decision_pending
         status = {
-            self.CONTINUE: "CONTINUE",
-            self.MUSTER_OUT: "MUSTER_OUT",
-            self.CHANGE_ASSIGNMENT: "CHANGE_ASSIGNMENT",
+            self.CONTINUE: StepStatus.CONTINUE,
+            self.MUSTER_OUT: StepStatus.MUSTER_OUT,
+            self.CHANGE_ASSIGNMENT: StepStatus.CHANGE_ASSIGNMENT,
         }[decision]
         self.outcome = StepOutcome(
             status=status,
@@ -917,8 +918,8 @@ class MusterOutOrNewCareerStep(Step):
     def apply(self) -> None:
         decision = self._decision_pending
         status = {
-            self.MUSTER_OUT: "MUSTER_OUT",
-            self.CHOOSE_CAREER: "CHOOSE_CAREER",
+            self.MUSTER_OUT: StepStatus.MUSTER_OUT,
+            self.CHOOSE_CAREER: StepStatus.CHOOSE_CAREER,
         }[decision]
         self.outcome = StepOutcome(
             status=status,
@@ -1009,14 +1010,14 @@ class ChooseDraftOrDrifterStep(Step):
         if self._decision_pending == self.DRIFTER:
             self.assigned_career = "Drifter"
             self.outcome = StepOutcome(
-                status="DRIFTER",
+                status=StepStatus.DRIFTER,
                 description="Fell back to the Drifter career.",
                 data={"career": "Drifter"},
             )
             return
         assert self.draft_roll is not None and self.assigned_career is not None
         self.outcome = StepOutcome(
-            status="DRAFTED",
+            status=StepStatus.DRAFTED,
             description=(
                 f"Drafted — rolled {self.draft_roll} on the Draft table: "
                 f"assigned to the {self.assigned_career} career."

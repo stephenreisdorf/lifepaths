@@ -7,6 +7,7 @@ from src.terms.base import (
     Step,
     StepOutcome,
     StepPrompt,
+    StepStatus,
     StepType,
     Term,
 )
@@ -125,7 +126,7 @@ class MusterOutStep(Step):
             amount = int(entry) if isinstance(entry, (int, str)) and str(entry).lstrip("-").isdigit() else 0
             self.character.cash += amount
             self.outcome = StepOutcome(
-                status="CASH",
+                status=StepStatus.CASH,
                 description=(
                     f"Benefit roll {self.roll_index}/{self.total_rolls}: "
                     f"rolled {self.roll_value} on the Cash column — "
@@ -146,7 +147,7 @@ class MusterOutStep(Step):
         entry_text = str(entry).strip()
         applied = self._apply_material(entry_text)
         self.outcome = StepOutcome(
-            status="BENEFITS",
+            status=StepStatus.BENEFITS,
             description=(
                 f"Benefit roll {self.roll_index}/{self.total_rolls}: "
                 f"rolled {self.roll_value} on the Benefits column — "
@@ -243,7 +244,7 @@ class MusterOutTerm(Term):
         super().advance()
         if self.current_step_index >= len(self.steps):
             self.outcome = StepOutcome(
-                status="MUSTERED_OUT",
+                status=StepStatus.MUSTERED_OUT,
                 description=(
                     f"Mustered out of the {self.career_name} — "
                     f"{self.total_rolls} benefit roll(s) resolved."

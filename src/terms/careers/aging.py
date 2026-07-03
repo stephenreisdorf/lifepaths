@@ -5,6 +5,7 @@ from src.terms.base import (
     Step,
     StepOutcome,
     StepPrompt,
+    StepStatus,
     StepType,
 )
 from src.utilities import roll
@@ -95,7 +96,7 @@ class AgingStep(Step):
     def apply(self) -> None:
         if self._bracket is None:
             self.outcome = StepOutcome(
-                status="NO_AGING",
+                status=StepStatus.NO_AGING,
                 description=f"Age {self.character.age} — no aging effects.",
             )
             return
@@ -131,7 +132,7 @@ class AgingStep(Step):
             desc_lines.append("  A characteristic has reached 0 — aging crisis!")
 
         self.outcome = StepOutcome(
-            status="AGING_CRISIS" if death else "AGED",
+            status=StepStatus.AGING_CRISIS if death else StepStatus.AGED,
             description="\n".join(desc_lines),
             data={
                 "age": self.character.age,

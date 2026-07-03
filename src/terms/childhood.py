@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.character import Character
-from src.terms.base import Step, StepOutcome, StepPrompt, StepType, Term
+from src.terms.base import Step, StepOutcome, StepPrompt, StepStatus, StepType, Term
 from src.utilities import roll
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ class RollCharacteristicsStep(Step):
             )
         rolled = ", ".join(f"{name} {value}" for name, value in self.characteristics.items())
         self.outcome = StepOutcome(
-            status="ROLLED",
+            status=StepStatus.ROLLED,
             description=f"Rolled characteristics: {rolled}.",
             data={"characteristics": dict(self.characteristics)},
         )
@@ -116,7 +116,7 @@ class ChooseBackgroundSkillsStep(Step):
         for skill in self._selections_pending:
             self.character.grant_skill(skill, level=0)
         self.outcome = StepOutcome(
-            status="SELECTED",
+            status=StepStatus.SELECTED,
             description=f"Background skills: {', '.join(self._selections_pending)}.",
             data={"skills": list(self._selections_pending)},
         )

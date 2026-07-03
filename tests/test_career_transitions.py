@@ -111,7 +111,7 @@ def test_after_survival_branches_on_status():
     assert survived.steps[-1].step_id == EventsRollStep.step_id
 
     mishap = _scout_term()
-    mishap._after_survival(_FakeStep(status="INJURED"))
+    mishap._after_survival(_FakeStep(status="FAILED"))
     assert mishap.steps[-1].step_id == MishapRollStep.step_id
 
 
@@ -138,7 +138,7 @@ def test_after_advancement_promoted_defers_finalize_and_grants_skill():
 def test_after_advancement_no_promotion_finalizes_completed():
     term = _scout_term()
     term._after_advancement(
-        _FakeStep(status="ADVANCED", forced_stay=False, forced_exit=False)
+        _FakeStep(status="NOT_PROMOTED", forced_stay=False, forced_exit=False)
     )
 
     assert term.outcome is not None

@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.character import Character
-from src.terms.base import Step, StepOutcome, Term
+from src.terms.base import Step, StepOutcome, StepStatus, Term
 from src.terms.careers import BasicTrainingStep, try_apply_characteristic_bonus
 from src.terms.education.config import (
     UNIVERSITY,
@@ -95,9 +95,9 @@ class UniversityTerm(Term):
         return "University"
 
     def _after_qualification(self, step: Step) -> None:
-        if step.outcome.status != "QUALIFIED":
+        if step.outcome.status != StepStatus.QUALIFIED:
             self.outcome = StepOutcome(
-                status="NOT_ADMITTED",
+                status=StepStatus.NOT_ADMITTED,
                 description="Not admitted to University — proceed to a career.",
             )
             return
@@ -123,7 +123,7 @@ class UniversityTerm(Term):
         self.character.age += EDUCATION_TERM_YEARS
         self._graduated_qualification_dm = step.qualification_dm
         self.outcome = StepOutcome(
-            status="EDUCATED",
+            status=StepStatus.EDUCATED,
             description=step.outcome.description,
             data={"qualification_dm": step.qualification_dm},
         )
@@ -180,9 +180,9 @@ class MilitaryAcademyTerm(Term):
         return self.academy["name"]
 
     def _after_qualification(self, step: Step) -> None:
-        if step.outcome.status != "QUALIFIED":
+        if step.outcome.status != StepStatus.QUALIFIED:
             self.outcome = StepOutcome(
-                status="NOT_ADMITTED",
+                status=StepStatus.NOT_ADMITTED,
                 description=(
                     f"Not admitted to the {self.academy['name']} — "
                     "proceed to a career."
@@ -210,7 +210,7 @@ class MilitaryAcademyTerm(Term):
         self.character.age += EDUCATION_TERM_YEARS
         self._graduated = step.graduated
         self.outcome = StepOutcome(
-            status="GRADUATED" if step.graduated else "ATTENDED",
+            status=StepStatus.GRADUATED if step.graduated else StepStatus.ATTENDED,
             description=step.outcome.description,
             data={"graduated": step.graduated},
         )
@@ -247,7 +247,7 @@ class MilitaryAcademyTerm(Term):
             return None
         from src.terms.careers import CareerTerm
 
-        if self.outcome.status == "NOT_ADMITTED":
+        if self.outcome.status == StepStatus.NOT_ADMITTED:
             return _career_selection_term(context.character)
 
         # Admitted (graduated or merely attended) → enter the service career.

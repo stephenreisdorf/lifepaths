@@ -14,6 +14,7 @@ from src.terms.base import (
     Step,
     StepOutcome,
     StepPrompt,
+    StepStatus,
     StepType,
 )
 
@@ -23,8 +24,8 @@ class EducationQualificationStep(PassFailRollStep):
 
     step_id = "education_qualification"
     check_label = "Entry"
-    status_pass = "QUALIFIED"
-    status_fail = "FAILED"
+    status_pass = StepStatus.QUALIFIED
+    status_fail = StepStatus.FAILED
 
 
 class ChoosePreCareerStep(Step):
@@ -80,7 +81,7 @@ class ChoosePreCareerStep(Step):
     def apply(self) -> None:
         if self._choice_pending == self.SKIP_KEY:
             self.outcome = StepOutcome(
-                status="SKIP",
+                status=StepStatus.SKIP,
                 description="Skipped pre-career education.",
                 data={"choice": self.SKIP_KEY},
             )
@@ -89,7 +90,7 @@ class ChoosePreCareerStep(Step):
             o["label"] for o in self.options if o["key"] == self._choice_pending
         )
         self.outcome = StepOutcome(
-            status="CHOSEN",
+            status=StepStatus.CHOSEN,
             description=f"Applying to {label}.",
             data={"choice": self._choice_pending, "label": label},
         )
@@ -142,7 +143,7 @@ class ChooseUniversitySkillsStep(Step):
         self.character.grant_skill(major, level=1)
         self.character.grant_skill(minor, level=0)
         self.outcome = StepOutcome(
-            status="SELECTED",
+            status=StepStatus.SELECTED,
             description=f"Studying {major} (major) and {minor} (minor).",
             data={"major": major, "minor": minor},
         )
@@ -153,8 +154,8 @@ class UniversityGraduationStep(PassFailRollStep):
 
     step_id = "university_graduation"
     check_label = "Graduation"
-    status_pass = "GRADUATED"
-    status_fail = "NOT_GRADUATED"
+    status_pass = StepStatus.GRADUATED
+    status_fail = StepStatus.NOT_GRADUATED
 
     def __init__(
         self,
@@ -226,8 +227,8 @@ class AcademyGraduationStep(PassFailRollStep):
 
     step_id = "academy_graduation"
     check_label = "Graduation"
-    status_pass = "GRADUATED"
-    status_fail = "NOT_GRADUATED"
+    status_pass = StepStatus.GRADUATED
+    status_fail = StepStatus.NOT_GRADUATED
 
     def __init__(
         self,
