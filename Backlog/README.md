@@ -12,7 +12,11 @@ _(none)_
 
 ## Architecture
 
-_(none)_
+- [Replace step statuses with a StepStatus enum](status-string-enum.md) — stringly-typed status control flow; typo drift silently ends creation.
+- [Pull advance() dispatch into a DispatchTerm base](dispatch-term-base.md) — identical dispatch body copy-pasted across four terms.
+- [Extract the best-of-options qualification helper](dedup-best-qualification-option.md) — duplicated max()-by-DM block in CareerTerm and AssignmentChangeTerm.
+- [Keep CareerData typed through the domain layer](typed-career-data-through-domain.md) — validated model flattened to loose dicts at the domain boundary.
+- [Hoist in-function career_loader imports](hoist-career-loader-imports.md) — seven deferred imports with no cycle to justify them.
 
 ## Deferred
 
