@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.character import Character
-from src.terms.base import Step, StepOutcome, StepStatus, Term
+from src.terms.base import DispatchTerm, Step, StepOutcome, StepStatus, Term
 from src.terms.careers import BasicTrainingStep, try_apply_characteristic_bonus
 from src.terms.education.config import (
     UNIVERSITY,
@@ -66,7 +66,7 @@ class PreCareerChoiceTerm(Term):
         return _career_selection_term(context.character)
 
 
-class UniversityTerm(Term):
+class UniversityTerm(DispatchTerm):
     """Attempt University: qualify, pick subjects, then attempt to graduate."""
 
     def __init__(self, character: Character) -> None:
@@ -134,15 +134,6 @@ class UniversityTerm(Term):
         UniversityGraduationStep: _after_graduation,
     }
 
-    def advance(self) -> None:
-        step = self.current_step
-        super().advance()
-        if step is None or step.outcome is None:
-            return
-        handler = self._STEP_HANDLERS.get(type(step))
-        if handler is not None:
-            handler(self, step)
-
     def next_term(self, context: "CareerContext") -> "Term | None":
         if self.outcome is None:
             return None
@@ -152,7 +143,7 @@ class UniversityTerm(Term):
         return _career_selection_term(context.character)
 
 
-class MilitaryAcademyTerm(Term):
+class MilitaryAcademyTerm(DispatchTerm):
     """Attempt a Military Academy tied to a specific service career.
 
     Graduating enters the service commissioned (officer rank 1) and
@@ -220,15 +211,6 @@ class MilitaryAcademyTerm(Term):
         BasicTrainingStep: _after_training,
         AcademyGraduationStep: _after_graduation,
     }
-
-    def advance(self) -> None:
-        step = self.current_step
-        super().advance()
-        if step is None or step.outcome is None:
-            return
-        handler = self._STEP_HANDLERS.get(type(step))
-        if handler is not None:
-            handler(self, step)
 
     def _apply_officer_commission(self) -> None:
         """Commission the character as a rank-1 officer of the service."""

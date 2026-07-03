@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from src.career_data import CareerData
 from src.character import Character
 from src.terms.base import (
+    DispatchTerm,
     Step,
     StepOutcome,
     StepStatus,
@@ -189,7 +190,7 @@ class TransitionTerm(Term):
         return handler(self, inner, outcome, context)
 
 
-class CareerTerm(Term):
+class CareerTerm(DispatchTerm):
     """Live through a full career term.
 
     The progression is dynamic based on results and choices:
@@ -490,22 +491,6 @@ class CareerTerm(Term):
     def _after_aging(self, step: Step) -> None:
         self.outcome = self._pending_outcome
 
-    def advance(self) -> None:
-        """Complete the current step and dispatch to its transition handler.
-
-        The handler dynamically appends the next step(s) or synthesizes a
-        terminal outcome based on the just-resolved step's result.
-        """
-        step = self.current_step
-        super().advance()
-
-        if step is None or step.outcome is None:
-            return
-
-        handler = self._STEP_HANDLERS.get(type(step))
-        if handler is not None:
-            handler(self, step)
-
     # Declarative transition table: step type → handler. Grouping two step
     # classes (roll vs auto qualification) onto one handler is a table entry,
     # not a branch. Extend the flow by adding a handler above and a row here.
@@ -600,7 +585,7 @@ class CareerTerm(Term):
         return None
 
 
-class AssignmentChangeTerm(Term):
+class AssignmentChangeTerm(DispatchTerm):
     """Handle the assignment-change flow.
 
     Pick a new assignment within the same career, then roll career
@@ -685,15 +670,6 @@ class AssignmentChangeTerm(Term):
         RollQualificationStep: _after_qualification,
         AutoQualifyStep: _after_qualification,
     }
-
-    def advance(self) -> None:
-        step = self.current_step
-        super().advance()
-        if step is None or step.outcome is None:
-            return
-        handler = self._STEP_HANDLERS.get(type(step))
-        if handler is not None:
-            handler(self, step)
 
     def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None

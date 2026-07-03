@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -296,3 +296,34 @@ class Term:
         explicit, typed object rather than the engine. Default is no next term.
         """
         return None
+
+
+class DispatchTerm(Term):
+    """A `Term` that dispatches each resolved step through a handler table.
+
+    Subclasses declare a `_STEP_HANDLERS` mapping of step type → handler
+    (an unbound method taking `(self, step)`) and nothing else about the
+    dispatch mechanism. After the current step is completed, `advance()`
+    looks up the just-resolved step's type and calls its handler, which
+    dynamically appends the next step(s) or synthesizes a terminal outcome.
+
+    This is the Template Method that `CareerTerm`, `AssignmentChangeTerm`,
+    and the two education terms share instead of hand-rolling identical
+    `advance()` bodies.
+    """
+
+    _STEP_HANDLERS: ClassVar[dict[type[Step], Callable[["DispatchTerm", Step], None]]] = {}
+
+    def advance(self) -> None:
+        """Complete the current step and dispatch to its transition handler.
+
+        The handler dynamically appends the next step(s) or synthesizes a
+        terminal outcome based on the just-resolved step's result.
+        """
+        step = self.current_step
+        super().advance()
+        if step is None or step.outcome is None:
+            return
+        handler = self._STEP_HANDLERS.get(type(step))
+        if handler is not None:
+            handler(self, step)
