@@ -1,0 +1,4 @@
+interface:
+  display_name: "Iterate"
+  short_description: "Ship the next backlog item end-to-end"
+  default_prompt: "Use $iterate to ship the next prioritized Lifepaths backlog item."
