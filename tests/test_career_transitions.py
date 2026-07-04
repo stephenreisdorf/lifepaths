@@ -9,7 +9,7 @@ point of the sequencing-machine refactor.
 
 from src.career_loader import load_career
 from src.character import Character
-from src.terms.base import StepOutcome
+from src.terms.base import StepOutcome, StepStatus
 from src.terms.careers import (
     AdvancementRollStep,
     AgingStep,
@@ -93,6 +93,18 @@ def test_step_handler_table_covers_every_flow_step():
         MishapRollStep,
         AdvancementRollStep,
         AgingStep,
+    }
+
+
+def test_terminal_handler_table_covers_every_career_term_outcome():
+    """Cross-term terminal routing should stay declarative like step routing."""
+    assert set(CareerTerm._TERMINAL_HANDLERS) == {
+        StepStatus.ANAGATHICS_PRISONER,
+        StepStatus.FAILED_QUAL,
+        StepStatus.MISHAP,
+        StepStatus.COMPLETED,
+        StepStatus.FORCED_EXIT,
+        StepStatus.FORCED_STAY,
     }
 
 

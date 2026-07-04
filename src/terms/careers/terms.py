@@ -591,85 +591,92 @@ class CareerTerm(DispatchTerm):
         AgingStep: _after_aging,
     }
 
+    def _next_on_anagathics_prisoner(
+        self, context: "CareerContext"
+    ) -> "Term | None":
+        # Natural 2 on the anagathics roll — abandon this term's career and
+        # go straight to Prisoner (queued as pending_career_entry).
+        context.reset_for_career_exit()
+        return _forced_entry_career_term(context)
+
+    def _next_on_failed_qual(self, context: "CareerContext") -> "Term | None":
+        forced = _forced_entry_career_term(context)
+        if forced is not None:
+            return forced
+        # Per RAW, a failed qualification routes to the Draft (once
+        # per life) or the Drifter career — never straight back to
+        # career selection.
+        return TransitionTerm(
+            context.character,
+            ChooseDraftOrDrifterStep(context.character, draft_used=context.draft_used),
+        )
+
+    def _next_on_mishap(self, context: "CareerContext") -> "Term | None":
+        context.reset_for_career_exit(blocked_career=self.career_name)
+        forced = _forced_entry_career_term(context)
+        if forced is not None:
+            return forced
+        # Keep context.current_career_data loaded — the muster-out
+        # branch needs it to read benefit tables.
+        return TransitionTerm(
+            context.character,
+            MusterOutOrNewCareerStep(context.character, self.career_name),
+        )
+
+    def _next_on_completed(self, context: "CareerContext") -> "Term | None":
+        context.career_term_count += 1
+        context.current_assignment = self._selected_assignment
+        return TransitionTerm(
+            context.character,
+            ContinueOrMusterOutStep(
+                context.character,
+                self.career_name,
+                assignment_change_group=self.assignment_change_group,
+                current_assignment=self._selected_assignment,
+                assignments=self.assignments,
+            ),
+        )
+
+    def _next_on_forced_exit(self, context: "CareerContext") -> "Term | None":
+        # Forced out by advancement ≤ terms served. No Continue /
+        # Muster choice — go straight to Career Selection. The
+        # "cannot re-enter next term" rule applies to any leaving.
+        context.current_career_data = None
+        context.reset_for_career_exit(blocked_career=self.career_name)
+        forced = _forced_entry_career_term(context)
+        if forced is not None:
+            return forced
+        careers = _available_careers_for(context)
+        return TransitionTerm(
+            context.character, ChooseCareerStep(context.character, careers)
+        )
+
+    def _next_on_forced_stay(self, context: "CareerContext") -> "Term | None":
+        # Natural 12 on advancement — skip continue/muster and start
+        # the next term in the same career immediately.
+        context.career_term_count += 1
+        return CareerTerm(
+            context.character,
+            context.current_career_data,
+            term_number=context.career_term_count + 1,
+            is_first_term=False,
+            anagathics_enabled=context.anagathics_enabled,
+        )
+
+    _TERMINAL_HANDLERS = {
+        StepStatus.ANAGATHICS_PRISONER: _next_on_anagathics_prisoner,
+        StepStatus.FAILED_QUAL: _next_on_failed_qual,
+        StepStatus.MISHAP: _next_on_mishap,
+        StepStatus.COMPLETED: _next_on_completed,
+        StepStatus.FORCED_EXIT: _next_on_forced_exit,
+        StepStatus.FORCED_STAY: _next_on_forced_stay,
+    }
+
     def next_term(self, context: "CareerContext") -> "Term | None":
         status = self.outcome.status if self.outcome else None
-
-        if status == StepStatus.ANAGATHICS_PRISONER:
-            # Natural 2 on the anagathics roll — abandon this term's career and
-            # go straight to Prisoner (queued as pending_career_entry).
-            context.career_term_count = 0
-            context.current_assignment = None
-            return _forced_entry_career_term(context)
-
-        if status == StepStatus.FAILED_QUAL:
-            forced = _forced_entry_career_term(context)
-            if forced is not None:
-                return forced
-            # Per RAW, a failed qualification routes to the Draft (once
-            # per life) or the Drifter career — never straight back to
-            # career selection.
-            return TransitionTerm(
-                context.character,
-                ChooseDraftOrDrifterStep(
-                    context.character, draft_used=context.draft_used
-                ),
-            )
-
-        if status == StepStatus.MISHAP:
-            context.career_term_count = 0
-            context.blocked_career = self.career_name
-            context.current_assignment = None
-            forced = _forced_entry_career_term(context)
-            if forced is not None:
-                return forced
-            # Keep context.current_career_data loaded — the muster-out
-            # branch needs it to read benefit tables.
-            return TransitionTerm(
-                context.character,
-                MusterOutOrNewCareerStep(context.character, self.career_name),
-            )
-
-        if status == StepStatus.COMPLETED:
-            context.career_term_count += 1
-            context.current_assignment = self._selected_assignment
-            return TransitionTerm(
-                context.character,
-                ContinueOrMusterOutStep(
-                    context.character,
-                    self.career_name,
-                    assignment_change_group=self.assignment_change_group,
-                    current_assignment=self._selected_assignment,
-                    assignments=self.assignments,
-                ),
-            )
-
-        if status == StepStatus.FORCED_EXIT:
-            # Forced out by advancement ≤ terms served. No Continue /
-            # Muster choice — go straight to Career Selection. The
-            # "cannot re-enter next term" rule applies to any leaving.
-            context.current_career_data = None
-            context.career_term_count = 0
-            context.blocked_career = self.career_name
-            context.current_assignment = None
-            forced = _forced_entry_career_term(context)
-            if forced is not None:
-                return forced
-            careers = _available_careers_for(context)
-            return TransitionTerm(
-                context.character, ChooseCareerStep(context.character, careers)
-            )
-
-        if status == StepStatus.FORCED_STAY:
-            # Natural 12 on advancement — skip continue/muster and start
-            # the next term in the same career immediately.
-            context.career_term_count += 1
-            return CareerTerm(
-                context.character,
-                context.current_career_data,
-                term_number=context.career_term_count + 1,
-                is_first_term=False,
-                anagathics_enabled=context.anagathics_enabled,
-            )
+        handler = self._TERMINAL_HANDLERS.get(status)
+        if handler is not None:
+            return handler(self, context)
 
         return None
 

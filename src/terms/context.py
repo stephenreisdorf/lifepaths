@@ -48,3 +48,13 @@ class CareerContext:
     pre_career_qualification_dm: int = 0
     anagathics_enabled: bool = False
     careers: CareerRepository = field(default_factory=FilesystemCareerRepository)
+
+    def reset_for_career_exit(self, blocked_career: str | None = None) -> None:
+        """Reset per-career state after leaving a career term.
+
+        ``blocked_career`` is set when the Traveller may not immediately
+        re-enter the career they just left.
+        """
+        self.career_term_count = 0
+        self.blocked_career = blocked_career
+        self.current_assignment = None

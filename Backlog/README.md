@@ -6,18 +6,17 @@ One file per open issue. Index below.
 
 Execution sequence — `iterate` always works the first entry. Regenerate with `/backlog sort`.
 
-1. [CareerTerm.next_term dispatch table](career-term-next-term-dispatch.md)
-2. [Keep Rank typed through steps](typed-rank-through-steps.md)
-3. [Typed career summary](typed-career-summary.md)
-4. [Character sheet missing fields](character-sheet-missing-fields.md)
-5. [Network error handling](network-error-handling.md)
-6. [Async loading states](async-loading-states.md)
-7. [Start Over confirmation](start-over-confirmation.md)
-8. [Expose the anagathics option](expose-anagathics-option.md)
-9. [Lifepath progress indicator](lifepath-progress-indicator.md)
-10. [Frontend accessibility](frontend-accessibility.md)
-11. [Final sheet presentation](final-sheet-presentation.md)
-12. [Connections Rule (multi-character)](connections-rule.md)
+1. [Keep Rank typed through steps](typed-rank-through-steps.md)
+2. [Typed career summary](typed-career-summary.md)
+3. [Character sheet missing fields](character-sheet-missing-fields.md)
+4. [Network error handling](network-error-handling.md)
+5. [Async loading states](async-loading-states.md)
+6. [Start Over confirmation](start-over-confirmation.md)
+7. [Expose the anagathics option](expose-anagathics-option.md)
+8. [Lifepath progress indicator](lifepath-progress-indicator.md)
+9. [Frontend accessibility](frontend-accessibility.md)
+10. [Final sheet presentation](final-sheet-presentation.md)
+11. [Connections Rule (multi-character)](connections-rule.md)
 
 ## Bugs
 
@@ -36,7 +35,6 @@ _None open._
 
 ## Architecture
 
-- [CareerTerm.next_term dispatch table](career-term-next-term-dispatch.md) — replace the six-branch status if/elif with a `StepStatus`→handler table to match the codebase's own dispatch convention.
 - [Keep Rank typed through steps](typed-rank-through-steps.md) — thread `list[Rank]` into the rank steps and factor one `apply_rank_bonus` helper instead of `list[dict]` + duplicated logic.
 - [Typed career summary](typed-career-summary.md) — replace the loosely-typed career-summary dict with a `CareerSummary` model through eligibility + selection; best folded into the repository item.
 
