@@ -6,14 +6,13 @@ One file per open issue. Index below.
 
 Execution sequence — `iterate` always works the first entry. Regenerate with `/backlog sort`.
 
-1. [Network error handling](network-error-handling.md)
-2. [Async loading states](async-loading-states.md)
-3. [Start Over confirmation](start-over-confirmation.md)
-4. [Expose the anagathics option](expose-anagathics-option.md)
-5. [Lifepath progress indicator](lifepath-progress-indicator.md)
-6. [Frontend accessibility](frontend-accessibility.md)
-7. [Final sheet presentation](final-sheet-presentation.md)
-8. [Connections Rule (multi-character)](connections-rule.md)
+1. [Async loading states](async-loading-states.md)
+2. [Start Over confirmation](start-over-confirmation.md)
+3. [Expose the anagathics option](expose-anagathics-option.md)
+4. [Lifepath progress indicator](lifepath-progress-indicator.md)
+5. [Frontend accessibility](frontend-accessibility.md)
+6. [Final sheet presentation](final-sheet-presentation.md)
+7. [Connections Rule (multi-character)](connections-rule.md)
 
 ## Bugs
 
@@ -25,7 +24,6 @@ _None open._
 - [Expose the anagathics option](expose-anagathics-option.md) — the anti-aging rule is implemented and honoured by `/api/start` but the welcome screen never lets a player enable it.
 - [Lifepath progress indicator](lifepath-progress-indicator.md) — no phase stepper or term counter; the player has no sense of where they are in the run.
 - [Async loading states](async-loading-states.md) — no pending/disabled state on fetches; the UI looks frozen on latency and a double-click can double-submit a step.
-- [Network error handling](network-error-handling.md) — `startCreation` has no try/catch or `res.ok` check; a down/500 backend leaves a blank, frozen screen.
 - [Frontend accessibility](frontend-accessibility.md) — color-only pass/fail status, no `aria-pressed` on skill selection, and no focus management across steps.
 - [Start Over confirmation](start-over-confirmation.md) — the finished sheet's "Start Over" destroys the completed character with no confirmation.
 

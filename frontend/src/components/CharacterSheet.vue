@@ -4,6 +4,7 @@ import CharacterCanvas from './CharacterCanvas.vue'
 defineProps({
   characterData: Object,
   history: Array,
+  error: String,
 })
 
 defineEmits(['restart'])
@@ -21,6 +22,7 @@ defineEmits(['restart'])
       :associates="characterData?.associates"
       :history="history"
     />
+    <p v-if="error" class="error">{{ error }}</p>
     <button class="restart-btn" @click="$emit('restart')">Start Over</button>
   </div>
 </template>

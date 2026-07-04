@@ -12,17 +12,57 @@ const currentPrompt = ref(null)
 const pendingReview = ref(null)
 const error = ref('')
 
+const networkErrorMessage = "Couldn't reach the server. Try again."
+const invalidResponseMessage = 'The server returned an unreadable response. Try again.'
+
+async function readJson(res) {
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) return null
+  try {
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+function responseErrorMessage(res, data) {
+  if (data?.detail) return data.detail
+  if (data?.message) return data.message
+  return `Server returned ${res.status}. Try again.`
+}
+
+async function requestJson(url, options) {
+  let res
+  try {
+    res = await fetch(url, options)
+  } catch {
+    throw new Error(networkErrorMessage)
+  }
+
+  const data = await readJson(res)
+  if (!res.ok) {
+    throw new Error(responseErrorMessage(res, data))
+  }
+  if (!data) {
+    throw new Error(invalidResponseMessage)
+  }
+  return data
+}
+
 async function startCreation() {
   error.value = ''
-  const res = await fetch('/api/start', { method: 'POST' })
-  const data = await res.json()
+  try {
+    const data = await requestJson('/api/start', { method: 'POST' })
 
-  sessionId.value = data.session_id
-  characterData.value = data.character
-  stepHistory.value = [...data.resolved_steps]
-  currentPrompt.value = data.next_prompt
-  pendingReview.value = null
-  currentScreen.value = data.next_prompt ? 'creation' : 'sheet'
+    sessionId.value = data.session_id
+    characterData.value = data.character
+    stepHistory.value = [...data.resolved_steps]
+    currentPrompt.value = data.next_prompt
+    pendingReview.value = null
+    currentScreen.value = data.next_prompt ? 'creation' : 'sheet'
+  } catch (err) {
+    error.value = err.message || networkErrorMessage
+  }
 }
 
 async function submitChoice(selections) {
@@ -44,23 +84,22 @@ async function submitAutomatic() {
 
 async function submit(playerInput, choiceEntry) {
   error.value = ''
+  let data
 
-  const res = await fetch('/api/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      session_id: sessionId.value,
-      player_input: playerInput,
-    }),
-  })
-
-  if (!res.ok) {
-    const err = await res.json()
-    error.value = err.detail
+  try {
+    data = await requestJson('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId.value,
+        player_input: playerInput,
+      }),
+    })
+  } catch (err) {
+    error.value = err.message || networkErrorMessage
     return
   }
 
-  const data = await res.json()
   characterData.value = data.character
   if (choiceEntry) stepHistory.value.push(choiceEntry)
   stepHistory.value.push(...data.resolved_steps)
@@ -94,6 +133,7 @@ function dismissReview() {
     </header>
     <WelcomeScreen
       v-if="currentScreen === 'welcome'"
+      :error="error"
       @start="startCreation"
     />
     <CreationScreen
@@ -111,6 +151,7 @@ function dismissReview() {
       v-else-if="currentScreen === 'sheet'"
       :character-data="characterData"
       :history="stepHistory"
+      :error="error"
       @restart="startCreation"
     />
   </div>
