@@ -2,6 +2,25 @@
 
 One file per open issue. Index below.
 
+## Order
+
+Execution sequence — `iterate` always works the first entry. Regenerate with `/backlog sort`.
+
+1. [Character read model](character-read-model.md)
+2. [SingleChoiceStep base](single-choice-step-base.md)
+3. [CareerTerm.next_term dispatch table](career-term-next-term-dispatch.md)
+4. [Keep Rank typed through steps](typed-rank-through-steps.md)
+5. [Typed career summary](typed-career-summary.md)
+6. [Character sheet missing fields](character-sheet-missing-fields.md)
+7. [Network error handling](network-error-handling.md)
+8. [Async loading states](async-loading-states.md)
+9. [Start Over confirmation](start-over-confirmation.md)
+10. [Expose the anagathics option](expose-anagathics-option.md)
+11. [Lifepath progress indicator](lifepath-progress-indicator.md)
+12. [Frontend accessibility](frontend-accessibility.md)
+13. [Final sheet presentation](final-sheet-presentation.md)
+14. [Connections Rule (multi-character)](connections-rule.md)
+
 ## Bugs
 
 _None open._
