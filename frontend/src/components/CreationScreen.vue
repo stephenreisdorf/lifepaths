@@ -85,6 +85,9 @@ const reviewStatus = computed(() => props.pendingReview?.data?.status || '')
       :age="characterData?.age"
       :characteristics="characterData?.characteristics"
       :skills="characterData?.skills"
+      :cash="characterData?.cash"
+      :possessions="characterData?.possessions"
+      :associates="characterData?.associates"
       :history="history"
     />
   </div>

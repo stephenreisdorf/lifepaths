@@ -16,6 +16,9 @@ defineEmits(['restart'])
       :age="characterData?.age"
       :characteristics="characterData?.characteristics"
       :skills="characterData?.skills"
+      :cash="characterData?.cash"
+      :possessions="characterData?.possessions"
+      :associates="characterData?.associates"
       :history="history"
     />
     <button class="restart-btn" @click="$emit('restart')">Start Over</button>
