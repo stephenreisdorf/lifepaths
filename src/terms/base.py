@@ -173,6 +173,43 @@ class Step:
         self.completed = True
 
 
+class SingleChoiceStep(Step):
+    """A choice step where the player must pick exactly one available option.
+
+    Subclasses provide the current option labels and react to the selected
+    value. This mirrors `PassFailRollStep`: the shared base owns the repeated
+    lifecycle plumbing while concrete steps keep their domain-specific prompt
+    and side effects.
+    """
+
+    step_type = StepType.CHOICE
+
+    input_required_message: str = "Selection is required."
+    single_choice_message: str = "Must choose a single option."
+
+    def options(self) -> list[str]:
+        """Return the currently available option labels."""
+        raise NotImplementedError
+
+    def resolve(self, player_input: dict | None = None) -> None:
+        if player_input is None:
+            raise ValueError(self.input_required_message)
+        selections = player_input.get("selections", [])
+        if len(selections) != 1:
+            raise ValueError(self.single_choice_message)
+        selection = selections[0]
+        if selection not in self.options():
+            raise ValueError(self.invalid_choice_message(selection))
+        self.on_choice(selection)
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"Unavailable option: {selection}"
+
+    def on_choice(self, selection: str) -> None:
+        """Handle the selected option after base validation passes."""
+        raise NotImplementedError
+
+
 class PassFailRollStep(Step):
     """A 2d6 + DM vs target check.
 

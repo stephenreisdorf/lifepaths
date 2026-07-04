@@ -11,6 +11,7 @@ from __future__ import annotations
 from src.character import Character
 from src.terms.base import (
     PassFailRollStep,
+    SingleChoiceStep,
     Step,
     StepOutcome,
     StepPrompt,
@@ -28,11 +29,12 @@ class EducationQualificationStep(PassFailRollStep):
     status_fail = StepStatus.FAILED
 
 
-class ChoosePreCareerStep(Step):
+class ChoosePreCareerStep(SingleChoiceStep):
     """Offer the eligible pre-career institutions plus a Skip-to-career option."""
 
     step_id = "choose_pre_career"
-    step_type = StepType.CHOICE
+    input_required_message = "A pre-career education choice is required."
+    single_choice_message = "Must choose a single option."
 
     SKIP_LABEL = "Skip — go straight to a career"
     SKIP_KEY = "skip"
@@ -40,10 +42,10 @@ class ChoosePreCareerStep(Step):
     def __init__(self, character: Character, options: list[dict]) -> None:
         super().__init__(character)
         # options: list of {"key", "label"} for eligible institutions.
-        self.options = options
+        self.pre_career_options = options
 
     def _labels(self) -> list[str]:
-        return [o["label"] for o in self.options] + [self.SKIP_LABEL]
+        return [o["label"] for o in self.pre_career_options] + [self.SKIP_LABEL]
 
     def prompt(self) -> StepPrompt:
         if self.outcome is not None:
@@ -59,23 +61,24 @@ class ChoosePreCareerStep(Step):
                 "Before choosing a career you may attempt pre-career "
                 "education, or skip straight to a career."
             ),
-            options=self._labels(),
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("A pre-career education choice is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose a single option.")
-        label = selections[0]
-        if label == self.SKIP_LABEL:
+    def options(self) -> list[str]:
+        return self._labels()
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"Unknown pre-career option: {selection}"
+
+    def on_choice(self, selection: str) -> None:
+        if selection == self.SKIP_LABEL:
             self._choice_pending: str = self.SKIP_KEY
             return
-        matching = [o for o in self.options if o["label"] == label]
-        if not matching:
-            raise ValueError(f"Unknown pre-career option: {label}")
+        matching = [
+            o for o in self.pre_career_options
+            if o["label"] == selection
+        ]
         self._choice_pending = matching[0]["key"]
 
     def apply(self) -> None:
@@ -87,7 +90,8 @@ class ChoosePreCareerStep(Step):
             )
             return
         label = next(
-            o["label"] for o in self.options if o["key"] == self._choice_pending
+            o["label"] for o in self.pre_career_options
+            if o["key"] == self._choice_pending
         )
         self.outcome = StepOutcome(
             status=StepStatus.CHOSEN,

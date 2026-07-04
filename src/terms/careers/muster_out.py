@@ -4,11 +4,10 @@ from typing import TYPE_CHECKING
 
 from src.character import Character
 from src.terms.base import (
-    Step,
+    SingleChoiceStep,
     StepOutcome,
     StepPrompt,
     StepStatus,
-    StepType,
     Term,
 )
 from src.terms.careers.parsers import try_apply_characteristic_bonus
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
     from src.terms.context import CareerContext
 
 
-class MusterOutStep(Step):
+class MusterOutStep(SingleChoiceStep):
     """One benefit roll during muster-out.
 
     The player chooses the Cash column or the Material Benefits column,
@@ -29,7 +28,8 @@ class MusterOutStep(Step):
     """
 
     step_id = "muster_out_roll"
-    step_type = StepType.CHOICE
+    input_required_message = "Muster-out column selection is required."
+    single_choice_message = "Must choose a single muster-out column."
 
     CASH = "Cash"
     BENEFITS = "Benefits"
@@ -88,7 +88,7 @@ class MusterOutStep(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description=description,
-            options=self._options(),
+            options=self.options(),
             required_count=1,
             data={
                 "cash_table": self.cash_table,
@@ -99,16 +99,14 @@ class MusterOutStep(Step):
             },
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Muster-out column selection is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose a single muster-out column.")
-        decision = selections[0]
-        if decision not in self._options():
-            raise ValueError(f"Unknown muster-out option: {decision}")
-        self._decision_pending = decision
+    def options(self) -> list[str]:
+        return self._options()
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"Unknown muster-out option: {selection}"
+
+    def on_choice(self, selection: str) -> None:
+        self._decision_pending = selection
         self.raw_roll: int = roll(1)
         self.roll_value = self.raw_roll + self.dm
 

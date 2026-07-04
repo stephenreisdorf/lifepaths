@@ -9,6 +9,7 @@ from src.terms.anagathics import (
 )
 from src.terms.base import (
     PassFailRollStep,
+    SingleChoiceStep,
     Step,
     StepOutcome,
     StepPrompt,
@@ -118,11 +119,12 @@ class BasicTrainingStep(Step):
         )
 
 
-class PickServiceSkillStep(Step):
+class PickServiceSkillStep(SingleChoiceStep):
     """Subsequent-career basic training: pick one Service Skill at level 0."""
 
     step_id = "pick_service_skill"
-    step_type = StepType.CHOICE
+    input_required_message = "Service-skill selection is required."
+    single_choice_message = "Must choose a single service skill."
 
     def __init__(self, character: Character, service_skills: list[str]):
         super().__init__(character=character)
@@ -142,20 +144,18 @@ class PickServiceSkillStep(Step):
                 "Subsequent-career basic training: pick one Service Skill "
                 "at level 0."
             ),
-            options=list(self.service_skills),
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Service-skill selection is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose a single service skill.")
-        chosen = selections[0]
-        if chosen not in self.service_skills:
-            raise ValueError(f"Unknown service skill: {chosen}")
-        self._selected_skill_pending: str = chosen
+    def options(self) -> list[str]:
+        return list(self.service_skills)
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"Unknown service skill: {selection}"
+
+    def on_choice(self, selection: str) -> None:
+        self._selected_skill_pending = selection
 
     def apply(self) -> None:
         skill = self._selected_skill_pending
@@ -167,11 +167,12 @@ class PickServiceSkillStep(Step):
         )
 
 
-class ChooseAssignmentStep(Step):
+class ChooseAssignmentStep(SingleChoiceStep):
     """Choose an assignment under the given career."""
 
     step_id = "choose_assignment"
-    step_type = StepType.CHOICE
+    input_required_message = "Assignment selection is required."
+    single_choice_message = "Must choose a single assignment"
 
     def __init__(self, character: Character, assignments: list[Assignment]):
         super().__init__(character=character)
@@ -192,20 +193,18 @@ class ChooseAssignmentStep(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description="Choose your assignment.",
-            options=[a.name for a in self.assignments],
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Assignment selection is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose a single assignment")
-        selected_name = selections[0]
-        matching = [a for a in self.assignments if a.name == selected_name]
-        if not matching:
-            raise ValueError(f"Unknown assignment: {selected_name}")
+    def options(self) -> list[str]:
+        return [a.name for a in self.assignments]
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"Unknown assignment: {selection}"
+
+    def on_choice(self, selection: str) -> None:
+        matching = [a for a in self.assignments if a.name == selection]
         self._selected_assignment_pending: Assignment = matching[0]
 
     def apply(self) -> None:
@@ -218,7 +217,7 @@ class ChooseAssignmentStep(Step):
         )
 
 
-class ChooseCareerSkillsTable(Step):
+class ChooseCareerSkillsTable(SingleChoiceStep):
     """Choose which skill table to roll on.
 
     Tables may declare a per-table requirement (e.g. EDU 8+ to access the
@@ -227,7 +226,8 @@ class ChooseCareerSkillsTable(Step):
     """
 
     step_id = "choose_career_skills_table"
-    step_type = StepType.CHOICE
+    input_required_message = "Skill table selection is required."
+    single_choice_message = "Must choose a single skill table."
 
     def __init__(
         self,
@@ -276,22 +276,18 @@ class ChooseCareerSkillsTable(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description="Choose a skill table to roll on.",
-            options=self.available_tables(),
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Skill table selection is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose a single skill table.")
-        chosen = selections[0]
-        if not self._meets_requirement(chosen):
-            raise ValueError(
-                f"You do not meet the requirements for the {chosen} skill table."
-            )
-        self._selected_skill_table_pending: str = chosen
+    def options(self) -> list[str]:
+        return self.available_tables()
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"You do not meet the requirements for the {selection} skill table."
+
+    def on_choice(self, selection: str) -> None:
+        self._selected_skill_table_pending = selection
 
     def apply(self) -> None:
         table = self._selected_skill_table_pending
@@ -601,7 +597,7 @@ class AdvancementRollStep(PassFailRollStep):
         return apply_rank_bonus(self.character, self.ranks, new_rank)
 
 
-class CommissionStep(Step):
+class CommissionStep(SingleChoiceStep):
     """Optional commission attempt for military careers.
 
     Player first chooses Attempt or Skip. On Attempt, roll 2d6 + DM vs the
@@ -614,7 +610,8 @@ class CommissionStep(Step):
     """
 
     step_id = "commission"
-    step_type = StepType.CHOICE
+    input_required_message = "Commission decision is required."
+    single_choice_message = "Must choose a single commission option."
 
     ATTEMPT = "Attempt"
     SKIP = "Skip"
@@ -662,21 +659,19 @@ class CommissionStep(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description=description,
-            options=[self.ATTEMPT, self.SKIP],
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Commission decision is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose a single commission option.")
-        decision = selections[0]
-        if decision not in (self.ATTEMPT, self.SKIP):
-            raise ValueError(f"Unknown commission option: {decision}")
-        self._decision_pending = decision
-        if decision == self.ATTEMPT:
+    def options(self) -> list[str]:
+        return [self.ATTEMPT, self.SKIP]
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"Unknown commission option: {selection}"
+
+    def on_choice(self, selection: str) -> None:
+        self._decision_pending = selection
+        if selection == self.ATTEMPT:
             self.raw_roll = roll(2)
             self.total_roll = self.raw_roll + self._total_dm()
 
@@ -730,11 +725,12 @@ class CommissionStep(Step):
         return apply_rank_bonus(self.character, self.officer_ranks, new_rank)
 
 
-class ChooseCareerStep(Step):
+class ChooseCareerStep(SingleChoiceStep):
     """Present available careers for the player to choose from."""
 
     step_id = "choose_career"
-    step_type = StepType.CHOICE
+    input_required_message = "Career selection is required."
+    single_choice_message = "Must choose a single career."
 
     def __init__(self, character: Character, careers: list[dict]) -> None:
         super().__init__(character)
@@ -751,18 +747,19 @@ class ChooseCareerStep(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description="Choose a career to pursue.",
-            options=[c["name"] for c in self.careers],
+            options=self.options(),
             required_count=1,
             data={"careers": self.careers},
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Career selection is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose a single career.")
-        self._selected_career_pending: str = selections[0]
+    def options(self) -> list[str]:
+        return [c["name"] for c in self.careers]
+
+    def invalid_choice_message(self, selection: str) -> str:
+        return f"Unknown career: {selection}"
+
+    def on_choice(self, selection: str) -> None:
+        self._selected_career_pending = selection
 
     def apply(self) -> None:
         career = self._selected_career_pending
@@ -773,11 +770,12 @@ class ChooseCareerStep(Step):
         )
 
 
-class ContinueOrMusterOutStep(Step):
+class ContinueOrMusterOutStep(SingleChoiceStep):
     """Ask whether to continue serving, muster out, or change assignment."""
 
     step_id = "continue_or_muster_out"
-    step_type = StepType.CHOICE
+    input_required_message = "Decision is required."
+    single_choice_message = "Must choose one option."
 
     CONTINUE = "Continue"
     MUSTER_OUT = "Muster Out"
@@ -833,20 +831,15 @@ class ContinueOrMusterOutStep(Step):
                 f"Your term in the {self.career_name} is complete. "
                 "Continue serving, muster out, or change assignment?"
             ),
-            options=self._options(),
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Decision is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose one option.")
-        decision = selections[0]
-        if decision not in self._options():
-            raise ValueError(f"Unavailable option: {decision}")
-        self._decision_pending: str = decision
+    def options(self) -> list[str]:
+        return self._options()
+
+    def on_choice(self, selection: str) -> None:
+        self._decision_pending = selection
 
     def apply(self) -> None:
         decision = self._decision_pending
@@ -862,11 +855,12 @@ class ContinueOrMusterOutStep(Step):
         )
 
 
-class MusterOutOrNewCareerStep(Step):
+class MusterOutOrNewCareerStep(SingleChoiceStep):
     """Offered after a mishap: muster out with benefits or choose a new career."""
 
     step_id = "muster_out_or_new_career"
-    step_type = StepType.CHOICE
+    input_required_message = "Decision is required."
+    single_choice_message = "Must choose one option."
 
     MUSTER_OUT = "Muster Out"
     CHOOSE_CAREER = "Choose New Career"
@@ -892,20 +886,15 @@ class MusterOutOrNewCareerStep(Step):
                 f"Your career in the {self.career_name} ended after a mishap. "
                 "Muster out with benefits for terms served, or choose a new career?"
             ),
-            options=self._options(),
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Decision is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose one option.")
-        decision = selections[0]
-        if decision not in self._options():
-            raise ValueError(f"Unavailable option: {decision}")
-        self._decision_pending: str = decision
+    def options(self) -> list[str]:
+        return self._options()
+
+    def on_choice(self, selection: str) -> None:
+        self._decision_pending = selection
 
     def apply(self) -> None:
         decision = self._decision_pending
@@ -920,7 +909,7 @@ class MusterOutOrNewCareerStep(Step):
         )
 
 
-class ChooseDraftOrDrifterStep(Step):
+class ChooseDraftOrDrifterStep(SingleChoiceStep):
     """Offered after a failed qualification: Draft (once per life) or Drifter.
 
     Draft rolls 1d6 to assign the character to a random service. Drifter
@@ -929,7 +918,8 @@ class ChooseDraftOrDrifterStep(Step):
     """
 
     step_id = "choose_draft_or_drifter"
-    step_type = StepType.CHOICE
+    input_required_message = "Draft-or-Drifter decision is required."
+    single_choice_message = "Must choose one option."
 
     DRAFT = "Draft"
     DRIFTER = "Drifter"
@@ -980,21 +970,16 @@ class ChooseDraftOrDrifterStep(Step):
             step_id=self.step_id,
             step_type=self.step_type,
             description=description,
-            options=self._options(),
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Draft-or-Drifter decision is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose one option.")
-        decision = selections[0]
-        if decision not in self._options():
-            raise ValueError(f"Unavailable option: {decision}")
-        self._decision_pending = decision
-        if decision == self.DRAFT:
+    def options(self) -> list[str]:
+        return self._options()
+
+    def on_choice(self, selection: str) -> None:
+        self._decision_pending = selection
+        if selection == self.DRAFT:
             self.draft_roll = roll(1)
             self.assigned_career = self.DRAFT_TABLE.get(self.draft_roll)
 
@@ -1021,7 +1006,7 @@ class ChooseDraftOrDrifterStep(Step):
         )
 
 
-class ChooseAnagathicsStep(Step):
+class ChooseAnagathicsStep(SingleChoiceStep):
     """Offer the optional anagathics rule at the start of a career term.
 
     Only shown when the anagathics rule is enabled and no course is active
@@ -1033,7 +1018,8 @@ class ChooseAnagathicsStep(Step):
     """
 
     step_id = "choose_anagathics"
-    step_type = StepType.CHOICE
+    input_required_message = "Anagathics decision is required."
+    single_choice_message = "Must choose one option."
 
     START = "Start anagathics"
     DECLINE = "Do not take anagathics"
@@ -1062,20 +1048,15 @@ class ChooseAnagathicsStep(Step):
                 "Survival checks each term. A natural 2 sends you straight to "
                 "the Prisoner career."
             ),
-            options=self._options(),
+            options=self.options(),
             required_count=1,
         )
 
-    def resolve(self, player_input: dict | None = None) -> None:
-        if player_input is None:
-            raise ValueError("Anagathics decision is required.")
-        selections = player_input.get("selections", [])
-        if len(selections) != 1:
-            raise ValueError("Must choose one option.")
-        decision = selections[0]
-        if decision not in self._options():
-            raise ValueError(f"Unavailable option: {decision}")
-        self._decision_pending = decision
+    def options(self) -> list[str]:
+        return self._options()
+
+    def on_choice(self, selection: str) -> None:
+        self._decision_pending = selection
 
     def apply(self) -> None:
         if self._decision_pending == self.DECLINE:
