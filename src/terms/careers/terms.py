@@ -19,7 +19,7 @@ from src.terms.base import (
 from src.terms.anagathics import PRISONER_CAREER
 from src.terms.careers.aging import AgingStep
 from src.terms.careers.muster_out import MusterOutTerm, _muster_out_term_for
-from src.terms.careers.parsers import best_qualification_option
+from src.terms.careers.parsers import apply_rank_bonus, best_qualification_option
 from src.terms.careers.steps import (
     AdvancementRollStep,
     AnagathicsUpkeepStep,
@@ -401,6 +401,12 @@ class CareerTerm(DispatchTerm):
                 description="Qualification failed — returning to career selection.",
             )
             return
+        # Career entry: apply the starting-rank (rank 0) bonus. A few careers
+        # (Army, Marine, Prisoner) grant a skill the moment you join. Qualifying
+        # only happens on a career's first term, so this fires once per entry,
+        # not per term. The record may not exist yet — it is created lazily at
+        # advancement — so grant against the character directly at rank 0.
+        apply_rank_bonus(self.character, self.ranks, 0)
         # Citizens and Drifters draw basic training from their *assignment*
         # skill table, so the assignment must be chosen first and training
         # happens after.
@@ -759,9 +765,17 @@ class AssignmentChangeTerm(DispatchTerm):
         status = self.outcome.status if self.outcome else None
 
         if status == StepStatus.CHANGED:
-            # RAW: rank resets to 0 when the assignment changes.
+            # RAW: rank resets to 0 when the assignment changes, so the
+            # career "begins afresh at rank 0" — re-apply the rank-0 bonus.
+            # The rank-0 grants in play are skills (level-0, idempotent), so a
+            # character who already earned theirs on entry is unaffected.
             record = self.character.ensure_career(self.career_name)
             record.rank = 0
+            apply_rank_bonus(
+                self.character,
+                context.current_career_data.ranks_as_dicts(),
+                0,
+            )
             context.current_assignment = self._chosen_assignment
             return CareerTerm(
                 context.character,

@@ -64,3 +64,28 @@ def try_apply_characteristic_bonus(character: Character, entry: str) -> bool:
     current = character.characteristics[name].value
     character.add_characteristic(name, current + delta)
     return True
+
+
+def apply_rank_bonus(
+    character: Character, ranks: list[dict], rank: int
+) -> str | None:
+    """Apply the bonus for `rank` from a rank/officer-rank table; return its title.
+
+    The single entry point for granting a rank's `bonus_skill`, shared by every
+    caller: the starting-rank grant on career entry (rank 0), promotions
+    (`AdvancementRollStep`), and commission (`CommissionStep`, officer ranks).
+    A '<Characteristic> +<N>' entry bumps the characteristic; anything else is
+    parsed as a skill entry (`parse_skill_entry`, so "Melee (unarmed)" resolves
+    to the Melee skill's unarmed specialty) and granted at level 0 — the rank
+    tables are authored as bare skill names, so an absent level suffix means
+    "ensure the skill exists" rather than "raise to rank 1". Returns the rank's
+    title, or None when the table has no matching rank entry.
+    """
+    entry = next((r for r in ranks if r.get("rank") == rank), None)
+    if entry is None:
+        return None
+    bonus = entry.get("bonus_skill")
+    if bonus and not try_apply_characteristic_bonus(character, bonus):
+        name, specialty, level = parse_skill_entry(bonus)
+        character.grant_skill(name, level=0 if level is None else level, specialty=specialty)
+    return entry.get("title")

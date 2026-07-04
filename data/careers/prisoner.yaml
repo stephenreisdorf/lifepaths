@@ -100,19 +100,22 @@ skill_tables:
     - Carouse
 
 ranks:
+  # RAW: the Prisoner career has no rank titles; the titles below are local
+  # flavour. Bonuses are the transcribed rulebook values.
   - rank: 0
     title: Convict
+    bonus_skill: Melee (unarmed)  # granted on entry
   - rank: 1
     title: Convict
-    bonus_skill: Melee (unarmed)
+    bonus_skill: Athletics
   - rank: 2
     title: Trustee
-    bonus_skill: Streetwise
+    bonus_skill: Advocate
   - rank: 3
     title: Trustee
   - rank: 4
     title: Foreman
-    bonus_skill: Leadership
+    bonus_skill: Endurance +1
   - rank: 5
     title: Foreman
   - rank: 6

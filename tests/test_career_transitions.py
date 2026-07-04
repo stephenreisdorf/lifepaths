@@ -117,6 +117,41 @@ def test_after_qualification_failed_ends_term():
     assert len(term.steps) == 1  # nothing appended
 
 
+def test_army_entry_grants_rank_zero_gun_combat():
+    """Entering Army as a first career grants Gun Combat at rank 0, before any
+    advancement roll (RAW: Army starting skill Gun Combat)."""
+    char = _character()
+    term = CareerTerm(char, load_career("army"), is_first_term=True)
+    assert not char.has_skill("Gun Combat")  # not granted before qualifying
+
+    term._after_qualification(_FakeStep(status="QUALIFIED"))
+
+    assert char.has_skill("Gun Combat")
+    # No advancement has run, so no promotion happened.
+    assert "Army" not in char.careers or char.careers["Army"].rank == 0
+
+
+def test_prisoner_entry_grants_rank_zero_melee_unarmed():
+    """Entering Prisoner grants Melee (unarmed) at rank 0 (RAW starting skill)."""
+    char = _character()
+    term = CareerTerm(char, load_career("prisoner"), is_first_term=True)
+    assert not char.has_skill("Melee")
+
+    term._after_qualification(_FakeStep(status="QUALIFIED"))
+
+    assert char.has_skill("Melee")
+    assert char.skills["Melee"].has_specialty("unarmed")
+
+
+def test_failed_qualification_grants_no_rank_zero_skill():
+    """The rank-0 entry skill is only granted when qualification succeeds."""
+    char = _character()
+    term = CareerTerm(char, load_career("army"), is_first_term=True)
+    term._after_qualification(_FakeStep(status="FAILED"))
+
+    assert not char.has_skill("Gun Combat")
+
+
 def test_first_career_first_term_skips_skill_roll():
     """First career ever: basic training is the only skill grant — the first
     term goes straight from assignment to the survival check, no skill roll."""

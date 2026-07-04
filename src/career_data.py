@@ -98,7 +98,22 @@ class SkillTable(BaseModel):
 
 class Rank(BaseModel):
     """A rank rung, with an optional bonus skill/characteristic granted on
-    reaching it."""
+    reaching it.
+
+    ``bonus_skill`` is a single string: a bare skill name (granted at level 0
+    via ``apply_rank_bonus``) or a "<Characteristic> +<N>" bump. The rank-0
+    entry (``rank: 0``) is granted the moment the career is entered, before any
+    advancement roll (see ``CareerTerm._after_qualification``).
+
+    The single-string shape cannot express the two RAW cases where a rank grants
+    a *choice*; both are simplified with a documented fallback rather than a
+    schema extension:
+      - Marine rank 0 ("Gun Combat (any) 1 or Melee (blade) 1") → a fixed
+        ``Gun Combat`` grant (matching Marine rank 1, and consistent with the
+        loader collapsing the "(any)" specialty choice to base Gun Combat).
+      - Army General / Marine Colonel ("SOC 10 or SOC +1, whichever is higher")
+        → ``Social Standing +1`` (the common case; the floor-to-10 is dropped).
+    """
 
     model_config = ConfigDict(extra="forbid")
 

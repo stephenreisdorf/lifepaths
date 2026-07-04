@@ -117,17 +117,17 @@ skill_tables:
 ranks:
   - rank: 0
     title: Private
+    bonus_skill: Gun Combat  # granted on entry
   - rank: 1
     title: Lance Corporal
-    bonus_skill: Gun Combat
+    bonus_skill: Recon
   - rank: 2
     title: Corporal
-    bonus_skill: Recon
   - rank: 3
     title: Lance Sergeant
+    bonus_skill: Leadership
   - rank: 4
     title: Sergeant
-    bonus_skill: Leadership
   - rank: 5
     title: Gunnery Sergeant
   - rank: 6
@@ -144,12 +144,13 @@ officer_ranks:
     bonus_skill: Tactics (Military)
   - rank: 4
     title: Lieutenant Colonel
-    bonus_skill: Leadership
   - rank: 5
     title: Colonel
-    bonus_skill: Social Standing +1
+  # RAW: General grants "SOC 10 or SOC +1, whichever is higher"; simplified
+  # here to the common +1 case (the single-str schema can't express the floor).
   - rank: 6
     title: General
+    bonus_skill: Social Standing +1
 
 benefits:
   cash:

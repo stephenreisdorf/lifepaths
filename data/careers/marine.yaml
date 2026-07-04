@@ -115,8 +115,14 @@ skill_tables:
     - Explosives
 
 ranks:
+  # RAW rank 0 is a player choice: "Gun Combat (any) 1 or Melee (blade) 1",
+  # granted on entry. The single-str bonus_skill schema can't express a choice,
+  # so it is simplified to a fixed Gun Combat grant (the same skill rank 1
+  # grants, and consistent with how the loader already collapses the
+  # "(any)" specialty choice to the base Gun Combat skill).
   - rank: 0
     title: Marine
+    bonus_skill: Gun Combat
   - rank: 1
     title: Lance Corporal
     bonus_skill: Gun Combat
@@ -124,7 +130,7 @@ ranks:
     title: Corporal
   - rank: 3
     title: Lance Sergeant
-    bonus_skill: Gun Combat
+    bonus_skill: Leadership
   - rank: 4
     title: Sergeant
   - rank: 5
@@ -144,12 +150,13 @@ officer_ranks:
     bonus_skill: Tactics (Military)
   - rank: 4
     title: Lieutenant Colonel
-    bonus_skill: Leadership
+  # RAW: Colonel grants "SOC 10 or SOC +1, whichever is higher"; simplified
+  # here to the common +1 case (the single-str schema can't express the floor).
   - rank: 5
     title: Colonel
+    bonus_skill: Social Standing +1
   - rank: 6
     title: Brigadier
-    bonus_skill: Social Standing +1
 
 benefits:
   cash:

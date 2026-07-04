@@ -16,6 +16,7 @@ from src.terms.base import (
     StepType,
 )
 from src.terms.careers.parsers import (
+    apply_rank_bonus,
     parse_skill_entry,
     try_apply_characteristic_bonus,
 )
@@ -596,19 +597,8 @@ class AdvancementRollStep(PassFailRollStep):
         )
 
     def _apply_rank_bonus(self, new_rank: int) -> str | None:
-        """Find the rank entry for new_rank, apply any bonus skill/characteristic, return the title."""
-        entry = next((r for r in self.ranks if r.get("rank") == new_rank), None)
-        if entry is None:
-            return None
-        bonus = entry.get("bonus_skill")
-        if bonus:
-            self._apply_bonus(bonus)
-        return entry.get("title")
-
-    def _apply_bonus(self, bonus: str) -> None:
-        """Apply a rank bonus. '<Name> +<N>' against a known characteristic bumps it; otherwise add as a skill."""
-        if not try_apply_characteristic_bonus(self.character, bonus):
-            self.character.grant_skill(bonus, level=0)
+        """Apply the promoted rank's bonus skill/characteristic; return its title."""
+        return apply_rank_bonus(self.character, self.ranks, new_rank)
 
 
 class CommissionStep(Step):
@@ -737,16 +727,7 @@ class CommissionStep(Step):
             )
 
     def _apply_officer_rank_bonus(self, new_rank: int) -> str | None:
-        entry = next(
-            (r for r in self.officer_ranks if r.get("rank") == new_rank),
-            None,
-        )
-        if entry is None:
-            return None
-        bonus = entry.get("bonus_skill")
-        if bonus and not try_apply_characteristic_bonus(self.character, bonus):
-            self.character.grant_skill(bonus, level=0)
-        return entry.get("title")
+        return apply_rank_bonus(self.character, self.officer_ranks, new_rank)
 
 
 class ChooseCareerStep(Step):
