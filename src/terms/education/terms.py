@@ -15,7 +15,8 @@ from src.career_loader import filter_eligible_careers
 from src.career_repository import CareerRepository
 from src.character import Character
 from src.terms.base import DispatchTerm, Step, StepOutcome, StepStatus, Term
-from src.terms.careers import BasicTrainingStep, try_apply_characteristic_bonus
+from src.terms.careers import BasicTrainingStep
+from src.terms.careers.parsers import apply_rank_bonus
 from src.terms.education.config import (
     UNIVERSITY,
     academy_by_career,
@@ -221,12 +222,7 @@ class MilitaryAcademyTerm(DispatchTerm):
         record = self.character.ensure_career(self.career_key)
         record.commissioned = True
         record.rank = 1
-        officer_ranks = self.career_data.officer_ranks_as_dicts()
-        entry = next((r for r in officer_ranks if r.get("rank") == 1), None)
-        if entry is not None:
-            bonus = entry.get("bonus_skill")
-            if bonus and not try_apply_characteristic_bonus(self.character, bonus):
-                self.character.grant_skill(bonus, level=0)
+        apply_rank_bonus(self.character, self.career_data.officer_ranks, 1)
 
     def next_term(self, context: "CareerContext") -> "Term | None":
         if self.outcome is None:

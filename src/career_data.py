@@ -164,12 +164,6 @@ class CareerData(BaseModel):
         """Qualification options as plain `{characteristic, target}` dicts."""
         return [o.model_dump() for o in self.qualification.options]
 
-    def ranks_as_dicts(self) -> list[dict]:
-        return [r.model_dump() for r in self.ranks]
-
-    def officer_ranks_as_dicts(self) -> list[dict]:
-        return [r.model_dump() for r in self.officer_ranks]
-
     def commission_as_dict(self) -> dict | None:
         return self.commission.model_dump() if self.commission else None
 

@@ -246,8 +246,8 @@ class CareerTerm(DispatchTerm):
         self.skill_table_requirements = career.skill_table_requirements()
         self.events = career.events
         self.mishaps = career.mishaps
-        self.ranks = career.ranks_as_dicts()
-        self.officer_ranks = career.officer_ranks_as_dicts()
+        self.ranks = career.ranks
+        self.officer_ranks = career.officer_ranks
         self.commission = career.commission_as_dict()
         self.assignment_change_group = career.assignment_change_group
         self.benefits = career.benefits_as_dict()
@@ -776,7 +776,7 @@ class AssignmentChangeTerm(DispatchTerm):
             record.rank = 0
             apply_rank_bonus(
                 self.character,
-                context.current_career_data.ranks_as_dicts(),
+                context.current_career_data.ranks,
                 0,
             )
             context.current_assignment = self._chosen_assignment

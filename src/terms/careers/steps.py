@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.career_data import Assignment
+from src.career_data import Assignment, Rank
 from src.character import Character
 from src.terms.anagathics import (
     ANAGATHICS_SOC_TARGET,
@@ -501,8 +501,8 @@ class AdvancementRollStep(PassFailRollStep):
         character: Character,
         career_name: str,
         assignment: Assignment,
-        ranks: list[dict],
-        officer_ranks: list[dict] | None = None,
+        ranks: list[Rank],
+        officer_ranks: list[Rank] | None = None,
     ) -> None:
         advancement = assignment.advancement
         super().__init__(
@@ -523,7 +523,7 @@ class AdvancementRollStep(PassFailRollStep):
             else self.enlisted_ranks
         )
         self.max_rank: int | None = (
-            max(r["rank"] for r in self.ranks) if self.ranks else None
+            max(r.rank for r in self.ranks) if self.ranks else None
         )
 
     def apply(self) -> None:
@@ -546,7 +546,9 @@ class AdvancementRollStep(PassFailRollStep):
             else:
                 promoted = self.character.promote(self.career_name)
                 status = self.status_pass
-                self.new_rank_title = self._apply_rank_bonus(promoted.rank)
+                self.new_rank_title = apply_rank_bonus(
+                    self.character, self.ranks, promoted.rank
+                )
         else:
             status = self.status_fail
             self.new_rank_title = None
@@ -592,11 +594,6 @@ class AdvancementRollStep(PassFailRollStep):
             f"{outcome_str}{suffix}."
         )
 
-    def _apply_rank_bonus(self, new_rank: int) -> str | None:
-        """Apply the promoted rank's bonus skill/characteristic; return its title."""
-        return apply_rank_bonus(self.character, self.ranks, new_rank)
-
-
 class CommissionStep(SingleChoiceStep):
     """Optional commission attempt for military careers.
 
@@ -623,7 +620,7 @@ class CommissionStep(SingleChoiceStep):
         characteristic: str,
         target: int,
         dm: int,
-        officer_ranks: list[dict],
+        officer_ranks: list[Rank],
     ) -> None:
         super().__init__(character=character)
         self.career_name = career_name
@@ -689,7 +686,7 @@ class CommissionStep(SingleChoiceStep):
             record = self.character.ensure_career(self.career_name)
             record.commissioned = True
             record.rank = 1
-            new_rank_title = self._apply_officer_rank_bonus(1)
+            new_rank_title = apply_rank_bonus(self.character, self.officer_ranks, 1)
             # Commission replaces advancement this term — tick terms_served
             # here so the count is correct when the term ends.
             self.character.record_career_term(self.career_name)
@@ -720,10 +717,6 @@ class CommissionStep(SingleChoiceStep):
                     "target": self.target,
                 },
             )
-
-    def _apply_officer_rank_bonus(self, new_rank: int) -> str | None:
-        return apply_rank_bonus(self.character, self.officer_ranks, new_rank)
-
 
 class ChooseCareerStep(SingleChoiceStep):
     """Present available careers for the player to choose from."""

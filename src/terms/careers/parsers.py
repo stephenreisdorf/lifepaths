@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.career_data import CharacteristicCheck
+from src.career_data import CharacteristicCheck, Rank
 from src.character import Character
 
 
@@ -67,7 +67,7 @@ def try_apply_characteristic_bonus(character: Character, entry: str) -> bool:
 
 
 def apply_rank_bonus(
-    character: Character, ranks: list[dict], rank: int
+    character: Character, ranks: list[Rank], rank: int
 ) -> str | None:
     """Apply the bonus for `rank` from a rank/officer-rank table; return its title.
 
@@ -81,11 +81,11 @@ def apply_rank_bonus(
     "ensure the skill exists" rather than "raise to rank 1". Returns the rank's
     title, or None when the table has no matching rank entry.
     """
-    entry = next((r for r in ranks if r.get("rank") == rank), None)
+    entry = next((r for r in ranks if r.rank == rank), None)
     if entry is None:
         return None
-    bonus = entry.get("bonus_skill")
+    bonus = entry.bonus_skill
     if bonus and not try_apply_characteristic_bonus(character, bonus):
         name, specialty, level = parse_skill_entry(bonus)
         character.grant_skill(name, level=0 if level is None else level, specialty=specialty)
-    return entry.get("title")
+    return entry.title
