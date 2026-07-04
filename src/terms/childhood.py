@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.career_loader import filter_eligible_careers, get_available_careers
+from src.career_loader import filter_eligible_careers
 from src.character import Character
 from src.terms.base import Step, StepOutcome, StepPrompt, StepStatus, StepType, Term
 from src.utilities import roll
@@ -149,7 +149,7 @@ class ChildhoodTerm(Term):
             return PreCareerChoiceTerm(context.character, options)
 
         careers = filter_eligible_careers(
-            context.character, get_available_careers()
+            context.character, context.careers.get_available()
         )
         return TransitionTerm(
             context.character, ChooseCareerStep(context.character, careers)

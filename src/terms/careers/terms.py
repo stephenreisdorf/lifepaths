@@ -3,11 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.career_data import Assignment, CareerData, CharacteristicCheck
-from src.career_loader import (
-    filter_eligible_careers,
-    get_available_careers,
-    load_career,
-)
+from src.career_loader import filter_eligible_careers
 from src.character import Character
 from src.terms.base import (
     DispatchTerm,
@@ -45,10 +41,12 @@ if TYPE_CHECKING:
     from src.terms.context import CareerContext
 
 
-def _available_careers_for(character: Character, blocked: str | None) -> list[dict]:
+def _available_careers_for(context: "CareerContext") -> list[dict]:
     """Career list for ChooseCareerStep — filtered by eligibility and block."""
-    careers = filter_eligible_careers(character, get_available_careers())
-    return [c for c in careers if c["name"] != blocked]
+    careers = filter_eligible_careers(
+        context.character, context.careers.get_available()
+    )
+    return [c for c in careers if c["name"] != context.blocked_career]
 
 
 def _forced_entry_career_term(context: "CareerContext") -> "CareerTerm | None":
@@ -62,7 +60,7 @@ def _forced_entry_career_term(context: "CareerContext") -> "CareerTerm | None":
     if not career_name:
         return None
     context.character.pending_career_entry = None
-    context.current_career_data = load_career(career_name)
+    context.current_career_data = context.careers.load(career_name)
     context.career_term_count = 0
     context.blocked_career = None
     context.current_assignment = None
@@ -101,7 +99,7 @@ class TransitionTerm(Term):
     def _after_choose_career(
         self, inner: ChooseCareerStep, outcome: StepOutcome, context: "CareerContext"
     ) -> "Term | None":
-        context.current_career_data = load_career(outcome.data["career"])
+        context.current_career_data = context.careers.load(outcome.data["career"])
         context.career_term_count = 0
         # Block only applies to the immediately-following selection; once a
         # new career is picked the block is lifted.
@@ -127,7 +125,7 @@ class TransitionTerm(Term):
     ) -> "Term | None":
         if outcome.status == StepStatus.DRAFTED:
             context.draft_used = True
-        context.current_career_data = load_career(outcome.data["career"])
+        context.current_career_data = context.careers.load(outcome.data["career"])
         context.career_term_count = 0
         context.blocked_career = None
         return CareerTerm(
@@ -181,7 +179,7 @@ class TransitionTerm(Term):
             return _muster_out_term_for(context, inner.career_name)
         # CHOOSE_CAREER — proceed to career selection, skipping benefits.
         context.current_career_data = None
-        careers = _available_careers_for(context.character, context.blocked_career)
+        careers = _available_careers_for(context)
         return TransitionTerm(
             context.character, ChooseCareerStep(context.character, careers)
         )
@@ -656,9 +654,7 @@ class CareerTerm(DispatchTerm):
             forced = _forced_entry_career_term(context)
             if forced is not None:
                 return forced
-            careers = _available_careers_for(
-                context.character, context.blocked_career
-            )
+            careers = _available_careers_for(context)
             return TransitionTerm(
                 context.character, ChooseCareerStep(context.character, careers)
             )
@@ -791,9 +787,7 @@ class AssignmentChangeTerm(DispatchTerm):
             context.career_term_count = 0
             context.blocked_career = self.career_name
             context.current_assignment = None
-            careers = _available_careers_for(
-                context.character, context.blocked_career
-            )
+            careers = _available_careers_for(context)
             return TransitionTerm(
                 context.character, ChooseCareerStep(context.character, careers)
             )

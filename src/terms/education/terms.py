@@ -11,11 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.career_loader import (
-    filter_eligible_careers,
-    get_available_careers,
-    load_career,
-)
+from src.career_loader import filter_eligible_careers
+from src.career_repository import CareerRepository
 from src.character import Character
 from src.terms.base import DispatchTerm, Step, StepOutcome, StepStatus, Term
 from src.terms.careers import BasicTrainingStep, try_apply_characteristic_bonus
@@ -37,11 +34,12 @@ if TYPE_CHECKING:
 EDUCATION_TERM_YEARS = 4
 
 
-def _career_selection_term(character: Character) -> "Term":
+def _career_selection_term(context: "CareerContext") -> "Term":
     """Build the standard Career Selection transition (today's default flow)."""
     from src.terms.careers import ChooseCareerStep, TransitionTerm
 
-    careers = filter_eligible_careers(character, get_available_careers())
+    character = context.character
+    careers = filter_eligible_careers(character, context.careers.get_available())
     return TransitionTerm(character, ChooseCareerStep(character, careers))
 
 
@@ -65,9 +63,11 @@ class PreCareerChoiceTerm(Term):
         if choice == "university":
             return UniversityTerm(context.character)
         if isinstance(choice, str) and choice.startswith("academy:"):
-            return MilitaryAcademyTerm(context.character, choice.split(":", 1)[1])
+            return MilitaryAcademyTerm(
+                context.character, choice.split(":", 1)[1], context.careers
+            )
         # SKIP (or anything unrecognised) → straight to career selection.
-        return _career_selection_term(context.character)
+        return _career_selection_term(context)
 
 
 class UniversityTerm(DispatchTerm):
@@ -144,7 +144,7 @@ class UniversityTerm(DispatchTerm):
         # A university graduate carries a one-shot DM into their first career
         # qualification; consumed by TransitionTerm._after_choose_career.
         context.pre_career_qualification_dm = self._graduated_qualification_dm
-        return _career_selection_term(context.character)
+        return _career_selection_term(context)
 
 
 class MilitaryAcademyTerm(DispatchTerm):
@@ -154,11 +154,13 @@ class MilitaryAcademyTerm(DispatchTerm):
     auto-qualified; merely attending enters it as an enlisted recruit.
     """
 
-    def __init__(self, character: Character, career: str) -> None:
+    def __init__(
+        self, character: Character, career: str, careers: CareerRepository
+    ) -> None:
         super().__init__(character)
         self.academy = academy_by_career(career)
         self.career_key = career
-        self.career_data = load_career(career)
+        self.career_data = careers.load(career)
         qualification = self.academy["qualification"]
         self.steps = [
             EducationQualificationStep(
@@ -232,7 +234,7 @@ class MilitaryAcademyTerm(DispatchTerm):
         from src.terms.careers import CareerTerm
 
         if self.outcome.status == StepStatus.NOT_ADMITTED:
-            return _career_selection_term(context.character)
+            return _career_selection_term(context)
 
         # Admitted (graduated or merely attended) → enter the service career.
         context.current_career_data = self.career_data

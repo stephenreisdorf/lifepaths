@@ -6,6 +6,7 @@ without stepping a whole randomised run.
 """
 
 from src.career_loader import load_career
+from src.career_repository import FilesystemCareerRepository
 from src.character import Character
 from src.terms.base import PassFailRollStep, StepOutcome
 from src.terms.careers import CareerTerm, ChooseCareerStep, TransitionTerm
@@ -51,6 +52,14 @@ def _character(**overrides: int) -> Character:
         char.add_characteristic(characteristic=name, value=value)
     char.age = 18
     return char
+
+
+# Shared filesystem repository for constructing academy terms in tests.
+_REPO = FilesystemCareerRepository()
+
+
+def _academy(career: str, character: Character | None = None) -> MilitaryAcademyTerm:
+    return MilitaryAcademyTerm(character or _character(), career, _REPO)
 
 
 # --- Eligibility ----------------------------------------------------------
@@ -266,14 +275,14 @@ def test_pass_fail_step_folds_extra_dm_into_modifier():
 
 
 def test_academy_qualification_failure_ends_not_admitted():
-    term = MilitaryAcademyTerm(_character(), "army")
+    term = _academy("army")
     term._after_qualification(_FakeStep(status="FAILED"))
     assert term.outcome is not None
     assert term.outcome.status == "NOT_ADMITTED"
 
 
 def test_academy_qualified_appends_basic_training_then_graduation():
-    term = MilitaryAcademyTerm(_character(), "army")
+    term = _academy("army")
     term._after_qualification(_FakeStep(status="QUALIFIED"))
     assert term.steps[-1].step_id == "basic_training"
 
@@ -282,7 +291,7 @@ def test_academy_qualified_appends_basic_training_then_graduation():
 
 
 def test_academy_graduate_enters_career_commissioned():
-    term = MilitaryAcademyTerm(_character(), "army")
+    term = _academy("army")
     term.outcome = StepOutcome(status="GRADUATED", description="graduated")
     term._graduated = True
     context = CareerContext(character=term.character)
@@ -299,7 +308,7 @@ def test_academy_graduate_enters_career_commissioned():
 
 
 def test_naval_academy_graduate_enters_navy_commissioned():
-    term = MilitaryAcademyTerm(_character(), "navy")
+    term = _academy("navy")
     term.outcome = StepOutcome(status="GRADUATED", description="graduated")
     term._graduated = True
     context = CareerContext(character=term.character)
@@ -315,7 +324,7 @@ def test_naval_academy_graduate_enters_navy_commissioned():
 
 
 def test_academy_attended_enters_career_enlisted():
-    term = MilitaryAcademyTerm(_character(), "army")
+    term = _academy("army")
     term.outcome = StepOutcome(status="ATTENDED", description="did not graduate")
     term._graduated = False
     context = CareerContext(character=term.character)
@@ -330,7 +339,7 @@ def test_academy_attended_enters_career_enlisted():
 
 
 def test_academy_not_admitted_routes_to_career_selection():
-    term = MilitaryAcademyTerm(_character(), "army")
+    term = _academy("army")
     term.outcome = StepOutcome(status="NOT_ADMITTED", description="rejected")
     context = CareerContext(character=term.character)
 
@@ -341,7 +350,7 @@ def test_academy_not_admitted_routes_to_career_selection():
 
 
 def test_academy_ages_character_on_graduation():
-    term = MilitaryAcademyTerm(_character(), "army")
+    term = _academy("army")
     start_age = term.character.age
     grad = _FakeStep(status="GRADUATED", graduated=True)
     grad.outcome = StepOutcome(status="GRADUATED", description="graduated")

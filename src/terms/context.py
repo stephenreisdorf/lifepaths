@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from src.career_data import Assignment, CareerData
+from src.career_repository import CareerRepository, FilesystemCareerRepository
 from src.character import Character
 
 
@@ -32,6 +33,10 @@ class CareerContext:
     - ``anagathics_enabled`` — whether the optional anagathics (anti-aging)
       rule is in play; when set, each career term starts with an anagathics
       offer / upkeep. Off by default so the baseline flow is unchanged.
+    - ``careers`` — the ``CareerRepository`` terms read the catalogue through
+      (career selection and career entry). Defaults to a filesystem-backed
+      repository that parses each career YAML at most once per session; tests
+      may inject an in-memory stub to run transitions without touching disk.
     """
 
     character: Character
@@ -42,3 +47,4 @@ class CareerContext:
     draft_used: bool = False
     pre_career_qualification_dm: int = 0
     anagathics_enabled: bool = False
+    careers: CareerRepository = field(default_factory=FilesystemCareerRepository)
