@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from src.career_data import CareerData
+from src.career_data import CareerData, CareerSummary, CharacteristicCheck
 from src.character import Character
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "careers"
@@ -14,18 +14,20 @@ def _load_file(path: Path) -> CareerData:
         return CareerData.model_validate(yaml.safe_load(f))
 
 
-def get_available_careers() -> list[dict]:
-    """Return a `{name, description, qualification, entry_only}` summary dict for
-    every career YAML. Each file is validated against `CareerData` on the way."""
-    careers: list[dict] = []
+def get_available_careers() -> list[CareerSummary]:
+    """Return a lightweight summary for every career YAML.
+
+    Each file is validated against `CareerData` on the way.
+    """
+    careers: list[CareerSummary] = []
     for path in sorted(DATA_DIR.glob("*.yaml")):
         careers.append(_load_file(path).qualification_summary())
     return careers
 
 
 def filter_eligible_careers(
-    character: Character, careers: list[dict]
-) -> list[dict]:
+    character: Character, careers: list[CareerSummary]
+) -> list[CareerSummary]:
     """Drop careers the character cannot enter.
 
     - Entry-only careers (e.g. Prisoner) never appear in normal selection;
@@ -35,25 +37,23 @@ def filter_eligible_careers(
     - Non-auto careers are always listed — the player is allowed to attempt
       a qualification roll regardless of DM.
     """
-    eligible: list[dict] = []
+    eligible: list[CareerSummary] = []
     for career in careers:
-        if career.get("entry_only"):
+        if career.entry_only:
             continue
-        qual = career.get("qualification") or {}
-        if not qual.get("auto"):
+        if not career.qualification.auto:
             eligible.append(career)
             continue
-        options = qual.get("options") or []
-        if any(_meets_option(character, opt) for opt in options):
+        if any(_meets_option(character, opt) for opt in career.qualification.options):
             eligible.append(career)
     return eligible
 
 
-def _meets_option(character: Character, option: dict) -> bool:
-    stat = character.characteristics.get(option["characteristic"])
+def _meets_option(character: Character, option: CharacteristicCheck) -> bool:
+    stat = character.characteristics.get(option.characteristic)
     if stat is None:
         return False
-    return stat.value >= option["target"]
+    return stat.value >= option.target
 
 
 def load_career(career_name: str) -> CareerData:

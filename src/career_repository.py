@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from src.career_data import CareerData
+from src.career_data import CareerData, CareerSummary
 from src.career_loader import DATA_DIR, _load_file
 
 
@@ -30,8 +30,8 @@ class CareerRepository(Protocol):
     a lightweight summary list for selection, and a full validated load.
     """
 
-    def get_available(self) -> list[dict]:
-        """Return a ``qualification_summary()`` dict for every known career."""
+    def get_available(self) -> list[CareerSummary]:
+        """Return a typed ``qualification_summary()`` for every known career."""
         ...
 
     def load(self, name: str) -> CareerData:
@@ -51,7 +51,7 @@ class FilesystemCareerRepository:
     def __init__(self, data_dir: Path = DATA_DIR) -> None:
         self._data_dir = data_dir
         self._cache: dict[str, CareerData] = {}
-        self._available: list[dict] | None = None
+        self._available: list[CareerSummary] | None = None
 
     def load(self, name: str) -> CareerData:
         key = name.lower()
@@ -61,9 +61,9 @@ class FilesystemCareerRepository:
             self._cache[key] = cached
         return cached
 
-    def get_available(self) -> list[dict]:
+    def get_available(self) -> list[CareerSummary]:
         if self._available is None:
-            summaries: list[dict] = []
+            summaries: list[CareerSummary] = []
             for path in sorted(self._data_dir.glob("*.yaml")):
                 key = path.stem
                 career = self._cache.get(key)
@@ -88,5 +88,5 @@ class InMemoryCareerRepository:
     def load(self, name: str) -> CareerData:
         return self._careers[name.lower()]
 
-    def get_available(self) -> list[dict]:
+    def get_available(self) -> list[CareerSummary]:
         return [career.qualification_summary() for career in self._careers.values()]

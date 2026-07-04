@@ -6,16 +6,15 @@ One file per open issue. Index below.
 
 Execution sequence — `iterate` always works the first entry. Regenerate with `/backlog sort`.
 
-1. [Typed career summary](typed-career-summary.md)
-2. [Character sheet missing fields](character-sheet-missing-fields.md)
-3. [Network error handling](network-error-handling.md)
-4. [Async loading states](async-loading-states.md)
-5. [Start Over confirmation](start-over-confirmation.md)
-6. [Expose the anagathics option](expose-anagathics-option.md)
-7. [Lifepath progress indicator](lifepath-progress-indicator.md)
-8. [Frontend accessibility](frontend-accessibility.md)
-9. [Final sheet presentation](final-sheet-presentation.md)
-10. [Connections Rule (multi-character)](connections-rule.md)
+1. [Character sheet missing fields](character-sheet-missing-fields.md)
+2. [Network error handling](network-error-handling.md)
+3. [Async loading states](async-loading-states.md)
+4. [Start Over confirmation](start-over-confirmation.md)
+5. [Expose the anagathics option](expose-anagathics-option.md)
+6. [Lifepath progress indicator](lifepath-progress-indicator.md)
+7. [Frontend accessibility](frontend-accessibility.md)
+8. [Final sheet presentation](final-sheet-presentation.md)
+9. [Connections Rule (multi-character)](connections-rule.md)
 
 ## Bugs
 
@@ -34,7 +33,7 @@ _None open._
 
 ## Architecture
 
-- [Typed career summary](typed-career-summary.md) — replace the loosely-typed career-summary dict with a `CareerSummary` model through eligibility + selection; best folded into the repository item.
+_None open._
 
 ## Deferred
 

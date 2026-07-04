@@ -6,6 +6,7 @@ career-selection transition backed by an in-memory stub touches no disk.
 """
 
 import src.career_repository as repo_mod
+from src.career_data import CareerSummary
 from src.career_loader import load_career
 from src.career_repository import (
     FilesystemCareerRepository,
@@ -52,6 +53,27 @@ def test_filesystem_repository_parses_each_career_once(monkeypatch):
 
     assert parsed.count("scout") == 1
     assert parsed.count("army") == 1
+
+
+def test_repository_returns_typed_career_summaries():
+    repo = InMemoryCareerRepository({"scout": load_career("scout")})
+
+    summaries = repo.get_available()
+
+    assert len(summaries) == 1
+    assert isinstance(summaries[0], CareerSummary)
+    assert summaries[0].name == "Scout"
+
+
+def test_choose_career_prompt_serializes_summaries_at_api_boundary():
+    char = _character()
+    summary = load_career("scout").qualification_summary()
+    step = ChooseCareerStep(char, [summary])
+
+    prompt = step.prompt()
+
+    assert step.options() == ["Scout"]
+    assert prompt.data["careers"] == [summary.model_dump()]
 
 
 def test_career_selection_transition_uses_injected_repository_without_disk(monkeypatch):

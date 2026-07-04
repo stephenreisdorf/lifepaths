@@ -56,6 +56,26 @@ class Qualification(BaseModel):
         return data
 
 
+class QualificationSummary(BaseModel):
+    """Lightweight qualification data used by career selection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    options: list[CharacteristicCheck]
+    auto: bool = False
+
+
+class CareerSummary(BaseModel):
+    """Lightweight career data used by eligibility and selection prompts."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    description: str = ""
+    qualification: QualificationSummary
+    entry_only: bool = False
+
+
 class Assignment(BaseModel):
     """One assignment within a career, with its own survival / advancement
     checks."""
@@ -182,14 +202,14 @@ class CareerData(BaseModel):
             if table.requirement is not None
         }
 
-    def qualification_summary(self) -> dict:
+    def qualification_summary(self) -> CareerSummary:
         """Lightweight summary for career-selection eligibility checks."""
-        return {
-            "name": self.name,
-            "description": self.description,
-            "qualification": {
-                "options": self.qualification_options(),
-                "auto": self.qualification.auto,
-            },
-            "entry_only": self.entry_only,
-        }
+        return CareerSummary(
+            name=self.name,
+            description=self.description,
+            qualification=QualificationSummary(
+                options=self.qualification.options,
+                auto=self.qualification.auto,
+            ),
+            entry_only=self.entry_only,
+        )

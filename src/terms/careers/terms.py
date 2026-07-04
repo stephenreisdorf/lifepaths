@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.career_data import Assignment, CareerData, CharacteristicCheck
+from src.career_data import Assignment, CareerData, CareerSummary, CharacteristicCheck
 from src.career_loader import filter_eligible_careers
 from src.character import Character
 from src.terms.base import (
@@ -41,12 +41,12 @@ if TYPE_CHECKING:
     from src.terms.context import CareerContext
 
 
-def _available_careers_for(context: "CareerContext") -> list[dict]:
+def _available_careers_for(context: "CareerContext") -> list[CareerSummary]:
     """Career list for ChooseCareerStep — filtered by eligibility and block."""
     careers = filter_eligible_careers(
         context.character, context.careers.get_available()
     )
-    return [c for c in careers if c["name"] != context.blocked_career]
+    return [c for c in careers if c.name != context.blocked_career]
 
 
 def _forced_entry_career_term(context: "CareerContext") -> "CareerTerm | None":

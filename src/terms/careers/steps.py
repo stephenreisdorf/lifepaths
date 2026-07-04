@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.career_data import Assignment, Rank
+from src.career_data import Assignment, CareerSummary, Rank
 from src.character import Character
 from src.terms.anagathics import (
     ANAGATHICS_SOC_TARGET,
@@ -725,7 +725,7 @@ class ChooseCareerStep(SingleChoiceStep):
     input_required_message = "Career selection is required."
     single_choice_message = "Must choose a single career."
 
-    def __init__(self, character: Character, careers: list[dict]) -> None:
+    def __init__(self, character: Character, careers: list[CareerSummary]) -> None:
         super().__init__(character)
         self.careers = careers
 
@@ -742,11 +742,11 @@ class ChooseCareerStep(SingleChoiceStep):
             description="Choose a career to pursue.",
             options=self.options(),
             required_count=1,
-            data={"careers": self.careers},
+            data={"careers": [career.model_dump() for career in self.careers]},
         )
 
     def options(self) -> list[str]:
-        return [c["name"] for c in self.careers]
+        return [career.name for career in self.careers]
 
     def invalid_choice_message(self, selection: str) -> str:
         return f"Unknown career: {selection}"
