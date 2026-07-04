@@ -6,20 +6,19 @@ One file per open issue. Index below.
 
 Execution sequence — `iterate` always works the first entry. Regenerate with `/backlog sort`.
 
-1. [Character read model](character-read-model.md)
-2. [SingleChoiceStep base](single-choice-step-base.md)
-3. [CareerTerm.next_term dispatch table](career-term-next-term-dispatch.md)
-4. [Keep Rank typed through steps](typed-rank-through-steps.md)
-5. [Typed career summary](typed-career-summary.md)
-6. [Character sheet missing fields](character-sheet-missing-fields.md)
-7. [Network error handling](network-error-handling.md)
-8. [Async loading states](async-loading-states.md)
-9. [Start Over confirmation](start-over-confirmation.md)
-10. [Expose the anagathics option](expose-anagathics-option.md)
-11. [Lifepath progress indicator](lifepath-progress-indicator.md)
-12. [Frontend accessibility](frontend-accessibility.md)
-13. [Final sheet presentation](final-sheet-presentation.md)
-14. [Connections Rule (multi-character)](connections-rule.md)
+1. [SingleChoiceStep base](single-choice-step-base.md)
+2. [CareerTerm.next_term dispatch table](career-term-next-term-dispatch.md)
+3. [Keep Rank typed through steps](typed-rank-through-steps.md)
+4. [Typed career summary](typed-career-summary.md)
+5. [Character sheet missing fields](character-sheet-missing-fields.md)
+6. [Network error handling](network-error-handling.md)
+7. [Async loading states](async-loading-states.md)
+8. [Start Over confirmation](start-over-confirmation.md)
+9. [Expose the anagathics option](expose-anagathics-option.md)
+10. [Lifepath progress indicator](lifepath-progress-indicator.md)
+11. [Frontend accessibility](frontend-accessibility.md)
+12. [Final sheet presentation](final-sheet-presentation.md)
+13. [Connections Rule (multi-character)](connections-rule.md)
 
 ## Bugs
 
@@ -41,7 +40,6 @@ _None open._
 - [SingleChoiceStep base](single-choice-step-base.md) — dedup the identical `resolve()` validation across ~8 choice steps behind a Template-Method base, mirroring `PassFailRollStep`.
 - [CareerTerm.next_term dispatch table](career-term-next-term-dispatch.md) — replace the six-branch status if/elif with a `StepStatus`→handler table to match the codebase's own dispatch convention.
 - [Keep Rank typed through steps](typed-rank-through-steps.md) — thread `list[Rank]` into the rank steps and factor one `apply_rank_bonus` helper instead of `list[dict]` + duplicated logic.
-- [Character read model](character-read-model.md) — move `GameSession._character_summary` serialization onto the model / a read model so the engine stops reaching into every domain model's internals.
 - [Typed career summary](typed-career-summary.md) — replace the loosely-typed career-summary dict with a `CareerSummary` model through eligibility + selection; best folded into the repository item.
 
 ## Deferred

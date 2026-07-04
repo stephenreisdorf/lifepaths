@@ -1,4 +1,5 @@
 from src.character import Character
+from src.character_summary import CharacterSummary
 from src.terms.base import StepPrompt, StepType, SubmitResult, Term
 from src.terms.childhood import ChildhoodTerm
 from src.terms.context import CareerContext
@@ -25,34 +26,12 @@ class GameSession:
         )
 
     def _character_summary(self) -> dict:
-        """Serialize current character state for API responses."""
-        return {
-            "age": self.character.age,
-            "characteristics": {
-                name: {"value": c.value, "modifier": c.modifier()}
-                for name, c in self.character.characteristics.items()
-            },
-            "skills": {
-                name: {
-                    "base_rank": s.base_rank,
-                    "specialties": {
-                        sp_name: sp.rank for sp_name, sp in s.specialties.items()
-                    },
-                }
-                for name, s in self.character.skills.items()
-            },
-            "associates": [
-                {
-                    "name": a.name,
-                    "type": a.type.value,
-                    "description": a.description,
-                    "source_event": a.source_event,
-                }
-                for a in self.character.associates
-            ],
-            "cash": self.character.cash,
-            "possessions": list(self.character.possessions),
-        }
+        """Serialize current character state for API responses.
+
+        Delegates to the `CharacterSummary` read model so the engine stays out
+        of the domain models' internals; see src/character_summary.py.
+        """
+        return CharacterSummary.from_character(self.character).model_dump()
 
     def _advance_past_term_boundaries(self) -> StepPrompt | None:
         """Cross exhausted term boundaries until a step is available, or the chain ends."""
