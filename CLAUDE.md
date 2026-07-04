@@ -98,3 +98,5 @@ Three layers: **Domain** (`src/terms/`, `src/character.py`) → **Engine** (`src
 ## Backlog
 
 Open issues live as one file per issue under `Backlog/`, indexed by `Backlog/README.md`. Check there for the current list of known bugs, missing mechanics, and architectural RFCs before adding new features or refactors.
+
+The backlog is fed by three skills: `backlog` (sort/add), `iterate` (execute/ship the top item), and the `audit` suite that *discovers* items. `/audit ultimate` fans out five focus audits in parallel — `audit-rules` (MgT 2022 fidelity via the "Bowman Arm" NotebookLM notebook), `audit-architecture`, `audit-ux`, `audit-tests`, `audit-perf` — then dedupes, impact-ranks, files them, and ships to `main`. Each focus audit is also runnable standalone (files directly to `Backlog/`, no commit).
