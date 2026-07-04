@@ -1,0 +1,4 @@
+interface:
+  display_name: "Loop Iterate"
+  short_description: "Repeat Lifepaths backlog shipping safely"
+  default_prompt: "Use $loop-iterate to keep shipping prioritized Lifepaths backlog items until tokens run low or a blocker appears."
