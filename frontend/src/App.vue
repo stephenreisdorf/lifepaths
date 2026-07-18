@@ -50,13 +50,17 @@ async function requestJson(url, options) {
   return data
 }
 
-async function startCreation() {
+async function startCreation(anagathicsEnabled = false) {
   if (busy.value) return
 
   busy.value = true
   error.value = ''
   try {
-    const data = await requestJson('/api/start', { method: 'POST' })
+    const data = await requestJson('/api/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ anagathics_enabled: anagathicsEnabled }),
+    })
 
     sessionId.value = data.session_id
     characterData.value = data.character
