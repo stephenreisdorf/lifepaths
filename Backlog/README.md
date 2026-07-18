@@ -6,12 +6,11 @@ One file per open issue. Index below.
 
 Execution sequence — `iterate` always works the first entry. Regenerate with `/backlog sort`.
 
-1. [Start Over confirmation](start-over-confirmation.md)
-2. [Expose the anagathics option](expose-anagathics-option.md)
-3. [Lifepath progress indicator](lifepath-progress-indicator.md)
-4. [Frontend accessibility](frontend-accessibility.md)
-5. [Final sheet presentation](final-sheet-presentation.md)
-6. [Connections Rule (multi-character)](connections-rule.md)
+1. [Expose the anagathics option](expose-anagathics-option.md)
+2. [Lifepath progress indicator](lifepath-progress-indicator.md)
+3. [Frontend accessibility](frontend-accessibility.md)
+4. [Final sheet presentation](final-sheet-presentation.md)
+5. [Connections Rule (multi-character)](connections-rule.md)
 
 ## Bugs
 
@@ -23,7 +22,6 @@ _None open._
 - [Expose the anagathics option](expose-anagathics-option.md) — the anti-aging rule is implemented and honoured by `/api/start` but the welcome screen never lets a player enable it.
 - [Lifepath progress indicator](lifepath-progress-indicator.md) — no phase stepper or term counter; the player has no sense of where they are in the run.
 - [Frontend accessibility](frontend-accessibility.md) — color-only pass/fail status, no `aria-pressed` on skill selection, and no focus management across steps.
-- [Start Over confirmation](start-over-confirmation.md) — the finished sheet's "Start Over" destroys the completed character with no confirmation.
 
 ## Architecture
 

@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'
 import CharacterCanvas from './CharacterCanvas.vue'
 
 defineProps({
@@ -8,7 +9,12 @@ defineProps({
   busy: Boolean,
 })
 
-defineEmits(['restart'])
+const emit = defineEmits(['restart'])
+const confirmingRestart = ref(false)
+
+function confirmRestart() {
+  emit('restart')
+}
 </script>
 
 <template>
@@ -24,8 +30,19 @@ defineEmits(['restart'])
       :history="history"
     />
     <p v-if="error" class="error">{{ error }}</p>
-    <button class="restart-btn" :disabled="busy" @click="$emit('restart')">
-      {{ busy ? 'Starting…' : 'Start Over' }}
+    <div v-if="confirmingRestart" class="restart-confirmation" role="alert">
+      <p>Start over and discard this completed character?</p>
+      <div class="restart-actions">
+        <button class="secondary-btn" :disabled="busy" @click="confirmingRestart = false">
+          Keep Character
+        </button>
+        <button :disabled="busy" @click="confirmRestart">
+          {{ busy ? 'Starting…' : 'Discard & Start Over' }}
+        </button>
+      </div>
+    </div>
+    <button v-else class="restart-btn" :disabled="busy" @click="confirmingRestart = true">
+      Start Over
     </button>
   </div>
 </template>
@@ -38,5 +55,25 @@ defineEmits(['restart'])
 }
 .restart-btn {
   align-self: flex-start;
+}
+.restart-confirmation {
+  align-self: flex-start;
+  padding: 1rem;
+  border: 1px solid var(--color-orange);
+}
+.restart-confirmation p {
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+.restart-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.secondary-btn {
+  background: var(--color-graphite-soft);
+}
+.secondary-btn:hover {
+  background: var(--color-graphite);
 }
 </style>
