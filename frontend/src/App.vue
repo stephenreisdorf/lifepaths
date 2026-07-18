@@ -11,6 +11,7 @@ const stepHistory = ref([])
 const currentPrompt = ref(null)
 const pendingReview = ref(null)
 const error = ref('')
+const busy = ref(false)
 
 const networkErrorMessage = "Couldn't reach the server. Try again."
 const invalidResponseMessage = 'The server returned an unreadable response. Try again.'
@@ -50,6 +51,9 @@ async function requestJson(url, options) {
 }
 
 async function startCreation() {
+  if (busy.value) return
+
+  busy.value = true
   error.value = ''
   try {
     const data = await requestJson('/api/start', { method: 'POST' })
@@ -62,6 +66,8 @@ async function startCreation() {
     currentScreen.value = data.next_prompt ? 'creation' : 'sheet'
   } catch (err) {
     error.value = err.message || networkErrorMessage
+  } finally {
+    busy.value = false
   }
 }
 
@@ -83,6 +89,9 @@ async function submitAutomatic() {
 }
 
 async function submit(playerInput, choiceEntry) {
+  if (busy.value) return
+
+  busy.value = true
   error.value = ''
   let data
 
@@ -98,6 +107,8 @@ async function submit(playerInput, choiceEntry) {
   } catch (err) {
     error.value = err.message || networkErrorMessage
     return
+  } finally {
+    busy.value = false
   }
 
   characterData.value = data.character
@@ -122,7 +133,11 @@ function dismissReview() {
 </script>
 
 <template>
-  <div class="container" :class="{ wide: currentScreen !== 'welcome' }">
+  <div
+    class="container"
+    :class="{ wide: currentScreen !== 'welcome' }"
+    :aria-busy="busy"
+  >
     <header class="app-header">
       <span class="wordmark">LIFEPATHS</span>
       <svg class="orbit" viewBox="0 0 60 34" aria-hidden="true">
@@ -134,6 +149,7 @@ function dismissReview() {
     <WelcomeScreen
       v-if="currentScreen === 'welcome'"
       :error="error"
+      :busy="busy"
       @start="startCreation"
     />
     <CreationScreen
@@ -143,6 +159,7 @@ function dismissReview() {
       :pending-review="pendingReview"
       :history="stepHistory"
       :error="error"
+      :busy="busy"
       @confirm="submitChoice"
       @advance="submitAutomatic"
       @continue="dismissReview"
@@ -152,6 +169,7 @@ function dismissReview() {
       :character-data="characterData"
       :history="stepHistory"
       :error="error"
+      :busy="busy"
       @restart="startCreation"
     />
   </div>

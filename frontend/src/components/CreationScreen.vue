@@ -9,6 +9,7 @@ const props = defineProps({
   pendingReview: Object,
   history: Array,
   error: String,
+  busy: Boolean,
 })
 
 const emit = defineEmits(['confirm', 'advance', 'continue'])
@@ -59,7 +60,9 @@ const reviewStatus = computed(() => props.pendingReview?.data?.status || '')
         <p v-if="prompt.term_label" class="term-label">{{ prompt.term_label }}</p>
         <h2>{{ prompt.description }}</h2>
         <p v-if="error" class="error">{{ error }}</p>
-        <button @click="advance">Continue</button>
+        <button :disabled="busy" @click="advance">
+          {{ busy ? 'Working…' : 'Continue' }}
+        </button>
       </div>
       <div v-else-if="prompt" class="chamfer prompt-card">
         <h2>{{ prompt.description }}</h2>
@@ -76,7 +79,9 @@ const reviewStatus = computed(() => props.pendingReview?.data?.status || '')
           <span>{{ selected.size }}</span> / <span>{{ prompt.required_count }}</span> selected
         </p>
         <p v-if="error" class="error">{{ error }}</p>
-        <button :disabled="!canConfirm" @click="confirm">Confirm</button>
+        <button :disabled="!canConfirm || busy" @click="confirm">
+          {{ busy ? 'Working…' : 'Confirm' }}
+        </button>
       </div>
     </main>
 

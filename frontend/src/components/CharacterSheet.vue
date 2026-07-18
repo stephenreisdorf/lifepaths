@@ -5,6 +5,7 @@ defineProps({
   characterData: Object,
   history: Array,
   error: String,
+  busy: Boolean,
 })
 
 defineEmits(['restart'])
@@ -23,7 +24,9 @@ defineEmits(['restart'])
       :history="history"
     />
     <p v-if="error" class="error">{{ error }}</p>
-    <button class="restart-btn" @click="$emit('restart')">Start Over</button>
+    <button class="restart-btn" :disabled="busy" @click="$emit('restart')">
+      {{ busy ? 'Starting…' : 'Start Over' }}
+    </button>
   </div>
 </template>
 

@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   error: String,
+  busy: Boolean,
 })
 
 defineEmits(['start'])
@@ -11,7 +12,9 @@ defineEmits(['start'])
     <h2>Enlistment Record</h2>
     <p>Create a character by rolling characteristics and choosing background skills, then progress through terms of service.</p>
     <p v-if="error" class="error">{{ error }}</p>
-    <button @click="$emit('start')">Begin Character Creation</button>
+    <button :disabled="busy" @click="$emit('start')">
+      {{ busy ? 'Starting…' : 'Begin Character Creation' }}
+    </button>
   </div>
 </template>
 
