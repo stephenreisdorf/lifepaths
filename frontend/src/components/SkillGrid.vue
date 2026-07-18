@@ -14,6 +14,7 @@ const emit = defineEmits(['toggle'])
       :key="skill"
       class="skill-btn"
       :class="{ selected: selected.has(skill) }"
+      :aria-pressed="selected.has(skill)"
       @click="emit('toggle', skill)"
     >
       {{ skill }}
