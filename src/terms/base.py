@@ -19,6 +19,15 @@ class StepType(str, Enum):
     CHOICE = "choice"  # Player picks N items from a list
 
 
+class LifepathPhase(str, Enum):
+    """The coarse phase of the character-creation journey."""
+
+    CHILDHOOD = "childhood"
+    EDUCATION = "education"
+    CAREER = "career"
+    MUSTER_OUT = "muster_out"
+
+
 class StepStatus(str, Enum):
     """Machine-readable outcome tag produced by a step and branched on by terms.
 
@@ -104,12 +113,22 @@ class StepPrompt(BaseModel):
     term_label: str | None = None
 
 
+class LifepathProgress(BaseModel):
+    """Stable progress metadata for the frontend's creation roadmap."""
+
+    phase: LifepathPhase
+    phase_index: int
+    phase_count: int = 4
+    career_term_number: int | None = None
+
+
 class SubmitResult(BaseModel):
     """Uniform response after submitting player input (or auto-resolving)."""
 
     resolved_steps: list[StepPrompt]
     next_prompt: StepPrompt | None
     character: dict
+    progress: LifepathProgress
 
 
 class StepOutcome(BaseModel):

@@ -10,6 +10,7 @@ const characterData = ref(null)
 const stepHistory = ref([])
 const currentPrompt = ref(null)
 const pendingReview = ref(null)
+const progress = ref(null)
 const error = ref('')
 const busy = ref(false)
 
@@ -67,6 +68,7 @@ async function startCreation(anagathicsEnabled = false) {
     stepHistory.value = [...data.resolved_steps]
     currentPrompt.value = data.next_prompt
     pendingReview.value = null
+    progress.value = data.progress
     currentScreen.value = data.next_prompt ? 'creation' : 'sheet'
   } catch (err) {
     error.value = err.message || networkErrorMessage
@@ -119,6 +121,7 @@ async function submit(playerInput, choiceEntry) {
   if (choiceEntry) stepHistory.value.push(choiceEntry)
   stepHistory.value.push(...data.resolved_steps)
   currentPrompt.value = data.next_prompt
+  progress.value = data.progress
   pendingReview.value = data.resolved_steps.length
     ? data.resolved_steps[data.resolved_steps.length - 1]
     : null
@@ -161,6 +164,7 @@ function dismissReview() {
       :character-data="characterData"
       :prompt="currentPrompt"
       :pending-review="pendingReview"
+      :progress="progress"
       :history="stepHistory"
       :error="error"
       :busy="busy"

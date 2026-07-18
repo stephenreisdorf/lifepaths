@@ -2,11 +2,13 @@
 import { reactive, computed, watch } from 'vue'
 import SkillGrid from './SkillGrid.vue'
 import CharacterCanvas from './CharacterCanvas.vue'
+import LifepathProgress from './LifepathProgress.vue'
 
 const props = defineProps({
   characterData: Object,
   prompt: Object,
   pendingReview: Object,
+  progress: Object,
   history: Array,
   error: String,
   busy: Boolean,
@@ -49,52 +51,56 @@ const reviewStatus = computed(() => props.pendingReview?.data?.status || '')
 </script>
 
 <template>
-  <div class="creation-layout">
-    <main class="prompt-column">
-      <section v-if="pendingReview" class="chamfer review-card" :data-status="reviewStatus">
-        <p v-if="pendingReview.term_label" class="term-label">{{ pendingReview.term_label }}</p>
-        <h2 class="review-description">{{ pendingReview.description }}</h2>
-        <button @click="continueFromReview">Continue</button>
-      </section>
-      <div v-else-if="prompt && prompt.step_type === 'automatic'" class="chamfer prompt-card">
-        <p v-if="prompt.term_label" class="term-label">{{ prompt.term_label }}</p>
-        <h2>{{ prompt.description }}</h2>
-        <p v-if="error" class="error">{{ error }}</p>
-        <button :disabled="busy" @click="advance">
-          {{ busy ? 'Working…' : 'Continue' }}
-        </button>
-      </div>
-      <div v-else-if="prompt" class="chamfer prompt-card">
-        <h2>{{ prompt.description }}</h2>
-        <p v-if="prompt.required_count" class="skill-counter">
-          Select <span>{{ prompt.required_count }}</span>:
-        </p>
-        <SkillGrid
-          v-if="prompt.options"
-          :skills="prompt.options"
-          :selected="selected"
-          @toggle="toggleOption"
-        />
-        <p v-if="prompt.required_count" class="skill-counter">
-          <span>{{ selected.size }}</span> / <span>{{ prompt.required_count }}</span> selected
-        </p>
-        <p v-if="error" class="error">{{ error }}</p>
-        <button :disabled="!canConfirm || busy" @click="confirm">
-          {{ busy ? 'Working…' : 'Confirm' }}
-        </button>
-      </div>
-    </main>
+  <div class="creation-screen">
+    <LifepathProgress :progress="progress" />
 
-    <CharacterCanvas
-      class="canvas-column"
-      :age="characterData?.age"
-      :characteristics="characterData?.characteristics"
-      :skills="characterData?.skills"
-      :cash="characterData?.cash"
-      :possessions="characterData?.possessions"
-      :associates="characterData?.associates"
-      :history="history"
-    />
+    <div class="creation-layout">
+      <main class="prompt-column">
+        <section v-if="pendingReview" class="chamfer review-card" :data-status="reviewStatus">
+          <p v-if="pendingReview.term_label" class="term-label">{{ pendingReview.term_label }}</p>
+          <h2 class="review-description">{{ pendingReview.description }}</h2>
+          <button @click="continueFromReview">Continue</button>
+        </section>
+        <div v-else-if="prompt && prompt.step_type === 'automatic'" class="chamfer prompt-card">
+          <p v-if="prompt.term_label" class="term-label">{{ prompt.term_label }}</p>
+          <h2>{{ prompt.description }}</h2>
+          <p v-if="error" class="error">{{ error }}</p>
+          <button :disabled="busy" @click="advance">
+            {{ busy ? 'Working…' : 'Continue' }}
+          </button>
+        </div>
+        <div v-else-if="prompt" class="chamfer prompt-card">
+          <h2>{{ prompt.description }}</h2>
+          <p v-if="prompt.required_count" class="skill-counter">
+            Select <span>{{ prompt.required_count }}</span>:
+          </p>
+          <SkillGrid
+            v-if="prompt.options"
+            :skills="prompt.options"
+            :selected="selected"
+            @toggle="toggleOption"
+          />
+          <p v-if="prompt.required_count" class="skill-counter">
+            <span>{{ selected.size }}</span> / <span>{{ prompt.required_count }}</span> selected
+          </p>
+          <p v-if="error" class="error">{{ error }}</p>
+          <button :disabled="!canConfirm || busy" @click="confirm">
+            {{ busy ? 'Working…' : 'Confirm' }}
+          </button>
+        </div>
+      </main>
+
+      <CharacterCanvas
+        class="canvas-column"
+        :age="characterData?.age"
+        :characteristics="characterData?.characteristics"
+        :skills="characterData?.skills"
+        :cash="characterData?.cash"
+        :possessions="characterData?.possessions"
+        :associates="characterData?.associates"
+        :history="history"
+      />
+    </div>
   </div>
 </template>
 
@@ -104,6 +110,7 @@ const reviewStatus = computed(() => props.pendingReview?.data?.status || '')
   gap: 1.5rem;
   align-items: flex-start;
 }
+.creation-screen { width: 100%; }
 .prompt-column {
   flex: 1 1 60%;
   min-width: 0;

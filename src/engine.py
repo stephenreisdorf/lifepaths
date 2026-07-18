@@ -1,6 +1,13 @@
 from src.character import Character
 from src.character_summary import CharacterSummary
-from src.terms.base import StepPrompt, StepType, SubmitResult, Term
+from src.terms.base import (
+    LifepathPhase,
+    LifepathProgress,
+    StepPrompt,
+    StepType,
+    SubmitResult,
+    Term,
+)
 from src.terms.childhood import ChildhoodTerm
 from src.terms.context import CareerContext
 
@@ -33,6 +40,43 @@ class GameSession:
         """
         return CharacterSummary.from_character(self.character).model_dump()
 
+    def _progress(self) -> LifepathProgress:
+        """Describe the current position in the four-phase creation arc."""
+        from src.terms.careers.muster_out import MusterOutTerm
+        from src.terms.education import (
+            MilitaryAcademyTerm,
+            PreCareerChoiceTerm,
+            UniversityTerm,
+        )
+
+        if isinstance(self.term, ChildhoodTerm):
+            phase = LifepathPhase.CHILDHOOD
+            phase_index = 1
+        elif isinstance(
+            self.term,
+            (PreCareerChoiceTerm, UniversityTerm, MilitaryAcademyTerm),
+        ):
+            phase = LifepathPhase.EDUCATION
+            phase_index = 2
+        elif isinstance(self.term, MusterOutTerm):
+            phase = LifepathPhase.MUSTER_OUT
+            phase_index = 4
+        else:
+            phase = LifepathPhase.CAREER
+            phase_index = 3
+
+        career_term_number = None
+        if phase == LifepathPhase.CAREER:
+            career_term_number = getattr(self.term, "term_number", None)
+            if career_term_number is None and self.context.career_term_count:
+                career_term_number = self.context.career_term_count
+
+        return LifepathProgress(
+            phase=phase,
+            phase_index=phase_index,
+            career_term_number=career_term_number,
+        )
+
     def _advance_past_term_boundaries(self) -> StepPrompt | None:
         """Cross exhausted term boundaries until a step is available, or the chain ends."""
         prompt = self._current_prompt_with_label()
@@ -57,6 +101,7 @@ class GameSession:
             resolved_steps=[],
             next_prompt=next_prompt,
             character=self._character_summary(),
+            progress=self._progress(),
         )
 
     def submit(self, player_input: dict | None = None) -> SubmitResult:
@@ -86,4 +131,5 @@ class GameSession:
             resolved_steps=resolved,
             next_prompt=next_prompt,
             character=self._character_summary(),
+            progress=self._progress(),
         )
