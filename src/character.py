@@ -214,6 +214,41 @@ class Character(BaseModel):
         else:
             skill.base_rank = target
 
+    def validate_connection_skill(self, name: str) -> str:
+        """Validate and normalize a skill chosen through the Connections Rule.
+
+        A connection grants one normal skill increase, but may not grant
+        Jack-of-all-Trades or raise a skill above level 3. The character's
+        overall creation skill budget still applies.
+        """
+        normalized_name = name.strip()
+        if not normalized_name:
+            raise ValueError("Choose a skill for the connection.")
+
+        compact_name = "".join(
+            char for char in normalized_name.casefold() if char.isalnum()
+        )
+        if compact_name == "jackofalltrades":
+            raise ValueError("Connections cannot grant Jack-of-all-Trades.")
+
+        current = self.skills.get(normalized_name)
+        current_rank = current.base_rank if current is not None else 0
+        if current_rank >= 3:
+            raise ValueError(
+                f"Connections cannot raise {normalized_name} above level 3."
+            )
+        if not self._budget_allows_increment():
+            raise ValueError(
+                "The character's total skill-level cap is already reached."
+            )
+        return normalized_name
+
+    def grant_connection_skill(self, name: str) -> Skill:
+        """Grant a validated free skill from a shared Traveller connection."""
+        normalized_name = self.validate_connection_skill(name)
+        self.grant_skill(normalized_name)
+        return self.skills[normalized_name]
+
     @staticmethod
     def _clamp_target(current: int, level: int | None) -> int:
         """Resolve the skill-grant notation to a target rank, clamped to SKILL_MAX_LEVEL."""
